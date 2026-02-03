@@ -3,7 +3,7 @@
  * Override these values when embedding in your app.
  */
 export const defaultConfig = {
-  serverUrl: 'http://localhost:7777',
+  serverUrl: `http://${window.location.hostname}:7777`,
   position: 'bottom-right',
   title: 'MFCCortex',
   placeholder: 'Ask me anything...',
