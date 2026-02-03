@@ -49,7 +49,7 @@ export default function ItemPicker({ isOpen, onClose, jobCode, onAdd, isAdding }
 
   const toggleItem = (item) => {
     setSelectedItems(prev => {
-      const key = `${activeTab}-${item.ID}`
+      const key = `${sourceTableMap[activeTab]}-${item.ID}`
       const exists = prev.find(i => `${i.sourceTable}-${i.sourceId}` === key)
       if (exists) {
         return prev.filter(i => `${i.sourceTable}-${i.sourceId}` !== key)

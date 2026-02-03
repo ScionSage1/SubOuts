@@ -6,7 +6,7 @@ import { useApp } from '../../context/AppContext'
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/subouts', icon: Package, label: 'All SubOuts' },
-  { to: '/vendors', icon: Building2, label: 'Vendors' },
+  { to: '/vendors', icon: Building2, label: 'Sub Fabricators' },
   { to: '/settings', icon: Settings, label: 'Settings' }
 ]
 
