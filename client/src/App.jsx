@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import Header from './components/layout/Header'
 import Sidebar from './components/layout/Sidebar'
 import Dashboard from './pages/Dashboard'
@@ -10,12 +11,25 @@ import VendorsPage from './pages/VendorsPage'
 import JobView from './pages/JobView'
 import Settings from './pages/Settings'
 import { useApp } from './context/AppContext'
+import AiChat from './components/cortex/AiChat'
+import UserSelectModal from './components/common/UserSelectModal'
 
 function App() {
-  const { sidebarOpen } = useApp()
+  const { sidebarOpen, currentUser } = useApp()
+  const queryClient = useQueryClient()
+
+  // Handle tool results from MFCCortex AI
+  const handleToolResult = (tool, result) => {
+    // When a communication is logged via AI, refresh the communications and vendors queries
+    if (tool === 'log_fabricator_communication' && result?.success) {
+      queryClient.invalidateQueries({ queryKey: ['communications'] })
+      queryClient.invalidateQueries({ queryKey: ['vendors'] })
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <UserSelectModal />
       <Header />
       <div className="flex">
         <Sidebar />
@@ -32,6 +46,7 @@ function App() {
           </Routes>
         </main>
       </div>
+      <AiChat appId="subouts" userId={currentUser || 'guest'} onToolResult={handleToolResult} />
     </div>
   )
 }

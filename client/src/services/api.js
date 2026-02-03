@@ -71,4 +71,15 @@ export const dashboardApi = {
   getRecent: (limit) => api.get('/dashboard/recent', { params: { limit } })
 }
 
+// Communications API
+export const communicationsApi = {
+  getAll: (params) => api.get('/communications', { params }),
+  getFollowUps: () => api.get('/communications/follow-ups'),
+  getById: (id) => api.get(`/communications/${id}`),
+  create: (data) => api.post('/communications', data),
+  update: (id, data) => api.put(`/communications/${id}`, data),
+  completeFollowUp: (id) => api.patch(`/communications/${id}/complete-followup`),
+  delete: (id) => api.delete(`/communications/${id}`)
+}
+
 export default api

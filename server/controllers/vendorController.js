@@ -1,6 +1,6 @@
 const { query } = require('../config/database');
 
-// Get all active vendors
+// Get all active vendors (sub fabricators)
 async function getAllVendors(req, res, next) {
   try {
     const { includeInactive } = req.query;
@@ -27,7 +27,7 @@ async function getVendorById(req, res, next) {
     const result = await query(sqlQuery, { id: parseInt(id) });
 
     if (result.recordset.length === 0) {
-      return res.status(404).json({ success: false, error: 'Vendor not found' });
+      return res.status(404).json({ success: false, error: 'Sub Fabricator not found' });
     }
 
     res.json({ success: true, data: result.recordset[0] });
@@ -39,27 +39,48 @@ async function getVendorById(req, res, next) {
 // Create vendor
 async function createVendor(req, res, next) {
   try {
-    const { vendorName, contactName, phone, email, address, notes } = req.body;
+    const {
+      vendorName,
+      city,
+      state,
+      size,
+      contactName,
+      aiscBoard,
+      mfcOutreach,
+      email,
+      phone,
+      lastContactDate,
+      address,
+      notes
+    } = req.body;
 
     if (!vendorName) {
-      return res.status(400).json({ success: false, error: 'VendorName is required' });
+      return res.status(400).json({ success: false, error: 'Fabricator Name is required' });
     }
 
     const sqlQuery = `
       INSERT INTO FabTracker.SubOutVendors (
-        VendorName, ContactName, Phone, Email, Address, Notes
+        VendorName, City, State, Size, ContactName, AISCBoard, MFCOutreach,
+        Email, Phone, LastContactDate, Address, Notes
       )
       OUTPUT INSERTED.VendorID
       VALUES (
-        @vendorName, @contactName, @phone, @email, @address, @notes
+        @vendorName, @city, @state, @size, @contactName, @aiscBoard, @mfcOutreach,
+        @email, @phone, @lastContactDate, @address, @notes
       )
     `;
 
     const result = await query(sqlQuery, {
       vendorName,
+      city: city || null,
+      state: state || null,
+      size: size || null,
       contactName: contactName || null,
-      phone: phone || null,
+      aiscBoard: aiscBoard ? 1 : 0,
+      mfcOutreach: mfcOutreach || null,
       email: email || null,
+      phone: phone || null,
+      lastContactDate: lastContactDate || null,
       address: address || null,
       notes: notes || null
     });
@@ -80,15 +101,35 @@ async function createVendor(req, res, next) {
 async function updateVendor(req, res, next) {
   try {
     const { id } = req.params;
-    const { vendorName, contactName, phone, email, address, notes, isActive } = req.body;
+    const {
+      vendorName,
+      city,
+      state,
+      size,
+      contactName,
+      aiscBoard,
+      mfcOutreach,
+      email,
+      phone,
+      lastContactDate,
+      address,
+      notes,
+      isActive
+    } = req.body;
 
     const sqlQuery = `
       UPDATE FabTracker.SubOutVendors
       SET
         VendorName = @vendorName,
+        City = @city,
+        State = @state,
+        Size = @size,
         ContactName = @contactName,
-        Phone = @phone,
+        AISCBoard = @aiscBoard,
+        MFCOutreach = @mfcOutreach,
         Email = @email,
+        Phone = @phone,
+        LastContactDate = @lastContactDate,
         Address = @address,
         Notes = @notes,
         IsActive = @isActive
@@ -98,9 +139,15 @@ async function updateVendor(req, res, next) {
     await query(sqlQuery, {
       id: parseInt(id),
       vendorName,
+      city: city || null,
+      state: state || null,
+      size: size || null,
       contactName: contactName || null,
-      phone: phone || null,
+      aiscBoard: aiscBoard ? 1 : 0,
+      mfcOutreach: mfcOutreach || null,
       email: email || null,
+      phone: phone || null,
+      lastContactDate: lastContactDate || null,
       address: address || null,
       notes: notes || null,
       isActive: isActive !== undefined ? isActive : true
@@ -111,7 +158,7 @@ async function updateVendor(req, res, next) {
     const getResult = await query(getQuery, { id: parseInt(id) });
 
     if (getResult.recordset.length === 0) {
-      return res.status(404).json({ success: false, error: 'Vendor not found' });
+      return res.status(404).json({ success: false, error: 'Sub Fabricator not found' });
     }
 
     res.json({ success: true, data: getResult.recordset[0] });
@@ -134,10 +181,10 @@ async function deleteVendor(req, res, next) {
     const result = await query(sqlQuery, { id: parseInt(id) });
 
     if (result.rowsAffected[0] === 0) {
-      return res.status(404).json({ success: false, error: 'Vendor not found' });
+      return res.status(404).json({ success: false, error: 'Sub Fabricator not found' });
     }
 
-    res.json({ success: true, message: 'Vendor deactivated successfully' });
+    res.json({ success: true, message: 'Sub Fabricator deactivated successfully' });
   } catch (err) {
     next(err);
   }

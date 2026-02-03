@@ -26,7 +26,16 @@ D:\Claude\SubOuts\
 │   │   │   │   ├── LoadingSpinner.jsx
 │   │   │   │   ├── Modal.jsx
 │   │   │   │   ├── Select.jsx
-│   │   │   │   └── StatusBadge.jsx
+│   │   │   │   ├── StatusBadge.jsx
+│   │   │   │   └── UserSelectModal.jsx  # Login prompt on load
+│   │   │   ├── cortex/               # MFCCortex AI Chat integration
+│   │   │   │   ├── AiChat.jsx        # Floating chat panel
+│   │   │   │   ├── ChatHeader.jsx
+│   │   │   │   ├── ChatMessage.jsx
+│   │   │   │   ├── ChatInput.jsx
+│   │   │   │   ├── ChatToolCall.jsx
+│   │   │   │   ├── useAiChat.js      # Chat hook with SSE streaming
+│   │   │   │   └── cortex-config.js  # MFCCortex server config
 │   │   │   ├── subouts/             # SubOut-specific components
 │   │   │   │   ├── ItemPicker.jsx
 │   │   │   │   ├── ItemsTable.jsx
@@ -40,14 +49,15 @@ D:\Claude\SubOuts\
 │   │   │       ├── Sidebar.jsx
 │   │   │       └── Footer.jsx
 │   │   ├── context/
-│   │   │   └── AppContext.jsx       # Global state (sidebar, view mode)
+│   │   │   └── AppContext.jsx       # Global state (sidebar, view mode, currentUser)
 │   │   ├── hooks/                   # Custom React Query hooks
 │   │   │   ├── useSubOuts.js
 │   │   │   ├── useSubOutItems.js
 │   │   │   ├── useVendors.js
 │   │   │   ├── useJobs.js
 │   │   │   ├── useCutlists.js
-│   │   │   └── useDashboard.js
+│   │   │   ├── useDashboard.js
+│   │   │   └── useCommunications.js  # Communication log hooks
 │   │   ├── pages/
 │   │   │   ├── Dashboard.jsx
 │   │   │   ├── SubOutsListPage.jsx
@@ -84,14 +94,16 @@ D:\Claude\SubOuts\
 │   │   ├── vendors.js
 │   │   ├── jobs.js
 │   │   ├── cutlists.js
-│   │   └── dashboard.js
+│   │   ├── dashboard.js
+│   │   └── communications.js        # Communication log API
 │   ├── middleware/
 │   │   └── errorHandler.js          # Async wrapper & error handling
 │   ├── server.js
 │   └── package.json
 ├── database/
 │   ├── schema.sql                   # Tables, indexes, views
-│   └── seed.sql                     # Default vendors
+│   ├── seed.sql                     # Default vendors
+│   └── add_communication_log.sql    # Communication log table
 ├── CHANGELOG.md                     # Project changelog (see below)
 └── CLAUDE.md
 ```
@@ -133,12 +145,18 @@ CORS_ORIGIN=http://localhost:4000
 ## Database
 
 ### Tables
-- **SubOutVendors** - Vendor information (soft delete via IsActive)
+- **SubOutVendors** - Vendor/sub fabricator information (soft delete via IsActive)
+  - Includes: City, State, Size, AISCBoard, MFCOutreach, LastContactDate
 - **SubOuts** - Main sub fabrication records
 - **SubOutItems** - Individual items within a sub out
+- **SubFabricatorCommunicationLog** - Communication history with vendors
+  - Fields: ContactDate, ContactType, ContactPerson, MFCEmployee, Summary, Details
+  - Follow-up tracking: FollowUpRequired, FollowUpDate, FollowUpType, FollowUpNotes, FollowUpCompleted
+  - Source tracking: Manual or MFCCortex (AI)
 
 ### Views
 - **vwSubOutsList** - Sub outs with vendor and job info joined
+- **vwCommunicationLog** - Communication logs with vendor name joined
 
 ### Indexes
 - IX_SubOuts_JobCode
@@ -200,6 +218,15 @@ Run these scripts on the FabTracker database:
 - `GET /by-vendor` - Summary grouped by vendor
 - `GET /recent` - Recent activity (query: limit)
 
+### Communications (`/api/communications`)
+- `GET /` - Get all (filter: vendorId, limit)
+- `GET /follow-ups` - Get pending follow-ups
+- `GET /:id` - Get single entry
+- `POST /` - Create new entry
+- `PUT /:id` - Update entry
+- `PATCH /:id/complete-followup` - Mark follow-up complete
+- `DELETE /:id` - Delete entry
+
 ## Status Flow
 
 ```
@@ -217,6 +244,20 @@ Pending → Ready → Sent → InProcess → Shipped → Received → QCd → Co
 - **Gray**: Default/pending
 
 ## Key Features
+
+### User Authentication
+- Simple user selection on first load (no passwords)
+- Users: Doug, Todd, Blake, Evan, Ken, Joe L., Joe S., Conrad
+- Persisted to localStorage as `subouts-user`
+- User passed to MFCCortex AI for context
+
+### MFCCortex AI Integration
+- Floating chat panel (bottom-right corner)
+- Connects to MFCCortex server on port 7777
+- App ID: `subouts`
+- SSE streaming for real-time responses
+- Tool support: `log_fabricator_communication` auto-logs vendor communications
+- Auto-refresh: When AI logs a communication, queries are invalidated to show new entry
 
 ### Data Management
 - React Query with 5-minute stale time
