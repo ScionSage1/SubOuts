@@ -3,7 +3,7 @@ const { query, sql } = require('../config/database');
 // Get all sub outs with optional filters
 async function getAllSubOuts(req, res, next) {
   try {
-    const { jobCode, vendorId, status } = req.query;
+    const { jobCode, vendorId, status, includeArchived, archivedOnly } = req.query;
 
     let sqlQuery = `SELECT * FROM FabTracker.vwSubOutsList WHERE 1=1`;
     const params = {};
@@ -21,6 +21,13 @@ async function getAllSubOuts(req, res, next) {
       params.status = status;
     }
 
+    // Archive filtering: exclude Complete by default
+    if (archivedOnly === 'true') {
+      sqlQuery += ` AND Status = 'Complete'`;
+    } else if (includeArchived !== 'true' && !status) {
+      sqlQuery += ` AND Status <> 'Complete'`;
+    }
+
     sqlQuery += ` ORDER BY JobCode DESC, Lot`;
 
     const result = await query(sqlQuery, params);
@@ -33,9 +40,13 @@ async function getAllSubOuts(req, res, next) {
 // Get sub outs grouped by job for dashboard
 async function getGroupedSubOuts(req, res, next) {
   try {
+    const { includeArchived } = req.query;
+    const archiveFilter = includeArchived === 'true' ? '' : ` AND Status <> 'Complete'`;
+
     const sqlQuery = `
       SELECT DISTINCT JobCode, JobDescription, ProjectManager
       FROM FabTracker.vwSubOutsList
+      WHERE 1=1${archiveFilter}
       ORDER BY JobCode DESC
     `;
 
@@ -47,7 +58,7 @@ async function getGroupedSubOuts(req, res, next) {
       jobs.map(async (job) => {
         const subOutsQuery = `
           SELECT * FROM FabTracker.vwSubOutsList
-          WHERE JobCode = @jobCode
+          WHERE JobCode = @jobCode${archiveFilter}
           ORDER BY Lot
         `;
         const subOutsResult = await query(subOutsQuery, { jobCode: job.JobCode });

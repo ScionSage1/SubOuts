@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Plus, FileDown } from 'lucide-react'
-import { useSubOut, useDeleteSubOut, useIncrementLoadsOut, useIncrementLoadsIn } from '../hooks/useSubOuts'
+import { useSubOut, useDeleteSubOut, useIncrementLoadsOut, useIncrementLoadsIn, useUpdateStatus } from '../hooks/useSubOuts'
 import { useDeleteItem, useBulkAddItems } from '../hooks/useSubOutItems'
 import SubOutDetail from '../components/subouts/SubOutDetail'
 import ItemsTable from '../components/subouts/ItemsTable'
@@ -16,11 +16,13 @@ export default function SubOutDetailPage() {
   const navigate = useNavigate()
   const [showItemPicker, setShowItemPicker] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showReopenModal, setShowReopenModal] = useState(false)
 
   const { data, isLoading, error } = useSubOut(id)
   const deleteMutation = useDeleteSubOut()
   const incrementOutMutation = useIncrementLoadsOut()
   const incrementInMutation = useIncrementLoadsIn()
+  const updateStatusMutation = useUpdateStatus()
   const deleteItemMutation = useDeleteItem()
   const bulkAddMutation = useBulkAddItems()
 
@@ -32,6 +34,15 @@ export default function SubOutDetailPage() {
       navigate('/')
     } catch (err) {
       alert('Failed to delete: ' + err.message)
+    }
+  }
+
+  const handleReopen = async () => {
+    try {
+      await updateStatusMutation.mutateAsync({ id, status: 'Received' })
+      setShowReopenModal(false)
+    } catch (err) {
+      alert('Failed to reopen: ' + err.message)
     }
   }
 
@@ -102,6 +113,7 @@ export default function SubOutDetailPage() {
         onIncrementLoadsOut={handleIncrementLoadsOut}
         onIncrementLoadsIn={handleIncrementLoadsIn}
         onDelete={() => setShowDeleteModal(true)}
+        onReopen={() => setShowReopenModal(true)}
         isUpdating={incrementOutMutation.isPending || incrementInMutation.isPending}
       />
 
@@ -156,6 +168,30 @@ export default function SubOutDetailPage() {
             loading={deleteMutation.isPending}
           >
             Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Reopen Confirmation Modal */}
+      <Modal
+        isOpen={showReopenModal}
+        onClose={() => setShowReopenModal(false)}
+        title="Reopen SubOut"
+        size="sm"
+      >
+        <p className="text-gray-600">
+          Are you sure you want to reopen <strong>{subOut.Lot}</strong>?
+          Its status will be set to "Received" and it will appear in active views.
+        </p>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowReopenModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleReopen}
+            loading={updateStatusMutation.isPending}
+          >
+            Reopen
           </Button>
         </Modal.Footer>
       </Modal>

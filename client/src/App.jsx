@@ -9,6 +9,7 @@ import NewSubOutPage from './pages/NewSubOutPage'
 import EditSubOutPage from './pages/EditSubOutPage'
 import VendorsPage from './pages/VendorsPage'
 import JobView from './pages/JobView'
+import ArchivedPage from './pages/ArchivedPage'
 import Settings from './pages/Settings'
 import { useApp } from './context/AppContext'
 import AiChat from './components/cortex/AiChat'
@@ -25,6 +26,11 @@ function App() {
       queryClient.invalidateQueries({ queryKey: ['communications'] })
       queryClient.invalidateQueries({ queryKey: ['vendors'] })
     }
+    // When a sub out is completed/reopened via AI, refresh subouts and dashboard
+    if (tool === 'update_subout_status' && result?.success) {
+      queryClient.invalidateQueries({ queryKey: ['subouts'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    }
   }
 
   return (
@@ -40,6 +46,7 @@ function App() {
             <Route path="/subouts/new" element={<NewSubOutPage />} />
             <Route path="/subouts/:id" element={<SubOutDetailPage />} />
             <Route path="/subouts/:id/edit" element={<EditSubOutPage />} />
+            <Route path="/archived" element={<ArchivedPage />} />
             <Route path="/vendors" element={<VendorsPage />} />
             <Route path="/jobs/:jobCode" element={<JobView />} />
             <Route path="/settings" element={<Settings />} />

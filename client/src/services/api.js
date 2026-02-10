@@ -19,7 +19,7 @@ api.interceptors.response.use(
 // SubOuts API
 export const subOutsApi = {
   getAll: (params) => api.get('/subouts', { params }),
-  getGrouped: () => api.get('/subouts/grouped'),
+  getGrouped: (params) => api.get('/subouts/grouped', { params }),
   getById: (id) => api.get(`/subouts/${id}`),
   create: (data) => api.post('/subouts', data),
   update: (id, data) => api.put(`/subouts/${id}`, data),

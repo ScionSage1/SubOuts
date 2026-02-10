@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LayoutGrid, List, AlertTriangle, Filter } from 'lucide-react'
+import { LayoutGrid, List, AlertTriangle, Archive } from 'lucide-react'
 import clsx from 'clsx'
 import { useGroupedSubOuts } from '../hooks/useSubOuts'
 import { useDashboardStats } from '../hooks/useDashboard'
@@ -13,16 +13,20 @@ import { statusOptions } from '../utils/statusColors'
 
 export default function Dashboard() {
   const { viewMode, setViewMode } = useApp()
-  const { data: groupedData, isLoading, error } = useGroupedSubOuts()
-  const { data: statsData } = useDashboardStats()
-  const { data: vendorsData } = useVendors()
 
   const [filters, setFilters] = useState({
     jobCode: '',
     vendorId: '',
     status: '',
-    actionItemsOnly: false
+    actionItemsOnly: false,
+    showArchived: false
   })
+
+  const { data: groupedData, isLoading, error } = useGroupedSubOuts(
+    filters.showArchived ? { includeArchived: true } : {}
+  )
+  const { data: statsData } = useDashboardStats()
+  const { data: vendorsData } = useVendors()
 
   const stats = statsData?.data || {}
   const vendors = vendorsData?.data || []
@@ -97,8 +101,8 @@ export default function Dashboard() {
           <div className="text-sm text-gray-500">Action Required</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold text-green-600">{stats.CompleteThisMonth || 0}</div>
-          <div className="text-sm text-gray-500">Complete This Month</div>
+          <div className="text-2xl font-bold text-green-600">{stats.Archived || 0}</div>
+          <div className="text-sm text-gray-500">Archived</div>
         </Card>
       </div>
 
@@ -139,6 +143,18 @@ export default function Dashboard() {
             <span className="text-sm text-gray-700">
               <AlertTriangle className="inline w-4 h-4 mr-1 text-orange-500" />
               Action Items Only
+            </span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={filters.showArchived}
+              onChange={(e) => setFilters(f => ({ ...f, showArchived: e.target.checked }))}
+              className="rounded border-gray-300 text-blue-600"
+            />
+            <span className="text-sm text-gray-700">
+              <Archive className="inline w-4 h-4 mr-1 text-gray-500" />
+              Show Archived
             </span>
           </label>
 

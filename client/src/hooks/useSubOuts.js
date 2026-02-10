@@ -8,10 +8,10 @@ export function useSubOuts(params = {}) {
   })
 }
 
-export function useGroupedSubOuts() {
+export function useGroupedSubOuts(params = {}) {
   return useQuery({
-    queryKey: ['subouts', 'grouped'],
-    queryFn: () => subOutsApi.getGrouped()
+    queryKey: ['subouts', 'grouped', params],
+    queryFn: () => subOutsApi.getGrouped(params)
   })
 }
 
@@ -42,6 +42,7 @@ export function useUpdateSubOut() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['subouts'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     }
   })
 }
@@ -65,6 +66,7 @@ export function useUpdateStatus() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['subouts'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     }
   })
 }

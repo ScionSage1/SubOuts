@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Edit2, Trash2, Plus, Minus, Check } from 'lucide-react'
+import { Edit2, Trash2, Plus, Minus, Check, RotateCcw } from 'lucide-react'
 import Card from '../common/Card'
 import Button from '../common/Button'
 import StatusBadge from '../common/StatusBadge'
@@ -10,6 +10,7 @@ export default function SubOutDetail({
   onIncrementLoadsOut,
   onIncrementLoadsIn,
   onDelete,
+  onReopen,
   isUpdating
 }) {
   if (!subOut) return null
@@ -30,6 +31,12 @@ export default function SubOutDetail({
           )}
         </div>
         <div className="flex items-center gap-2">
+          {subOut.Status === 'Complete' && onReopen && (
+            <Button variant="secondary" size="sm" onClick={onReopen}>
+              <RotateCcw className="w-4 h-4 mr-1" />
+              Reopen
+            </Button>
+          )}
           <Link to={`/subouts/${subOut.SubOutID}/edit`}>
             <Button variant="secondary" size="sm">
               <Edit2 className="w-4 h-4 mr-1" />
