@@ -51,6 +51,7 @@ export default function useAiChat({ appId, userId, serverUrl, apiKey, metadata, 
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
+      let event = null
 
       while (true) {
         const { done, value } = await reader.read()
@@ -60,7 +61,6 @@ export default function useAiChat({ appId, userId, serverUrl, apiKey, metadata, 
         const lines = buffer.split('\n')
         buffer = lines.pop() || ''
 
-        let event = null
         for (const line of lines) {
           if (line.startsWith('event: ')) {
             event = line.slice(7).trim()
