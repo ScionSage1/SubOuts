@@ -26,8 +26,13 @@ function App() {
       queryClient.invalidateQueries({ queryKey: ['communications'] })
       queryClient.invalidateQueries({ queryKey: ['vendors'] })
     }
-    // When a sub out is completed/reopened via AI, refresh subouts and dashboard
+    // When a sub out is completed/reopened/deleted via AI, refresh subouts and dashboard
     if (tool === 'update_subout_status' && result?.success) {
+      queryClient.invalidateQueries({ queryKey: ['subouts'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    }
+    // When a sub out is created via AI, refresh subouts and dashboard
+    if (tool === 'create_subout' && result?.success) {
       queryClient.invalidateQueries({ queryKey: ['subouts'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     }
