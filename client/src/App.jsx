@@ -31,8 +31,8 @@ function App() {
       queryClient.invalidateQueries({ queryKey: ['subouts'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     }
-    // When a sub out is created via AI, refresh subouts and dashboard
-    if (tool === 'create_subout' && result?.success) {
+    // When a sub out is created or items modified via AI, refresh subouts and dashboard
+    if (['create_subout', 'add_subout_items', 'remove_subout_items'].includes(tool) && result?.success) {
       queryClient.invalidateQueries({ queryKey: ['subouts'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     }
