@@ -32,8 +32,19 @@ function App() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     }
     // When a sub out is created or items modified via AI, refresh subouts and dashboard
-    if (['create_subout', 'add_subout_items', 'remove_subout_items'].includes(tool) && result?.success) {
+    if (['create_subout', 'add_subout_items', 'remove_subout_items', 'update_item_send_type'].includes(tool) && result?.success) {
       queryClient.invalidateQueries({ queryKey: ['subouts'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    }
+    // When pallets are managed via AI, refresh pallets and subouts
+    if (['create_pallet', 'assign_items_to_pallet', 'update_pallet_status'].includes(tool) && result?.success) {
+      queryClient.invalidateQueries({ queryKey: ['subouts'] })
+      queryClient.invalidateQueries({ queryKey: ['pallets'] })
+    }
+    // When loads are managed via AI, refresh loads, subouts, and dashboard
+    if (['create_load', 'assign_items_to_load', 'update_load_status'].includes(tool) && result?.success) {
+      queryClient.invalidateQueries({ queryKey: ['subouts'] })
+      queryClient.invalidateQueries({ queryKey: ['loads'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     }
   }
