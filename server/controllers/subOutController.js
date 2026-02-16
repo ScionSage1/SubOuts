@@ -89,7 +89,7 @@ async function getSubOutById(req, res, next) {
 
     // Get items, pallets, and loads for this sub out
     const itemsQuery = `
-      SELECT * FROM FabTracker.SubOutItems
+      SELECT * FROM FabTracker.vwSubOutItemsDetail
       WHERE SubOutID = @id
       ORDER BY SourceTable, MainMark, PieceMark
     `;
