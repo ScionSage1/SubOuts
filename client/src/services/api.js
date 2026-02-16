@@ -71,6 +71,33 @@ export const dashboardApi = {
   getRecent: (limit) => api.get('/dashboard/recent', { params: { limit } })
 }
 
+// Pallets API
+export const palletsApi = {
+  getBySubOut: (subOutId) => api.get(`/subouts/${subOutId}/pallets`),
+  getById: (subOutId, palletId) => api.get(`/subouts/${subOutId}/pallets/${palletId}`),
+  create: (subOutId, data) => api.post(`/subouts/${subOutId}/pallets`, data),
+  update: (subOutId, palletId, data) => api.put(`/subouts/${subOutId}/pallets/${palletId}`, data),
+  delete: (subOutId, palletId) => api.delete(`/subouts/${subOutId}/pallets/${palletId}`),
+  updateStatus: (subOutId, palletId, status) => api.patch(`/subouts/${subOutId}/pallets/${palletId}/status`, { status }),
+  assignItems: (subOutId, palletId, itemIds) => api.post(`/subouts/${subOutId}/pallets/${palletId}/items`, { itemIds }),
+  removeItem: (subOutId, palletId, itemId) => api.delete(`/subouts/${subOutId}/pallets/${palletId}/items/${itemId}`),
+  assignToLoad: (subOutId, palletId, loadId) => api.patch(`/subouts/${subOutId}/pallets/${palletId}/assign-load`, { loadId })
+}
+
+// Loads API
+export const loadsApi = {
+  getBySubOut: (subOutId, direction) => api.get(`/subouts/${subOutId}/loads`, { params: { direction } }),
+  getById: (subOutId, loadId) => api.get(`/subouts/${subOutId}/loads/${loadId}`),
+  create: (subOutId, data) => api.post(`/subouts/${subOutId}/loads`, data),
+  update: (subOutId, loadId, data) => api.put(`/subouts/${subOutId}/loads/${loadId}`, data),
+  delete: (subOutId, loadId) => api.delete(`/subouts/${subOutId}/loads/${loadId}`),
+  updateStatus: (subOutId, loadId, status) => api.patch(`/subouts/${subOutId}/loads/${loadId}/status`, { status }),
+  assignItems: (subOutId, loadId, itemIds) => api.post(`/subouts/${subOutId}/loads/${loadId}/items`, { itemIds }),
+  removeItem: (subOutId, loadId, itemId) => api.delete(`/subouts/${subOutId}/loads/${loadId}/items/${itemId}`),
+  assignPallets: (subOutId, loadId, palletIds) => api.post(`/subouts/${subOutId}/loads/${loadId}/pallets`, { palletIds }),
+  removePallet: (subOutId, loadId, palletId) => api.delete(`/subouts/${subOutId}/loads/${loadId}/pallets/${palletId}`)
+}
+
 // Communications API
 export const communicationsApi = {
   getAll: (params) => api.get('/communications', { params }),

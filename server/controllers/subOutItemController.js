@@ -25,7 +25,8 @@ async function addItem(req, res, next) {
     const {
       sourceTable, sourceId,
       mainMark, pieceMark, shape, dimension, grade, length,
-      quantity, weight, heatNumber, certNumber, barcode, notes
+      quantity, weight, heatNumber, certNumber, barcode, notes,
+      sendType
     } = req.body;
 
     if (!sourceTable || !sourceId) {
@@ -36,13 +37,13 @@ async function addItem(req, res, next) {
       INSERT INTO FabTracker.SubOutItems (
         SubOutID, SourceTable, SourceID,
         MainMark, PieceMark, Shape, Dimension, Grade, Length,
-        Quantity, Weight, HeatNumber, CertNumber, Barcode, Notes
+        Quantity, Weight, HeatNumber, CertNumber, Barcode, Notes, SendType
       )
       OUTPUT INSERTED.SubOutItemID
       VALUES (
         @subOutId, @sourceTable, @sourceId,
         @mainMark, @pieceMark, @shape, @dimension, @grade, @length,
-        @quantity, @weight, @heatNumber, @certNumber, @barcode, @notes
+        @quantity, @weight, @heatNumber, @certNumber, @barcode, @notes, @sendType
       )
     `;
 
@@ -61,7 +62,8 @@ async function addItem(req, res, next) {
       heatNumber: heatNumber || null,
       certNumber: certNumber || null,
       barcode: barcode || null,
-      notes: notes || null
+      notes: notes || null,
+      sendType: sendType || 'Raw'
     });
 
     const newId = result.recordset[0].SubOutItemID;
@@ -84,7 +86,8 @@ async function updateItem(req, res, next) {
   try {
     const { itemId } = req.params;
     const {
-      quantitySent, quantityReceived, status, notes
+      quantitySent, quantityReceived, status, notes,
+      sendType, palletId, loadId
     } = req.body;
 
     const sqlQuery = `
@@ -93,7 +96,10 @@ async function updateItem(req, res, next) {
         QuantitySent = @quantitySent,
         QuantityReceived = @quantityReceived,
         Status = @status,
-        Notes = @notes
+        Notes = @notes,
+        SendType = @sendType,
+        PalletID = @palletId,
+        LoadID = @loadId
       WHERE SubOutItemID = @itemId
     `;
 
@@ -102,7 +108,10 @@ async function updateItem(req, res, next) {
       quantitySent: quantitySent || 0,
       quantityReceived: quantityReceived || 0,
       status: status || 'Pending',
-      notes: notes || null
+      notes: notes || null,
+      sendType: sendType || 'Raw',
+      palletId: palletId ? parseInt(palletId) : null,
+      loadId: loadId ? parseInt(loadId) : null
     });
 
     // Fetch updated item
@@ -156,13 +165,13 @@ async function bulkAddItems(req, res, next) {
           INSERT INTO FabTracker.SubOutItems (
             SubOutID, SourceTable, SourceID,
             MainMark, PieceMark, Shape, Dimension, Grade, Length,
-            Quantity, Weight, HeatNumber, CertNumber, Barcode, Notes
+            Quantity, Weight, HeatNumber, CertNumber, Barcode, Notes, SendType
           )
           OUTPUT INSERTED.SubOutItemID
           VALUES (
             @subOutId, @sourceTable, @sourceId,
             @mainMark, @pieceMark, @shape, @dimension, @grade, @length,
-            @quantity, @weight, @heatNumber, @certNumber, @barcode, @notes
+            @quantity, @weight, @heatNumber, @certNumber, @barcode, @notes, @sendType
           )
         `;
 
@@ -181,7 +190,8 @@ async function bulkAddItems(req, res, next) {
           heatNumber: item.heatNumber || null,
           certNumber: item.certNumber || null,
           barcode: item.barcode || null,
-          notes: item.notes || null
+          notes: item.notes || null,
+          sendType: item.sendType || 'Raw'
         });
 
         insertedIds.push(result.recordset[0].SubOutItemID);

@@ -137,11 +137,11 @@ export default function SubOutsListPage() {
                     <td className="px-4 py-3 text-sm text-gray-900">{subOut.SubFabricator || '-'}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{formatDate(subOut.DateToLeaveMFC)}</td>
                     <td className="px-4 py-3 text-sm text-center">
-                      {formatLoadsProgress(subOut.LoadsShippedFromMFC, subOut.LoadsToShipFromMFC)}
+                      {formatLoadsProgress(subOut.OutboundDeliveredCount ?? subOut.LoadsShippedFromMFC, subOut.OutboundLoadCount ?? subOut.LoadsToShipFromMFC)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">{formatDate(subOut.DateToShipFromSub)}</td>
                     <td className="px-4 py-3 text-sm text-center">
-                      {formatLoadsProgress(subOut.LoadsShippedFromSub, subOut.LoadsToShipFromSub)}
+                      {formatLoadsProgress(subOut.InboundDeliveredCount ?? subOut.LoadsShippedFromSub, subOut.InboundLoadCount ?? subOut.LoadsToShipFromSub)}
                     </td>
                     <td className="px-4 py-3 text-sm text-right">{formatWeight(subOut.Weight)}</td>
                     <td className="px-4 py-3 text-sm text-center">{subOut.MajorPieces || '-'}</td>

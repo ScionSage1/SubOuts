@@ -35,13 +35,18 @@ export function getActionColor(subOut) {
   const dateToLeave = subOut.DateToLeaveMFC ? new Date(subOut.DateToLeaveMFC) : null
   const dateToShip = subOut.DateToShipFromSub ? new Date(subOut.DateToShipFromSub) : null
 
+  const outShipped = subOut.OutboundDeliveredCount ?? subOut.LoadsShippedFromMFC
+  const outTotal = subOut.OutboundLoadCount ?? subOut.LoadsToShipFromMFC
+  const inShipped = subOut.InboundDeliveredCount ?? subOut.LoadsShippedFromSub
+  const inTotal = subOut.InboundLoadCount ?? subOut.LoadsToShipFromSub
+
   // Check overdue send
-  if (dateToLeave && dateToLeave < now && subOut.LoadsShippedFromMFC < subOut.LoadsToShipFromMFC) {
+  if (dateToLeave && dateToLeave < now && outShipped < outTotal) {
     return actionColors.overdueSend
   }
 
   // Check overdue receive
-  if (dateToShip && dateToShip < now && subOut.LoadsShippedFromSub < subOut.LoadsToShipFromSub) {
+  if (dateToShip && dateToShip < now && inShipped < inTotal) {
     return actionColors.overdueReceive
   }
 
@@ -74,15 +79,18 @@ export function getRowColor(subOut) {
     return rowColors.missingSteel
   }
 
+  const rInShipped = subOut.InboundDeliveredCount ?? subOut.LoadsShippedFromSub
+  const rInTotal = subOut.InboundLoadCount ?? subOut.LoadsToShipFromSub
+  const rOutShipped = subOut.OutboundDeliveredCount ?? subOut.LoadsShippedFromMFC
+
   // Complete - green
   if (subOut.Status === 'Complete' ||
-      (subOut.LoadsShippedFromSub >= subOut.LoadsToShipFromSub &&
-       subOut.LoadsToShipFromSub > 0)) {
+      (rInShipped >= rInTotal && rInTotal > 0)) {
     return rowColors.complete
   }
 
   // Partial - yellow
-  if (subOut.LoadsShippedFromMFC > 0 || subOut.LoadsShippedFromSub > 0) {
+  if (rOutShipped > 0 || rInShipped > 0) {
     return rowColors.partial
   }
 
@@ -99,3 +107,45 @@ export const statusOptions = [
   'QCd',
   'Complete'
 ]
+
+// Pallet status colors
+export const palletStatusColors = {
+  'Open':     { bg: 'bg-gray-100',   text: 'text-gray-800',   border: 'border-gray-300' },
+  'Closed':   { bg: 'bg-blue-100',   text: 'text-blue-800',   border: 'border-blue-300' },
+  'Loaded':   { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300' },
+  'Shipped':  { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-300' },
+  'Received': { bg: 'bg-green-100',  text: 'text-green-800',  border: 'border-green-300' }
+}
+
+export const palletStatusOptions = ['Open', 'Closed', 'Loaded', 'Shipped', 'Received']
+
+export function getPalletStatusColor(status) {
+  return palletStatusColors[status] || palletStatusColors['Open']
+}
+
+// Load status colors
+export const loadStatusColors = {
+  'Planned':   { bg: 'bg-gray-100',   text: 'text-gray-800',   border: 'border-gray-300' },
+  'Loading':   { bg: 'bg-blue-100',   text: 'text-blue-800',   border: 'border-blue-300' },
+  'InTransit': { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300' },
+  'Delivered': { bg: 'bg-green-100',  text: 'text-green-800',  border: 'border-green-300' }
+}
+
+export const loadStatusOptions = ['Planned', 'Loading', 'InTransit', 'Delivered']
+
+export function getLoadStatusColor(status) {
+  return loadStatusColors[status] || loadStatusColors['Planned']
+}
+
+// Send type colors
+export const sendTypeColors = {
+  'Raw':            { bg: 'bg-gray-100',   text: 'text-gray-700',   border: 'border-gray-300' },
+  'CutToLength':    { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-300' },
+  'PartsOnPallets': { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300' }
+}
+
+export const sendTypeOptions = ['Raw', 'CutToLength', 'PartsOnPallets']
+
+export function getSendTypeColor(sendType) {
+  return sendTypeColors[sendType] || sendTypeColors['Raw']
+}

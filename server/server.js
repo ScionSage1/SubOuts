@@ -9,6 +9,8 @@ const { getPool } = require('./config/database');
 // Import routes
 const suboutsRoutes = require('./routes/subouts');
 const itemsRoutes = require('./routes/items');
+const palletsRoutes = require('./routes/pallets');
+const loadsRoutes = require('./routes/loads');
 const vendorsRoutes = require('./routes/vendors');
 const jobsRoutes = require('./routes/jobs');
 const cutlistsRoutes = require('./routes/cutlists');
@@ -29,6 +31,8 @@ app.use(express.urlencoded({ extended: true }));
 // API Routes
 app.use('/api/subouts', suboutsRoutes);
 app.use('/api/subouts', itemsRoutes);
+app.use('/api/subouts', palletsRoutes);
+app.use('/api/subouts', loadsRoutes);
 app.use('/api/vendors', vendorsRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/cutlists', cutlistsRoutes);

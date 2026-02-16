@@ -87,19 +87,36 @@ async function getSubOutById(req, res, next) {
       return res.status(404).json({ success: false, error: 'SubOut not found' });
     }
 
-    // Get items for this sub out
+    // Get items, pallets, and loads for this sub out
     const itemsQuery = `
       SELECT * FROM FabTracker.SubOutItems
       WHERE SubOutID = @id
       ORDER BY SourceTable, MainMark, PieceMark
     `;
-    const itemsResult = await query(itemsQuery, { id: parseInt(id) });
+    const palletsQuery = `
+      SELECT * FROM FabTracker.vwSubOutPalletsDetail
+      WHERE SubOutID = @id
+      ORDER BY PalletNumber
+    `;
+    const loadsQuery = `
+      SELECT * FROM FabTracker.vwSubOutLoadsDetail
+      WHERE SubOutID = @id
+      ORDER BY Direction, LoadNumber
+    `;
+
+    const [itemsResult, palletsResult, loadsResult] = await Promise.all([
+      query(itemsQuery, { id: parseInt(id) }),
+      query(palletsQuery, { id: parseInt(id) }),
+      query(loadsQuery, { id: parseInt(id) })
+    ]);
 
     res.json({
       success: true,
       data: {
         ...result.recordset[0],
-        items: itemsResult.recordset
+        items: itemsResult.recordset,
+        pallets: palletsResult.recordset,
+        loads: loadsResult.recordset
       }
     });
   } catch (err) {
@@ -290,19 +307,34 @@ async function updateStatus(req, res, next) {
   }
 }
 
-// Increment loads shipped from MFC
+// Increment loads shipped from MFC (Quick Ship - also creates a load record)
 async function incrementLoadsOut(req, res, next) {
   try {
     const { id } = req.params;
 
-    const sqlQuery = `
-      UPDATE FabTracker.SubOuts
-      SET LoadsShippedFromMFC = LoadsShippedFromMFC + 1,
-          UpdatedAt = GETDATE()
-      WHERE SubOutID = @id
+    // Create a Delivered outbound load record
+    const countQuery = `
+      SELECT COUNT(*) AS cnt FROM FabTracker.SubOutLoads
+      WHERE SubOutID = @id AND Direction = 'Outbound'
     `;
+    const countResult = await query(countQuery, { id: parseInt(id) });
+    const nextNum = (countResult.recordset[0].cnt || 0) + 1;
+    const loadNumber = `OUT-${String(nextNum).padStart(3, '0')}`;
 
-    await query(sqlQuery, { id: parseInt(id) });
+    await query(`
+      INSERT INTO FabTracker.SubOutLoads (SubOutID, LoadNumber, Direction, Status, ActualDate, Notes)
+      VALUES (@id, @loadNumber, 'Outbound', 'Delivered', GETDATE(), 'Quick ship')
+    `, { id: parseInt(id), loadNumber });
+
+    // Sync legacy counters from load records
+    await query(`
+      UPDATE FabTracker.SubOuts
+      SET
+        LoadsToShipFromMFC = (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = @id AND Direction = 'Outbound'),
+        LoadsShippedFromMFC = (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = @id AND Direction = 'Outbound' AND Status = 'Delivered'),
+        UpdatedAt = GETDATE()
+      WHERE SubOutID = @id
+    `, { id: parseInt(id) });
 
     const getQuery = `SELECT * FROM FabTracker.vwSubOutsList WHERE SubOutID = @id`;
     const getResult = await query(getQuery, { id: parseInt(id) });
@@ -313,19 +345,34 @@ async function incrementLoadsOut(req, res, next) {
   }
 }
 
-// Increment loads shipped from Sub
+// Increment loads shipped from Sub (Quick Ship - also creates a load record)
 async function incrementLoadsIn(req, res, next) {
   try {
     const { id } = req.params;
 
-    const sqlQuery = `
-      UPDATE FabTracker.SubOuts
-      SET LoadsShippedFromSub = LoadsShippedFromSub + 1,
-          UpdatedAt = GETDATE()
-      WHERE SubOutID = @id
+    // Create a Delivered inbound load record
+    const countQuery = `
+      SELECT COUNT(*) AS cnt FROM FabTracker.SubOutLoads
+      WHERE SubOutID = @id AND Direction = 'Inbound'
     `;
+    const countResult = await query(countQuery, { id: parseInt(id) });
+    const nextNum = (countResult.recordset[0].cnt || 0) + 1;
+    const loadNumber = `IN-${String(nextNum).padStart(3, '0')}`;
 
-    await query(sqlQuery, { id: parseInt(id) });
+    await query(`
+      INSERT INTO FabTracker.SubOutLoads (SubOutID, LoadNumber, Direction, Status, ActualDate, Notes)
+      VALUES (@id, @loadNumber, 'Inbound', 'Delivered', GETDATE(), 'Quick ship')
+    `, { id: parseInt(id), loadNumber });
+
+    // Sync legacy counters from load records
+    await query(`
+      UPDATE FabTracker.SubOuts
+      SET
+        LoadsToShipFromSub = (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = @id AND Direction = 'Inbound'),
+        LoadsShippedFromSub = (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = @id AND Direction = 'Inbound' AND Status = 'Delivered'),
+        UpdatedAt = GETDATE()
+      WHERE SubOutID = @id
+    `, { id: parseInt(id) });
 
     const getQuery = `SELECT * FROM FabTracker.vwSubOutsList WHERE SubOutID = @id`;
     const getResult = await query(getQuery, { id: parseInt(id) });

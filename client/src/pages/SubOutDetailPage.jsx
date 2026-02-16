@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Plus, FileDown } from 'lucide-react'
+import { ArrowLeft, Plus } from 'lucide-react'
 import { useSubOut, useDeleteSubOut, useIncrementLoadsOut, useIncrementLoadsIn, useUpdateStatus } from '../hooks/useSubOuts'
-import { useDeleteItem, useBulkAddItems } from '../hooks/useSubOutItems'
+import { useDeleteItem, useBulkAddItems, useUpdateItem } from '../hooks/useSubOutItems'
+import { usePallets, useCreatePallet, useUpdatePallet, useDeletePallet, useUpdatePalletStatus, useAssignItemsToPallet, useRemoveItemFromPallet, useAssignPalletToLoad } from '../hooks/usePallets'
+import { useLoads, useCreateLoad, useUpdateLoad, useDeleteLoad, useUpdateLoadStatus, useAssignItemsToLoad, useAssignPalletsToLoad } from '../hooks/useLoads'
 import SubOutDetail from '../components/subouts/SubOutDetail'
+import LoadsSection from '../components/subouts/LoadsSection'
+import PalletsSection from '../components/subouts/PalletsSection'
 import ItemsTable from '../components/subouts/ItemsTable'
 import ItemPicker from '../components/subouts/ItemPicker'
 import Card from '../components/common/Card'
@@ -18,16 +22,44 @@ export default function SubOutDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showReopenModal, setShowReopenModal] = useState(false)
 
+  // Core data
   const { data, isLoading, error } = useSubOut(id)
+  const { data: palletsData } = usePallets(id)
+  const { data: loadsData } = useLoads(id)
+
+  // SubOut mutations
   const deleteMutation = useDeleteSubOut()
   const incrementOutMutation = useIncrementLoadsOut()
   const incrementInMutation = useIncrementLoadsIn()
   const updateStatusMutation = useUpdateStatus()
+
+  // Item mutations
   const deleteItemMutation = useDeleteItem()
   const bulkAddMutation = useBulkAddItems()
+  const updateItemMutation = useUpdateItem()
+
+  // Pallet mutations
+  const createPalletMutation = useCreatePallet()
+  const updatePalletMutation = useUpdatePallet()
+  const deletePalletMutation = useDeletePallet()
+  const updatePalletStatusMutation = useUpdatePalletStatus()
+  const assignItemsToPalletMutation = useAssignItemsToPallet()
+  const removeItemFromPalletMutation = useRemoveItemFromPallet()
+  const assignPalletToLoadMutation = useAssignPalletToLoad()
+
+  // Load mutations
+  const createLoadMutation = useCreateLoad()
+  const updateLoadMutation = useUpdateLoad()
+  const deleteLoadMutation = useDeleteLoad()
+  const updateLoadStatusMutation = useUpdateLoadStatus()
+  const assignItemsToLoadMutation = useAssignItemsToLoad()
+  const assignPalletsToLoadMutation = useAssignPalletsToLoad()
 
   const subOut = data?.data
+  const pallets = palletsData?.data || []
+  const loads = loadsData?.data || []
 
+  // --- SubOut handlers ---
   const handleDelete = async () => {
     try {
       await deleteMutation.mutateAsync(id)
@@ -46,14 +78,7 @@ export default function SubOutDetailPage() {
     }
   }
 
-  const handleIncrementLoadsOut = () => {
-    incrementOutMutation.mutate(id)
-  }
-
-  const handleIncrementLoadsIn = () => {
-    incrementInMutation.mutate(id)
-  }
-
+  // --- Item handlers ---
   const handleDeleteItem = (itemId) => {
     if (confirm('Remove this item from the sub out?')) {
       deleteItemMutation.mutate({ subOutId: id, itemId })
@@ -72,6 +97,19 @@ export default function SubOutDetailPage() {
     } catch (err) {
       alert('Failed to add items: ' + err.message)
     }
+  }
+
+  const handleUpdateSendType = (itemId, sendType) => {
+    updateItemMutation.mutate({ subOutId: id, itemId, data: { sendType } })
+  }
+
+  // --- Load handlers ---
+  const handleQuickShipOut = () => {
+    incrementOutMutation.mutate(id)
+  }
+
+  const handleQuickShipIn = () => {
+    incrementInMutation.mutate(id)
   }
 
   if (isLoading) {
@@ -107,36 +145,72 @@ export default function SubOutDetailPage() {
         Back to Dashboard
       </Link>
 
-      {/* SubOut Details */}
+      {/* SubOut Details + Loads + Pallets + Items */}
       <SubOutDetail
         subOut={subOut}
-        onIncrementLoadsOut={handleIncrementLoadsOut}
-        onIncrementLoadsIn={handleIncrementLoadsIn}
         onDelete={() => setShowDeleteModal(true)}
         onReopen={() => setShowReopenModal(true)}
-        isUpdating={incrementOutMutation.isPending || incrementInMutation.isPending}
-      />
+      >
+        {/* Loads Section */}
+        <LoadsSection
+          loads={loads}
+          items={subOut.items}
+          pallets={pallets}
+          subOutId={id}
+          dateToLeaveMFC={subOut.DateToLeaveMFC}
+          dateToShipFromSub={subOut.DateToShipFromSub}
+          onCreateLoad={createLoadMutation.mutate}
+          onUpdateLoad={updateLoadMutation.mutate}
+          onDeleteLoad={deleteLoadMutation.mutate}
+          onUpdateLoadStatus={updateLoadStatusMutation.mutate}
+          onAssignItemsToLoad={assignItemsToLoadMutation.mutate}
+          onAssignPalletsToLoad={assignPalletsToLoadMutation.mutate}
+          onQuickShipOut={handleQuickShipOut}
+          onQuickShipIn={handleQuickShipIn}
+          isCreating={createLoadMutation.isPending}
+          isUpdating={updateLoadMutation.isPending || updateLoadStatusMutation.isPending || assignItemsToLoadMutation.isPending || assignPalletsToLoadMutation.isPending}
+          isQuickShipping={incrementOutMutation.isPending || incrementInMutation.isPending}
+        />
 
-      {/* Items Section */}
-      <Card className="mt-6">
-        <Card.Header className="flex items-center justify-between">
-          <h2 className="font-semibold">Items ({subOut.items?.length || 0} total)</h2>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setShowItemPicker(true)}>
-              <Plus className="w-4 h-4 mr-1" />
-              Add Items
-            </Button>
-          </div>
-        </Card.Header>
-        <Card.Body>
-          <ItemsTable
-            items={subOut.items}
-            onDelete={handleDeleteItem}
-            onEdit={handleEditItem}
-            isDeleting={deleteItemMutation.isPending}
-          />
-        </Card.Body>
-      </Card>
+        {/* Pallets Section */}
+        <PalletsSection
+          pallets={pallets}
+          items={subOut.items}
+          loads={loads}
+          subOutId={id}
+          onCreatePallet={createPalletMutation.mutate}
+          onUpdatePallet={updatePalletMutation.mutate}
+          onDeletePallet={deletePalletMutation.mutate}
+          onUpdatePalletStatus={updatePalletStatusMutation.mutate}
+          onAssignItems={assignItemsToPalletMutation.mutate}
+          onRemoveItem={removeItemFromPalletMutation.mutate}
+          onAssignPalletToLoad={assignPalletToLoadMutation.mutate}
+          isCreating={createPalletMutation.isPending}
+          isUpdating={updatePalletMutation.isPending || updatePalletStatusMutation.isPending || assignItemsToPalletMutation.isPending || removeItemFromPalletMutation.isPending || assignPalletToLoadMutation.isPending}
+        />
+
+        {/* Items Section */}
+        <Card>
+          <Card.Header className="flex items-center justify-between">
+            <h2 className="font-semibold">Items ({subOut.items?.length || 0} total)</h2>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setShowItemPicker(true)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Add Items
+              </Button>
+            </div>
+          </Card.Header>
+          <Card.Body>
+            <ItemsTable
+              items={subOut.items}
+              onDelete={handleDeleteItem}
+              onEdit={handleEditItem}
+              onUpdateSendType={handleUpdateSendType}
+              isDeleting={deleteItemMutation.isPending}
+            />
+          </Card.Body>
+        </Card>
+      </SubOutDetail>
 
       {/* Item Picker Modal */}
       <ItemPicker
@@ -156,7 +230,7 @@ export default function SubOutDetailPage() {
       >
         <p className="text-gray-600">
           Are you sure you want to delete <strong>{subOut.Lot}</strong>?
-          This will also remove all associated items.
+          This will also remove all associated items, pallets, and loads.
         </p>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>

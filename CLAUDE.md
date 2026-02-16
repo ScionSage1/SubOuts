@@ -37,11 +37,18 @@ D:\Claude\SubOuts\
 │   │   │   │   ├── useAiChat.js      # Chat hook with SSE streaming
 │   │   │   │   └── cortex-config.js  # MFCCortex server config
 │   │   │   ├── subouts/             # SubOut-specific components
-│   │   │   │   ├── ItemPicker.jsx
-│   │   │   │   ├── ItemsTable.jsx
+│   │   │   │   ├── ItemPicker.jsx    # Cutlist item selector with send type defaults
+│   │   │   │   ├── ItemsTable.jsx    # Items table with SendType column & filter
 │   │   │   │   ├── JobGroup.jsx
+│   │   │   │   ├── LoadForm.jsx      # Load create/edit modal
+│   │   │   │   ├── LoadItemAssigner.jsx  # Assign items/pallets to a load
+│   │   │   │   ├── LoadsSection.jsx  # Two-column outbound/inbound load tracking
+│   │   │   │   ├── PalletForm.jsx    # Pallet create/edit modal
+│   │   │   │   ├── PalletItemAssigner.jsx  # Assign parts to a pallet
+│   │   │   │   ├── PalletsSection.jsx  # Expandable pallet cards with items
+│   │   │   │   ├── SendTypeBadge.jsx # Color-coded send type indicator
 │   │   │   │   ├── SubOutCard.jsx
-│   │   │   │   ├── SubOutDetail.jsx
+│   │   │   │   ├── SubOutDetail.jsx  # Detail view (children slot for sections)
 │   │   │   │   ├── SubOutForm.jsx
 │   │   │   │   └── VendorSelect.jsx
 │   │   │   └── layout/              # Layout components
@@ -53,6 +60,8 @@ D:\Claude\SubOuts\
 │   │   ├── hooks/                   # Custom React Query hooks
 │   │   │   ├── useSubOuts.js
 │   │   │   ├── useSubOutItems.js
+│   │   │   ├── usePallets.js        # Pallet CRUD, item/load assignment hooks
+│   │   │   ├── useLoads.js          # Load CRUD, status, item/pallet assignment hooks
 │   │   │   ├── useVendors.js
 │   │   │   ├── useJobs.js
 │   │   │   ├── useCutlists.js
@@ -84,6 +93,8 @@ D:\Claude\SubOuts\
 │   ├── controllers/
 │   │   ├── subOutController.js
 │   │   ├── subOutItemController.js
+│   │   ├── palletController.js      # Pallet CRUD, item assignment, load assignment
+│   │   ├── loadController.js        # Load CRUD, status, item/pallet assignment
 │   │   ├── vendorController.js
 │   │   ├── jobController.js
 │   │   ├── cutlistController.js
@@ -91,6 +102,8 @@ D:\Claude\SubOuts\
 │   ├── routes/
 │   │   ├── subouts.js
 │   │   ├── items.js
+│   │   ├── pallets.js               # Pallet routes under /api/subouts/:subOutId/pallets
+│   │   ├── loads.js                 # Load routes under /api/subouts/:subOutId/loads
 │   │   ├── vendors.js
 │   │   ├── jobs.js
 │   │   ├── cutlists.js
@@ -103,7 +116,8 @@ D:\Claude\SubOuts\
 ├── database/
 │   ├── schema.sql                   # Tables, indexes, views
 │   ├── seed.sql                     # Default vendors
-│   └── add_communication_log.sql    # Communication log table
+│   ├── add_communication_log.sql    # Communication log table
+│   └── add_send_types_pallets_loads.sql  # Loads, Pallets, SendType migration
 ├── CHANGELOG.md                     # Project changelog (see below)
 └── CLAUDE.md
 ```
@@ -148,27 +162,47 @@ CORS_ORIGIN=http://localhost:4000
 - **SubOutVendors** - Vendor/sub fabricator information (soft delete via IsActive)
   - Includes: City, State, Size, AISCBoard, MFCOutreach, LastContactDate
 - **SubOuts** - Main sub fabrication records
+  - Legacy load counter fields: LoadsToShipFromMFC, LoadsShippedFromMFC, LoadsToShipFromSub, LoadsShippedFromSub
 - **SubOutItems** - Individual items within a sub out
+  - SendType: 'Raw' | 'CutToLength' | 'PartsOnPallets' (default 'Raw')
+  - PalletID (FK to SubOutPallets, nullable)
+  - LoadID (FK to SubOutLoads, nullable)
+- **SubOutLoads** - Individual load/shipment tracking
+  - LoadID (PK), SubOutID (FK cascade), LoadNumber (auto: OUT-001, IN-001)
+  - Direction: 'Outbound' | 'Inbound'
+  - ScheduledDate, ActualDate, TruckCompany, TrailerNumber, DriverName, BOLNumber
+  - Weight, PieceCount, Status: Planned → Loading → InTransit → Delivered
+  - Unique: (SubOutID, LoadNumber)
+- **SubOutPallets** - Pallet grouping for parts
+  - PalletID (PK), SubOutID (FK cascade), PalletNumber (auto: P-001)
+  - Weight, Length, Width, Height (dimensions in inches)
+  - Status: Open → Closed → Loaded → Shipped → Received
+  - LoadID (FK to SubOutLoads, nullable)
+  - PhotoURL, Notes
+  - Unique: (SubOutID, PalletNumber)
 - **SubFabricatorCommunicationLog** - Communication history with vendors
   - Fields: ContactDate, ContactType, ContactPerson, MFCEmployee, Summary, Details
   - Follow-up tracking: FollowUpRequired, FollowUpDate, FollowUpType, FollowUpNotes, FollowUpCompleted
   - Source tracking: Manual or MFCCortex (AI)
 
 ### Views
-- **vwSubOutsList** - Sub outs with vendor and job info joined
+- **vwSubOutsList** - Sub outs with vendor and job info joined, includes computed load counts (OutboundLoadCount, OutboundDeliveredCount, InboundLoadCount, InboundDeliveredCount)
+- **vwSubOutItemsDetail** - Items with joined pallet number and load number
+- **vwSubOutLoadsDetail** - Loads with SubOut info + item/pallet counts
+- **vwSubOutPalletsDetail** - Pallets with SubOut info + item counts + load number
 - **vwCommunicationLog** - Communication logs with vendor name joined
 
 ### Indexes
-- IX_SubOuts_JobCode
-- IX_SubOuts_VendorID
-- IX_SubOuts_Status
-- IX_SubOutItems_SubOutID
-- IX_SubOutItems_Source
+- IX_SubOuts_JobCode, IX_SubOuts_VendorID, IX_SubOuts_Status
+- IX_SubOutItems_SubOutID, IX_SubOutItems_Source, IX_SubOutItems_PalletID, IX_SubOutItems_LoadID
+- IX_SubOutLoads_SubOutID, IX_SubOutLoads_Direction, IX_SubOutLoads_Status
+- IX_SubOutPallets_SubOutID, IX_SubOutPallets_LoadID
 
 ### Setup
 Run these scripts on the FabTracker database:
 1. `database/schema.sql` - Creates tables, indexes, and views
 2. `database/seed.sql` - Inserts default vendors
+3. `database/add_send_types_pallets_loads.sql` - Adds loads, pallets, send types (run after schema.sql)
 
 ## API Endpoints
 
@@ -178,20 +212,43 @@ Run these scripts on the FabTracker database:
 ### SubOuts (`/api/subouts`)
 - `GET /` - Get all (filters: jobCode, vendorId, status)
 - `GET /grouped` - Get grouped by job
-- `GET /:id` - Get single with items
+- `GET /:id` - Get single with items, pallets, and loads
 - `POST /` - Create
 - `PUT /:id` - Update
-- `DELETE /:id` - Delete
+- `DELETE /:id` - Delete (cascades to items, loads, pallets)
 - `PATCH /:id/status` - Update status
-- `PATCH /:id/loads-out` - Increment loads from MFC
-- `PATCH /:id/loads-in` - Increment loads from Sub
+- `PATCH /:id/loads-out` - Quick ship outbound (creates Delivered load record + syncs legacy counters)
+- `PATCH /:id/loads-in` - Quick ship inbound (creates Delivered load record + syncs legacy counters)
 
 ### Items (`/api/subouts/:subOutId/items`)
 - `GET /` - Get items
-- `POST /` - Add item
-- `POST /bulk` - Bulk add items
-- `PUT /:itemId` - Update item
+- `POST /` - Add item (supports sendType field)
+- `POST /bulk` - Bulk add items (supports sendType per item)
+- `PUT /:itemId` - Update item (supports sendType, palletId, loadId)
 - `DELETE /:itemId` - Remove item
+
+### Pallets (`/api/subouts/:subOutId/pallets`)
+- `GET /` - List pallets for a sub out
+- `GET /:palletId` - Get pallet with its items
+- `POST /` - Create pallet (auto-numbers P-001, P-002...)
+- `PUT /:palletId` - Update pallet details
+- `DELETE /:palletId` - Delete pallet (unassigns items first)
+- `PATCH /:palletId/status` - Update pallet status
+- `POST /:palletId/items` - Assign items to pallet (body: { itemIds })
+- `DELETE /:palletId/items/:itemId` - Remove item from pallet
+- `PATCH /:palletId/assign-load` - Assign pallet to a load (body: { loadId })
+
+### Loads (`/api/subouts/:subOutId/loads`)
+- `GET /` - List loads (query: direction)
+- `GET /:loadId` - Get load with items and pallets
+- `POST /` - Create load (auto-numbers OUT-001/IN-001)
+- `PUT /:loadId` - Update load details
+- `DELETE /:loadId` - Delete load (unassigns items/pallets first)
+- `PATCH /:loadId/status` - Update status (syncs legacy counters on Delivered)
+- `POST /:loadId/items` - Assign items to load (body: { itemIds })
+- `DELETE /:loadId/items/:itemId` - Remove item from load
+- `POST /:loadId/pallets` - Assign pallets to load (body: { palletIds })
+- `DELETE /:loadId/pallets/:palletId` - Remove pallet from load
 
 ### Vendors (`/api/vendors`)
 - `GET /` - Get all (filter: includeInactive)
@@ -264,21 +321,53 @@ Pending → Ready → Sent → InProcess → Shipped → Received → QCd → Co
 - Automatic cache invalidation on mutations
 - Axios response interceptor for error handling
 
+### Send Types
+Items can be classified into three send types reflecting real-world scenarios:
+- **Raw** (gray badge) - Sending raw inventory lengths as-is
+- **Cut to Length** (blue badge) - Cutting main marks to length before sending
+- **Parts on Pallets** (purple badge) - Burning/cutting parts, palletizing, then shipping
+- Send type is set per item (a single SubOut can mix all three types)
+- ItemPicker defaults send type by tab: PullList→Raw, LongShapes→CutToLength, Parts→PartsOnPallets
+- ItemsTable has inline send type dropdown editing and a send type filter
+
+### Pallet Tracking
+- Group "Parts on Pallets" items into named pallets (P-001, P-002, etc.)
+- Pallet details: weight, dimensions (L x W x H), photo URL, notes
+- Status flow: Open → Closed → Loaded → Shipped → Received
+- Assign pallets to outbound loads (cascades to items on the pallet)
+- Expandable pallet cards show assigned items with remove option
+
+### Load Tracking
+- Full load entities replacing old simple counters
+- Two-column layout: Outbound (MFC → Sub) and Inbound (Sub → MFC)
+- Auto-numbered: OUT-001, OUT-002... and IN-001, IN-002...
+- Load details: scheduled/actual dates, truck company, trailer number, driver, BOL number, weight, piece count
+- Status flow: Planned → Loading → InTransit → Delivered
+- Assign items and pallets to loads
+- **Quick Ship** button preserves old "+1 Load" workflow (creates a Delivered load instantly)
+- Progress bars show delivered/total loads per direction
+- Legacy counter fields synced automatically when loads change status
+
 ### Item Tracking
 - Source tracking (SourceTable, SourceID) for LongShapes, Parts, PullList
 - Material tracking: HeatNumber, CertNumber, Barcode
+- Send type tracking: Raw, CutToLength, PartsOnPallets
+- Pallet and Load assignment tracking
 - Lot number generation: SUB#001, SUB#002, etc.
 
 ### Database
 - Connection pooling (max 10, timeout 30s)
 - Retry logic for connection failures
-- Foreign key cascading delete for SubOutItems
-- Unique constraint on (JobCode, Lot) pairs
+- Foreign key cascading delete for SubOutItems, SubOutLoads, SubOutPallets
+- Unique constraints: (JobCode, Lot), (SubOutID, LoadNumber), (SubOutID, PalletNumber)
 
 ### Formatting Utilities
 - Date: short (m/d/yy) and long (Month Day, Year)
 - Weight: Tons (T) if >= 2000 lbs, otherwise lbs
 - Loads progress: "shipped of total" format
+- Dimensions: L x W x H in inches
+- Send type labels: Raw, Cut to Length, Parts on Pallets
+- Load status labels: Planned, Loading, In Transit, Delivered
 
 ---
 
@@ -353,15 +442,12 @@ Table row background colors follow a similar scheme:
    - **Status** - Defaults to "Pending". Set to the appropriate status.
    - **Zone** - Optional zone identifier for the job (e.g., "2", "3").
 
-   **Outbound from MFC:**
+   **Shipping:**
    - **Date to Leave MFC** - Target date for steel to ship from MFC to the sub.
-   - **Loads to Ship** - Total number of truckloads going out (defaults to 1).
-   - **Loads Shipped** - Number already shipped (typically 0 when creating).
-
-   **Inbound from Sub:**
    - **Date to Ship from Sub** - Target date for fabricated steel to return from the sub.
-   - **Loads to Ship** - Total number of return loads expected (defaults to 1).
-   - **Loads Shipped** - Number already returned (typically 0 when creating).
+   - **Planned Outbound Loads** - Estimated number of truckloads going out (defaults to 1).
+   - **Planned Inbound Loads** - Estimated number of return loads expected (defaults to 1).
+   - Note: Detailed load tracking (truck info, status, items/pallets) is managed on the detail page after creation.
 
    **Details:**
    - **Weight (lbs)** - Total weight in pounds.
@@ -381,19 +467,35 @@ Table row background colors follow a similar scheme:
 
 Click on any sub out card or table row to open its detail page. The detail page shows:
 
-1. **Header** - Job name, lot number, description, and project manager. Action buttons for **Edit** and **Delete** are in the top-right corner.
+1. **Header** - Job name, lot number, description, and project manager. Action buttons for **Edit**, **Delete**, and **Reopen** (for Complete status) are in the top-right corner.
 
-2. **Details Card** - Shows vendor, zone, weight, major pieces, PO number, status, and costs.
+2. **Details Card** - Grid showing vendor, zone, weight, major pieces, PO number, status, costs, leave MFC date, and due from sub date.
 
-3. **Shipment Tracking Card** - Two-column layout showing:
-   - **FROM MFC** - Loads shipped vs. loads to ship, with the leave date. A green checkmark appears when all loads are shipped. Click **"+1 Load Out"** to increment the shipped count.
-   - **FROM SUB** - Loads returned vs. loads expected, with the due date. A green checkmark appears when all loads are returned. Click **"+1 Load In"** to increment the received count.
+3. **Loads Section** - Two-column layout tracking all shipments:
+   - **Outbound (MFC → Sub)** - Loads going to the sub-fabricator with progress bar
+   - **Inbound (Sub → MFC)** - Loads returning with progress bar
+   - Each column has: **"+ Load"** (create with details), **"Quick"** (instant Delivered load)
+   - Load cards show: number, status badge, scheduled date, item/pallet counts
+   - Expand loads to see truck info, assigned pallets, and direct items
+   - Inline status dropdown to advance: Planned → Loading → InTransit → Delivered
+   - Actions: assign items/pallets, edit, delete
 
-4. **Missing Steel Card** - Displays missing steel notes in pink if present, otherwise shows "No missing steel".
+4. **Pallets Section** - Group parts onto pallets for organized shipping:
+   - **"+ New Pallet"** button to create (auto-numbered P-001, P-002...)
+   - Pallet cards show: number, status, item count, weight, dimensions, load assignment
+   - Expand to see assigned items with remove option
+   - Inline status dropdown and load assignment dropdown
+   - Actions: add items, edit, delete
 
-5. **Notes Card** - Displays any additional notes.
+5. **Items Section** - All items in a tabbed table (LongShapes, Parts, PullList, Combined):
+   - **SendType column** with inline dropdown to change type (Raw / Cut to Length / Parts on Pallets)
+   - **Pallet** and **Load** columns showing assignments
+   - **Send type filter** dropdown above the tabs
+   - Use **"+ Add Items"** to add from the job's cutlist
 
-6. **Items Section** - Shows all items associated with this sub out in a table. Use the **"+ Add Items"** button to add items from the job's cutlist.
+6. **Missing Steel Card** - Displays missing steel notes in pink (only shown if present).
+
+7. **Notes Card** - Displays any additional notes (only shown if present).
 
 ---
 
@@ -411,17 +513,66 @@ Click on any sub out card or table row to open its detail page. The detail page 
 1. Open the sub out detail page.
 2. Click the **Delete** button in the top-right corner.
 3. A confirmation modal will appear showing the lot number.
-4. Click **Delete** to confirm. This permanently removes the sub out and all its associated items (cascading delete).
+4. Click **Delete** to confirm. This permanently removes the sub out and all its associated items, pallets, and loads (cascading delete).
 
 ---
 
-### Tracking Loads (Quick Increment)
+### Managing Loads
 
-From the sub out detail page:
-- Click **"+1 Load Out"** under the "FROM MFC" section each time a truck leaves MFC headed to the sub-fabricator. The button is disabled once all loads have been shipped.
-- Click **"+1 Load In"** under the "FROM SUB" section each time a truck arrives back from the sub-fabricator. The button is disabled once all loads have been received.
+Loads are tracked on the sub out detail page in the **Loads Section**. Two columns show Outbound (MFC → Sub) and Inbound (Sub → MFC) loads.
 
-These are the primary day-to-day actions users will perform to track shipment progress.
+**Quick Ship (simple workflow):**
+- Click the **"Quick"** button in either column to instantly create a Delivered load. This is the fastest way to record a shipment and replaces the old "+1 Load" buttons.
+
+**Detailed Load (full tracking):**
+1. Click **"+ Load"** in the appropriate column (Outbound or Inbound).
+2. Fill in the load form: direction, scheduled date, truck company, trailer number, driver name, BOL number, weight, piece count, notes.
+3. Click **"Create Load"**. The load appears as a card in the column.
+4. Assign items or pallets to the load using the **+** button on the load card.
+5. Update the load status as it progresses: **Planned → Loading → InTransit → Delivered**.
+
+**Assigning items/pallets to loads:**
+- Click the **+** icon on a load card to open the assigner modal.
+- **Items tab** - Shows unassigned items (not on pallets). Checkbox to select, then assign.
+- **Pallets tab** - Shows unassigned pallets with item counts. Assigning a pallet also assigns all its items.
+
+---
+
+### Managing Pallets
+
+Pallets appear on the detail page in the **Pallets Section**, between Loads and Items.
+
+**Creating a pallet:**
+1. Click **"+ New Pallet"** to open the pallet form.
+2. Fill in: weight, dimensions (length, width, height in inches), photo URL, notes.
+3. Click **"Create Pallet"**. The pallet is auto-numbered (P-001, P-002...).
+
+**Adding items to a pallet:**
+1. Click the **+** icon on a pallet card.
+2. The assigner shows items with SendType = "PartsOnPallets" that aren't already on another pallet.
+3. Select items and click **"Assign to Pallet"**.
+
+**Assigning a pallet to a load:**
+- Use the load dropdown on the pallet card to assign it to an outbound load. This also assigns all items on the pallet to that load.
+
+**Pallet status flow:** Open → Closed → Loaded → Shipped → Received
+
+---
+
+### Send Types
+
+Each item has a **Send Type** indicating how it will be handled:
+
+| Send Type | Badge Color | Description |
+|-----------|-------------|-------------|
+| **Raw** | Gray | Raw inventory lengths sent as-is |
+| **Cut to Length** | Blue | Main marks cut to length before sending |
+| **Parts on Pallets** | Purple | Parts burned/cut, placed on pallets for shipping |
+
+- When adding items via the Item Picker, send types default by tab: PullList→Raw, LongShapes→Cut to Length, Parts→Parts on Pallets. Override with the dropdown.
+- On the Items table, change send type inline via the dropdown in the Type column.
+- Filter items by send type using the dropdown above the tabs.
+- Only items with SendType = "PartsOnPallets" can be assigned to pallets.
 
 ---
 
@@ -431,12 +582,12 @@ These are the primary day-to-day actions users will perform to track shipment pr
 2. Click **"+ Add Items"** above the items table.
 3. The **Item Picker** modal opens:
    - **Select a Package** from the dropdown (packages come from the job's cutlist data).
-   - Choose a tab: **LongShapes**, **Parts**, or **PullList/Raw**.
+   - Choose a tab: **LongShapes**, **Parts**, or **PullList/Raw**. Each tab sets a default **send type** (LongShapes→Cut to Length, Parts→Parts on Pallets, PullList→Raw).
    - Use the **search box** to filter by mark, piece mark, or shape.
    - Click rows to select individual items, or use **"Select all available"** to select everything not already assigned.
    - Items already assigned to another sub out are grayed out and show which lot they belong to.
-   - The **selection summary** at the bottom shows total count, pieces, and weight of your selection.
-4. Click **"Add Selected Items"** to add them to the sub out.
+   - The **selection summary** at the bottom shows total count, pieces, weight, and the **send type selector** to override the default.
+4. Click **"Add Selected Items"** to add them to the sub out with the chosen send type.
 
 ---
 

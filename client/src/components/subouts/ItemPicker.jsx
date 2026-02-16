@@ -6,7 +6,15 @@ import Button from '../common/Button'
 import Select from '../common/Select'
 import LoadingSpinner from '../common/LoadingSpinner'
 import { useAvailableItems, usePackages } from '../../hooks/useCutlists'
-import { formatWeight } from '../../utils/formatters'
+import { formatWeight, formatSendType } from '../../utils/formatters'
+import { sendTypeOptions } from '../../utils/statusColors'
+
+// Default send types by source tab
+const defaultSendTypes = {
+  longShapes: 'CutToLength',
+  parts: 'PartsOnPallets',
+  pullList: 'Raw'
+}
 
 export default function ItemPicker({ isOpen, onClose, jobCode, onAdd, isAdding }) {
   const [selectedPackage, setSelectedPackage] = useState('')
@@ -15,6 +23,7 @@ export default function ItemPicker({ isOpen, onClose, jobCode, onAdd, isAdding }
   const [activeTab, setActiveTab] = useState('longShapes')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedItems, setSelectedItems] = useState([])
+  const [sendType, setSendType] = useState('CutToLength')
 
   const packages = packagesData?.data || []
   const packageOptions = packages.map(p => ({ value: p, label: p }))
@@ -67,7 +76,8 @@ export default function ItemPicker({ isOpen, onClose, jobCode, onAdd, isAdding }
         weight: item.Weight,
         heatNumber: item.HeatNumber,
         certNumber: item.CertNumber,
-        barcode: item.Barcode
+        barcode: item.Barcode,
+        sendType
       }]
     })
   }
@@ -91,7 +101,8 @@ export default function ItemPicker({ isOpen, onClose, jobCode, onAdd, isAdding }
       weight: item.Weight,
       heatNumber: item.HeatNumber,
       certNumber: item.CertNumber,
-      barcode: item.Barcode
+      barcode: item.Barcode,
+      sendType
     }))
 
     // Add items from this tab that aren't already selected
@@ -151,7 +162,7 @@ export default function ItemPicker({ isOpen, onClose, jobCode, onAdd, isAdding }
               {tabs.map(tab => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => { setActiveTab(tab.key); setSendType(defaultSendTypes[tab.key]); }}
                   className={clsx(
                     'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
                     activeTab === tab.key
@@ -255,11 +266,23 @@ export default function ItemPicker({ isOpen, onClose, jobCode, onAdd, isAdding }
             </div>
           )}
 
-          {/* Selection Summary */}
-          <div className="mt-4 p-3 bg-gray-50 rounded-md">
+          {/* Send Type + Selection Summary */}
+          <div className="mt-4 p-3 bg-gray-50 rounded-md flex items-center justify-between">
             <span className="text-sm text-gray-600">
               Selected: {selectedSummary.count} items ({selectedSummary.qty} pieces, {formatWeight(selectedSummary.weight)})
             </span>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">Send Type:</label>
+              <select
+                value={sendType}
+                onChange={(e) => setSendType(e.target.value)}
+                className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                {sendTypeOptions.map(opt => (
+                  <option key={opt} value={opt}>{formatSendType(opt)}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </>
       )}

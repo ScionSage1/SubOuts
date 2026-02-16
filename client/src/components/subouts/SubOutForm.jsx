@@ -19,10 +19,8 @@ export default function SubOutForm({ initialData, onSubmit, onCancel, isLoading 
     vendorId: '',
     dateToLeaveMFC: '',
     loadsToShipFromMFC: 1,
-    loadsShippedFromMFC: 0,
     dateToShipFromSub: '',
     loadsToShipFromSub: 1,
-    loadsShippedFromSub: 0,
     zone: '',
     weight: '',
     majorPieces: '',
@@ -43,10 +41,8 @@ export default function SubOutForm({ initialData, onSubmit, onCancel, isLoading 
         vendorId: initialData.VendorID || '',
         dateToLeaveMFC: formatDateInput(initialData.DateToLeaveMFC),
         loadsToShipFromMFC: initialData.LoadsToShipFromMFC || 1,
-        loadsShippedFromMFC: initialData.LoadsShippedFromMFC || 0,
         dateToShipFromSub: formatDateInput(initialData.DateToShipFromSub),
         loadsToShipFromSub: initialData.LoadsToShipFromSub || 1,
-        loadsShippedFromSub: initialData.LoadsShippedFromSub || 0,
         zone: initialData.Zone || '',
         weight: initialData.Weight || '',
         majorPieces: initialData.MajorPieces || '',
@@ -128,56 +124,36 @@ export default function SubOutForm({ initialData, onSubmit, onCancel, isLoading 
         />
       </div>
 
-      {/* Outbound from MFC */}
+      {/* Shipping Dates & Planning */}
       <div className="border-t pt-4">
-        <h3 className="font-medium text-gray-900 mb-3">Outbound from MFC</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h3 className="font-medium text-gray-900 mb-3">Shipping</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DatePicker
             label="Date to Leave MFC"
             value={formData.dateToLeaveMFC}
             onChange={handleChange('dateToLeaveMFC')}
           />
-          <Input
-            label="Loads to Ship"
-            type="number"
-            min="1"
-            value={formData.loadsToShipFromMFC}
-            onChange={handleChange('loadsToShipFromMFC')}
-          />
-          <Input
-            label="Loads Shipped"
-            type="number"
-            min="0"
-            value={formData.loadsShippedFromMFC}
-            onChange={handleChange('loadsShippedFromMFC')}
-          />
-        </div>
-      </div>
-
-      {/* Inbound from Sub */}
-      <div className="border-t pt-4">
-        <h3 className="font-medium text-gray-900 mb-3">Inbound from Sub</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <DatePicker
             label="Date to Ship from Sub"
             value={formData.dateToShipFromSub}
             onChange={handleChange('dateToShipFromSub')}
           />
           <Input
-            label="Loads to Ship"
+            label="Planned Outbound Loads"
+            type="number"
+            min="1"
+            value={formData.loadsToShipFromMFC}
+            onChange={handleChange('loadsToShipFromMFC')}
+          />
+          <Input
+            label="Planned Inbound Loads"
             type="number"
             min="1"
             value={formData.loadsToShipFromSub}
             onChange={handleChange('loadsToShipFromSub')}
           />
-          <Input
-            label="Loads Shipped"
-            type="number"
-            min="0"
-            value={formData.loadsShippedFromSub}
-            onChange={handleChange('loadsShippedFromSub')}
-          />
         </div>
+        <p className="text-xs text-gray-400 mt-2">Detailed load tracking (truck info, status, items) is available on the detail page.</p>
       </div>
 
       {/* Details */}

@@ -48,8 +48,12 @@ export default function Dashboard() {
         subOuts = subOuts.filter(s => {
           const dateToLeave = s.DateToLeaveMFC ? new Date(s.DateToLeaveMFC) : null
           const dateToShip = s.DateToShipFromSub ? new Date(s.DateToShipFromSub) : null
-          const overdueSend = dateToLeave && dateToLeave < now && s.LoadsShippedFromMFC < s.LoadsToShipFromMFC
-          const overdueReceive = dateToShip && dateToShip < now && s.LoadsShippedFromSub < s.LoadsToShipFromSub
+          const outShipped = s.OutboundDeliveredCount ?? s.LoadsShippedFromMFC
+          const outTotal = s.OutboundLoadCount ?? s.LoadsToShipFromMFC
+          const inShipped = s.InboundDeliveredCount ?? s.LoadsShippedFromSub
+          const inTotal = s.InboundLoadCount ?? s.LoadsToShipFromSub
+          const overdueSend = dateToLeave && dateToLeave < now && outShipped < outTotal
+          const overdueReceive = dateToShip && dateToShip < now && inShipped < inTotal
           const hasMissingSteel = s.MissingSteel
           return overdueSend || overdueReceive || hasMissingSteel
         })

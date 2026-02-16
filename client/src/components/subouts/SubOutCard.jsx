@@ -39,18 +39,30 @@ export default function SubOutCard({ subOut }) {
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500">Out:</span>
             <span className="text-sm font-medium">
-              {formatLoadsProgress(subOut.LoadsShippedFromMFC, subOut.LoadsToShipFromMFC)}
+              {formatLoadsProgress(
+                subOut.OutboundDeliveredCount ?? subOut.LoadsShippedFromMFC,
+                subOut.OutboundLoadCount ?? subOut.LoadsToShipFromMFC
+              )}
             </span>
-            {isLoadsComplete(subOut.LoadsShippedFromMFC, subOut.LoadsToShipFromMFC) && (
+            {isLoadsComplete(
+              subOut.OutboundDeliveredCount ?? subOut.LoadsShippedFromMFC,
+              subOut.OutboundLoadCount ?? subOut.LoadsToShipFromMFC
+            ) && (
               <Check className="w-4 h-4 text-green-500" />
             )}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500">In:</span>
             <span className="text-sm font-medium">
-              {formatLoadsProgress(subOut.LoadsShippedFromSub, subOut.LoadsToShipFromSub)}
+              {formatLoadsProgress(
+                subOut.InboundDeliveredCount ?? subOut.LoadsShippedFromSub,
+                subOut.InboundLoadCount ?? subOut.LoadsToShipFromSub
+              )}
             </span>
-            {isLoadsComplete(subOut.LoadsShippedFromSub, subOut.LoadsToShipFromSub) && (
+            {isLoadsComplete(
+              subOut.InboundDeliveredCount ?? subOut.LoadsShippedFromSub,
+              subOut.InboundLoadCount ?? subOut.LoadsToShipFromSub
+            ) && (
               <Check className="w-4 h-4 text-green-500" />
             )}
           </div>

@@ -3,10 +3,14 @@ import { Trash2, Edit2, ChevronRight, ChevronDown } from 'lucide-react'
 import clsx from 'clsx'
 import Button from '../common/Button'
 import StatusBadge from '../common/StatusBadge'
+import SendTypeBadge from './SendTypeBadge'
+import { sendTypeOptions } from '../../utils/statusColors'
+import { formatSendType } from '../../utils/formatters'
 
-export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
+export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, isDeleting }) {
   const [activeTab, setActiveTab] = useState('LongShapes')
   const [expandedBarcodes, setExpandedBarcodes] = useState(new Set())
+  const [sendTypeFilter, setSendTypeFilter] = useState('')
 
   const tabs = [
     { key: 'LongShapes', label: 'LongShapes' },
@@ -15,25 +19,32 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
     { key: 'Combined', label: 'Combined' }
   ]
 
-  const filteredItems = items?.filter(item => item.SourceTable === activeTab) || []
+  const allFilteredItems = useMemo(() => {
+    let result = items || []
+    if (sendTypeFilter) {
+      result = result.filter(item => item.SendType === sendTypeFilter)
+    }
+    return result
+  }, [items, sendTypeFilter])
+
+  const filteredItems = allFilteredItems.filter(item => item.SourceTable === activeTab)
 
   const getCounts = (sourceTable) => {
     if (sourceTable === 'Combined') {
-      const pullListItems = items?.filter(item => item.SourceTable === 'PullList') || []
-      const longShapesItems = items?.filter(item => item.SourceTable === 'LongShapes') || []
+      const pullListItems = allFilteredItems.filter(item => item.SourceTable === 'PullList')
+      const longShapesItems = allFilteredItems.filter(item => item.SourceTable === 'LongShapes')
       return pullListItems.length + longShapesItems.length
     }
-    return items?.filter(item => item.SourceTable === sourceTable).length || 0
+    return allFilteredItems.filter(item => item.SourceTable === sourceTable).length
   }
 
   // Build combined hierarchy: PullList -> LongShapes by Barcode
   const combinedData = useMemo(() => {
-    if (!items) return []
+    if (!allFilteredItems.length) return { hierarchy: [], orphanLongShapes: [] }
 
-    const pullListItems = items.filter(item => item.SourceTable === 'PullList')
-    const longShapesItems = items.filter(item => item.SourceTable === 'LongShapes')
+    const pullListItems = allFilteredItems.filter(item => item.SourceTable === 'PullList')
+    const longShapesItems = allFilteredItems.filter(item => item.SourceTable === 'LongShapes')
 
-    // Group LongShapes by Barcode
     const longShapesByBarcode = {}
     longShapesItems.forEach(item => {
       if (item.Barcode) {
@@ -44,18 +55,16 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
       }
     })
 
-    // Build hierarchy
     const hierarchy = pullListItems.map(pullItem => ({
       ...pullItem,
       children: pullItem.Barcode ? (longShapesByBarcode[pullItem.Barcode] || []) : []
     }))
 
-    // Find orphan LongShapes (those without matching PullList barcode)
     const usedBarcodes = new Set(pullListItems.map(p => p.Barcode).filter(Boolean))
     const orphanLongShapes = longShapesItems.filter(item => !item.Barcode || !usedBarcodes.has(item.Barcode))
 
     return { hierarchy, orphanLongShapes }
-  }, [items])
+  }, [allFilteredItems])
 
   const toggleExpand = (barcode) => {
     setExpandedBarcodes(prev => {
@@ -80,11 +89,40 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
     setExpandedBarcodes(new Set())
   }
 
+  const renderSendTypeCell = (item) => {
+    if (!onUpdateSendType) {
+      return <SendTypeBadge sendType={item.SendType} />
+    }
+    return (
+      <select
+        value={item.SendType || 'Raw'}
+        onChange={(e) => onUpdateSendType(item.SubOutItemID, e.target.value)}
+        className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        {sendTypeOptions.map(opt => (
+          <option key={opt} value={opt}>{formatSendType(opt)}</option>
+        ))}
+      </select>
+    )
+  }
+
+  const renderAssignmentCells = (item) => (
+    <>
+      <td className="px-3 py-3 text-xs text-gray-500">
+        {item.PalletNumber || (item.PalletID ? `#${item.PalletID}` : '-')}
+      </td>
+      <td className="px-3 py-3 text-xs text-gray-500">
+        {item.LoadNumber || (item.LoadID ? `#${item.LoadID}` : '-')}
+      </td>
+    </>
+  )
+
   const renderStandardTable = () => (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
             {activeTab !== 'PullList' && (
               <>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Main Mark</th>
@@ -96,6 +134,8 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Length</th>
             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Qty</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pallet</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Load</th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
           </tr>
@@ -103,6 +143,7 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
         <tbody className="bg-white divide-y divide-gray-200">
           {filteredItems.map(item => (
             <tr key={item.SubOutItemID} className="hover:bg-gray-50">
+              <td className="px-3 py-3">{renderSendTypeCell(item)}</td>
               {activeTab !== 'PullList' && (
                 <>
                   <td className="px-4 py-3 text-sm text-gray-900">{item.MainMark || '-'}</td>
@@ -117,6 +158,7 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
                 <span className="font-medium">{item.Quantity || 0}</span>
                 <span className="text-gray-400">/{item.QuantitySent || 0}/{item.QuantityReceived || 0}</span>
               </td>
+              {renderAssignmentCells(item)}
               <td className="px-4 py-3">
                 <StatusBadge status={item.Status} />
               </td>
@@ -159,19 +201,12 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
 
     return (
       <>
-        {/* Expand/Collapse buttons */}
         <div className="flex gap-2 mb-3">
-          <button
-            onClick={expandAll}
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
+          <button onClick={expandAll} className="text-sm text-blue-600 hover:text-blue-800">
             Expand All
           </button>
           <span className="text-gray-300">|</span>
-          <button
-            onClick={collapseAll}
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
+          <button onClick={collapseAll} className="text-sm text-blue-600 hover:text-blue-800">
             Collapse All
           </button>
         </div>
@@ -181,6 +216,7 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
             <thead className="bg-gray-50">
               <tr>
                 <th className="w-10 px-2 py-3"></th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barcode</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Main Mark</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Piece Mark</th>
@@ -189,19 +225,19 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Length</th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Qty</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pallet</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Load</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {/* PullList items with their LongShapes children */}
               {hierarchy.map(pullItem => {
                 const isExpanded = expandedBarcodes.has(pullItem.Barcode)
                 const hasChildren = pullItem.children.length > 0
 
                 return (
                   <Fragment key={pullItem.SubOutItemID}>
-                    {/* PullList parent row */}
                     <tr className="bg-blue-50 hover:bg-blue-100">
                       <td className="px-2 py-3">
                         {hasChildren && (
@@ -209,20 +245,15 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
                             onClick={() => toggleExpand(pullItem.Barcode)}
                             className="p-1 text-gray-500 hover:text-gray-700"
                           >
-                            {isExpanded ? (
-                              <ChevronDown className="w-4 h-4" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4" />
-                            )}
+                            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                           </button>
                         )}
                       </td>
+                      <td className="px-3 py-3">{renderSendTypeCell(pullItem)}</td>
                       <td className="px-4 py-3 text-sm font-medium text-blue-800">
                         {pullItem.Barcode || '-'}
                         {hasChildren && (
-                          <span className="ml-2 text-xs text-blue-600">
-                            ({pullItem.children.length} shapes)
-                          </span>
+                          <span className="ml-2 text-xs text-blue-600">({pullItem.children.length} shapes)</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">-</td>
@@ -235,34 +266,24 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
                         <span className="font-medium">{pullItem.Quantity || 0}</span>
                         <span className="text-gray-400">/{pullItem.QuantitySent || 0}/{pullItem.QuantityReceived || 0}</span>
                       </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={pullItem.Status} />
-                      </td>
+                      {renderAssignmentCells(pullItem)}
+                      <td className="px-4 py-3"><StatusBadge status={pullItem.Status} /></td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => onEdit(pullItem)}
-                            className="p-1 text-gray-400 hover:text-blue-600"
-                            title="Edit"
-                          >
+                          <button onClick={() => onEdit(pullItem)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit">
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => onDelete(pullItem.SubOutItemID)}
-                            disabled={isDeleting}
-                            className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50"
-                            title="Remove"
-                          >
+                          <button onClick={() => onDelete(pullItem.SubOutItemID)} disabled={isDeleting} className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50" title="Remove">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
                     </tr>
 
-                    {/* LongShapes children rows */}
                     {isExpanded && pullItem.children.map(child => (
                       <tr key={child.SubOutItemID} className="bg-gray-50 hover:bg-gray-100">
                         <td className="px-2 py-3"></td>
+                        <td className="px-3 py-3">{renderSendTypeCell(child)}</td>
                         <td className="px-4 py-3 text-sm text-gray-400 pl-8">
                           <span className="text-gray-300">└</span> {child.Barcode || '-'}
                         </td>
@@ -276,24 +297,14 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
                           <span className="font-medium">{child.Quantity || 0}</span>
                           <span className="text-gray-400">/{child.QuantitySent || 0}/{child.QuantityReceived || 0}</span>
                         </td>
-                        <td className="px-4 py-3">
-                          <StatusBadge status={child.Status} />
-                        </td>
+                        {renderAssignmentCells(child)}
+                        <td className="px-4 py-3"><StatusBadge status={child.Status} /></td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => onEdit(child)}
-                              className="p-1 text-gray-400 hover:text-blue-600"
-                              title="Edit"
-                            >
+                            <button onClick={() => onEdit(child)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit">
                               <Edit2 className="w-4 h-4" />
                             </button>
-                            <button
-                              onClick={() => onDelete(child.SubOutItemID)}
-                              disabled={isDeleting}
-                              className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50"
-                              title="Remove"
-                            >
+                            <button onClick={() => onDelete(child.SubOutItemID)} disabled={isDeleting} className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50" title="Remove">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -304,17 +315,17 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
                 )
               })}
 
-              {/* Orphan LongShapes (no matching PullList) */}
               {orphanLongShapes.length > 0 && (
                 <>
                   <tr className="bg-yellow-50">
-                    <td colSpan="11" className="px-4 py-2 text-sm font-medium text-yellow-800">
+                    <td colSpan="14" className="px-4 py-2 text-sm font-medium text-yellow-800">
                       Unmatched LongShapes ({orphanLongShapes.length})
                     </td>
                   </tr>
                   {orphanLongShapes.map(item => (
                     <tr key={item.SubOutItemID} className="hover:bg-gray-50">
                       <td className="px-2 py-3"></td>
+                      <td className="px-3 py-3">{renderSendTypeCell(item)}</td>
                       <td className="px-4 py-3 text-sm text-gray-400">{item.Barcode || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{item.MainMark || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{item.PieceMark || '-'}</td>
@@ -326,24 +337,14 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
                         <span className="font-medium">{item.Quantity || 0}</span>
                         <span className="text-gray-400">/{item.QuantitySent || 0}/{item.QuantityReceived || 0}</span>
                       </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={item.Status} />
-                      </td>
+                      {renderAssignmentCells(item)}
+                      <td className="px-4 py-3"><StatusBadge status={item.Status} /></td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => onEdit(item)}
-                            className="p-1 text-gray-400 hover:text-blue-600"
-                            title="Edit"
-                          >
+                          <button onClick={() => onEdit(item)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit">
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => onDelete(item.SubOutItemID)}
-                            disabled={isDeleting}
-                            className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50"
-                            title="Remove"
-                          >
+                          <button onClick={() => onDelete(item.SubOutItemID)} disabled={isDeleting} className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50" title="Remove">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -361,24 +362,38 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
 
   return (
     <div>
-      {/* Tabs */}
-      <div className="border-b border-gray-200 mb-4">
-        <nav className="flex gap-4">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={clsx(
-                'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
-                activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              )}
-            >
-              {tab.label} ({getCounts(tab.key)})
-            </button>
-          ))}
-        </nav>
+      {/* Filter bar + Tabs */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="border-b border-gray-200 flex-1">
+          <nav className="flex gap-4">
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={clsx(
+                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+                  activeTab === tab.key
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                )}
+              >
+                {tab.label} ({getCounts(tab.key)})
+              </button>
+            ))}
+          </nav>
+        </div>
+        <div className="ml-4 flex-shrink-0">
+          <select
+            value={sendTypeFilter}
+            onChange={(e) => setSendTypeFilter(e.target.value)}
+            className="text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="">All Send Types</option>
+            {sendTypeOptions.map(opt => (
+              <option key={opt} value={opt}>{formatSendType(opt)}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Table Content */}
@@ -395,7 +410,7 @@ export default function ItemsTable({ items, onDelete, onEdit, isDeleting }) {
       {/* Summary */}
       {items && items.length > 0 && (
         <div className="mt-4 text-sm text-gray-500">
-          Total: {items.length} items |
+          Total: {allFilteredItems.length}{sendTypeFilter ? ` (filtered from ${items.length})` : ''} items |
           Qty columns: Total / Sent / Received
         </div>
       )}

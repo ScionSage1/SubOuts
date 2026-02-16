@@ -6,6 +6,50 @@ Format: [Date] - Summary of changes
 
 ---
 
+## 2026-02-16
+
+### Added
+- **Send Types** - Items can now be classified as Raw, Cut to Length, or Parts on Pallets
+  - `SendTypeBadge.jsx` - Color-coded badge component (gray/blue/purple)
+  - `ItemsTable.jsx` - Added SendType column with inline dropdown editing, send type filter
+  - `ItemPicker.jsx` - Send type selector with smart defaults per tab (PullList→Raw, LongShapes→Cut to Length, Parts→Parts on Pallets)
+
+- **Pallet tracking** - Group parts onto pallets before shipping
+  - `database/add_send_types_pallets_loads.sql` - New SubOutPallets table, SubOutItems altered with SendType/PalletID/LoadID columns
+  - `server/controllers/palletController.js` + `server/routes/pallets.js` - Full CRUD, item assignment, load assignment, auto-numbering (P-001, P-002...)
+  - `client/src/hooks/usePallets.js` - React Query hooks for all pallet operations
+  - `client/src/components/subouts/PalletsSection.jsx` - Expandable pallet cards with items, status dropdown, load assignment
+  - `client/src/components/subouts/PalletForm.jsx` - Modal for pallet create/edit (dimensions, weight, notes)
+  - `client/src/components/subouts/PalletItemAssigner.jsx` - Modal to assign PartsOnPallets items to a pallet
+
+- **Load tracking** - Full load entities replacing simple counters
+  - `database/add_send_types_pallets_loads.sql` - New SubOutLoads table with truck/trailer/driver/BOL info
+  - `server/controllers/loadController.js` + `server/routes/loads.js` - Full CRUD, status tracking, item/pallet assignment, auto-numbering (OUT-001, IN-001)
+  - `client/src/hooks/useLoads.js` - React Query hooks for all load operations
+  - `client/src/components/subouts/LoadsSection.jsx` - Two-column layout (Outbound/Inbound) with progress bars, expandable load cards, Quick Ship button
+  - `client/src/components/subouts/LoadForm.jsx` - Modal for load create/edit (direction, dates, truck info)
+  - `client/src/components/subouts/LoadItemAssigner.jsx` - Modal with Items/Pallets tabs to assign to a load
+
+- **New database views** - `vwSubOutLoadsDetail`, `vwSubOutPalletsDetail`
+- **API layer** - `palletsApi` and `loadsApi` in `client/src/services/api.js`
+- **Utility additions** - `formatDimensions`, `formatSendType`, `formatLoadStatus` in formatters; pallet/load/sendType color maps in statusColors
+
+### Changed
+- **SubOutDetail.jsx** - Replaced old shipment tracking card with children-based composition (LoadsSection, PalletsSection, Items)
+- **SubOutDetailPage.jsx** - Wired up all pallet and load hooks/mutations, passes `onUpdateSendType` to ItemsTable
+- **SubOutForm.jsx** - Removed "Loads Shipped" fields (now tracked via load entities), simplified to planning dates and planned load counts
+- **SubOutCard.jsx** - Uses new computed load counts (OutboundLoadCount/DeliveredCount) with legacy field fallback
+- **SubOutsListPage.jsx** - Uses new computed load counts with legacy fallback
+- **Dashboard.jsx** - Action items filter uses new computed load counts with legacy fallback
+- **statusColors.js** - `getActionColor` and `getRowColor` use new computed load counts with legacy fallback
+- **server/controllers/subOutController.js** - `getSubOutById` fetches pallets and loads; `incrementLoadsOut/In` create actual load records and sync legacy counters
+- **server/controllers/subOutItemController.js** - `addItem`, `bulkAddItems`, `updateItem` support SendType field
+- **server/server.js** - Registered pallet and load routes
+- **useSubOuts.js** - Increment hooks invalidate loads queries
+- **vwSubOutsList** - Updated with computed OutboundLoadCount, OutboundDeliveredCount, InboundLoadCount, InboundDeliveredCount columns
+
+---
+
 ## 2026-02-03
 
 ### Added

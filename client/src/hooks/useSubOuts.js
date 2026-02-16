@@ -79,6 +79,7 @@ export function useIncrementLoadsOut() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['subouts'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', id] })
+      queryClient.invalidateQueries({ queryKey: ['subouts', id, 'loads'] })
     }
   })
 }
@@ -91,6 +92,7 @@ export function useIncrementLoadsIn() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['subouts'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', id] })
+      queryClient.invalidateQueries({ queryKey: ['subouts', id, 'loads'] })
     }
   })
 }

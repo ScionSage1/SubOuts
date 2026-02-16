@@ -501,32 +501,23 @@ export default function Settings() {
                 </Step>
 
                 <Step number="4">
-                  Configure <strong>Outbound from MFC</strong> (steel going to the sub):
+                  Configure <strong>Shipping</strong> dates and planned load counts:
                   <div className="mt-2 bg-blue-50 rounded-lg p-3 border border-blue-200">
                     <div className="space-y-1 text-sm">
                       <div><strong>Date to Leave MFC</strong> - When steel should ship out</div>
-                      <div><strong>Loads to Ship</strong> - Total truckloads going out (default 1)</div>
-                      <div><strong>Loads Shipped</strong> - Already sent (usually 0 for new)</div>
+                      <div><strong>Date to Ship from Sub</strong> - When fabricated steel should return</div>
+                      <div><strong>Planned Outbound Loads</strong> - Estimated truckloads going out (default 1)</div>
+                      <div><strong>Planned Inbound Loads</strong> - Estimated return loads (default 1)</div>
                     </div>
                   </div>
+                  <Tip>Detailed load tracking (truck info, items, pallets) is managed on the detail page after creation.</Tip>
                 </Step>
 
                 <Step number="5">
-                  Configure <strong>Inbound from Sub</strong> (fabricated steel coming back):
-                  <div className="mt-2 bg-teal-50 rounded-lg p-3 border border-teal-200">
-                    <div className="space-y-1 text-sm">
-                      <div><strong>Date to Ship from Sub</strong> - When steel should come back</div>
-                      <div><strong>Loads to Ship</strong> - Total return loads expected (default 1)</div>
-                      <div><strong>Loads Shipped</strong> - Already returned (usually 0 for new)</div>
-                    </div>
-                  </div>
-                </Step>
-
-                <Step number="6">
                   Fill in <strong>Details</strong>: Weight, Major Pieces, PO Number, Estimated/Actual Cost, Missing Steel notes, and any additional Notes.
                 </Step>
 
-                <Step number="7">
+                <Step number="6">
                   Click
                   <span className="inline-flex items-center mx-1 px-3 py-0.5 rounded bg-blue-600 text-white text-xs font-semibold">
                     Create SubOut
@@ -537,53 +528,200 @@ export default function Settings() {
             </div>
           </GuideSection>
 
-          {/* Tracking Loads */}
-          <GuideSection icon={Truck} title="Tracking Loads (Daily Workflow)" color="orange">
+          {/* Send Types */}
+          <GuideSection icon={ClipboardList} title="Send Types" color="teal">
             <div className="bg-white rounded-lg p-4 space-y-4">
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <p className="text-sm text-orange-900 font-medium mb-2">
-                  This is the most common daily action - incrementing load counts as trucks come and go.
-                </p>
+              <p className="text-sm text-gray-700">
+                Each item has a <strong>Send Type</strong> that describes how it will be handled. A single sub out can mix all three types.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300">Raw</span>
+                  <p className="text-sm text-gray-600 mt-2">Send raw inventory lengths as-is to the sub-fabricator.</p>
+                  <p className="text-xs text-gray-400 mt-1">Default for PullList/Raw items</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300">Cut to Length</span>
+                  <p className="text-sm text-gray-600 mt-2">Cut main marks to length at MFC before sending to sub.</p>
+                  <p className="text-xs text-gray-400 mt-1">Default for LongShapes items</p>
+                </div>
+                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-300">Parts on Pallets</span>
+                  <p className="text-sm text-gray-600 mt-2">Burn/cut parts, place on pallets, then ship to sub.</p>
+                  <p className="text-xs text-gray-400 mt-1">Default for Parts items</p>
+                </div>
               </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                  How to Set Send Types
+                </h4>
+                <ul className="text-sm text-gray-600 space-y-1.5 ml-4">
+                  <li><strong>When adding items:</strong> The Item Picker defaults the send type based on the active tab. Override with the dropdown in the selection summary.</li>
+                  <li><strong>After adding:</strong> Change any item's send type inline on the Items table using the dropdown in the "Type" column.</li>
+                  <li><strong>Filtering:</strong> Use the send type dropdown above the tabs to show only items of a specific type.</li>
+                </ul>
+              </div>
+
+              <Tip>Only items with type "Parts on Pallets" can be assigned to pallets.</Tip>
+            </div>
+          </GuideSection>
+
+          {/* Managing Loads */}
+          <GuideSection icon={Truck} title="Managing Loads" color="orange">
+            <div className="bg-white rounded-lg p-4 space-y-4">
+              <p className="text-sm text-gray-700">
+                The <strong>Loads Section</strong> on the detail page tracks every shipment with full details. Two columns show Outbound (MFC → Sub) and Inbound (Sub → MFC) loads.
+              </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border-2 border-blue-200 rounded-xl p-4 bg-blue-50">
-                  <h4 className="font-semibold text-blue-900 mb-3 text-center">FROM MFC (Outbound)</h4>
-                  <div className="bg-white rounded-lg p-3 text-center mb-3">
-                    <div className="text-3xl font-bold text-gray-900">0 of 2</div>
-                    <p className="text-xs text-gray-500 mt-1">Loads shipped from MFC</p>
+                  <h4 className="font-semibold text-blue-900 mb-3 text-center">Outbound (MFC → Sub)</h4>
+                  <p className="text-sm text-blue-800 text-center mb-3">Steel going from MFC to the sub-fabricator</p>
+                  <div className="bg-white rounded-lg p-3 mb-3">
+                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                      <div className="bg-green-500 h-2 rounded-full" style={{ width: '50%' }} />
+                    </div>
+                    <p className="text-xs text-gray-500 text-center">1 of 2 delivered</p>
                   </div>
-                  <p className="text-sm text-blue-800 mb-2">When a truck <strong>leaves MFC</strong> headed to the sub:</p>
-                  <Step number="1">Open the sub out's detail page</Step>
-                  <div className="mt-2">
-                    <Step number="2">
-                      Click
-                      <span className="inline-flex items-center mx-1 px-2 py-0.5 rounded bg-white border border-gray-300 text-gray-700 text-xs font-semibold">
-                        <Plus className="w-3 h-3 mr-1" /> +1 Load Out
-                      </span>
-                    </Step>
-                  </div>
-                  <Tip>Button disables once shipped count equals total loads to ship.</Tip>
+                  <p className="text-xs text-blue-700">Auto-numbered: OUT-001, OUT-002...</p>
                 </div>
 
                 <div className="border-2 border-teal-200 rounded-xl p-4 bg-teal-50">
-                  <h4 className="font-semibold text-teal-900 mb-3 text-center">FROM SUB (Inbound)</h4>
-                  <div className="bg-white rounded-lg p-3 text-center mb-3">
-                    <div className="text-3xl font-bold text-gray-900">0 of 2</div>
-                    <p className="text-xs text-gray-500 mt-1">Loads returned from sub</p>
+                  <h4 className="font-semibold text-teal-900 mb-3 text-center">Inbound (Sub → MFC)</h4>
+                  <p className="text-sm text-teal-800 text-center mb-3">Fabricated steel returning from sub to MFC</p>
+                  <div className="bg-white rounded-lg p-3 mb-3">
+                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                      <div className="bg-green-500 h-2 rounded-full" style={{ width: '0%' }} />
+                    </div>
+                    <p className="text-xs text-gray-500 text-center">0 of 2 delivered</p>
                   </div>
-                  <p className="text-sm text-teal-800 mb-2">When a truck <strong>arrives back at MFC</strong> from the sub:</p>
-                  <Step number="1">Open the sub out's detail page</Step>
-                  <div className="mt-2">
-                    <Step number="2">
-                      Click
-                      <span className="inline-flex items-center mx-1 px-2 py-0.5 rounded bg-white border border-gray-300 text-gray-700 text-xs font-semibold">
-                        <Plus className="w-3 h-3 mr-1" /> +1 Load In
-                      </span>
-                    </Step>
-                  </div>
-                  <Tip>A green checkmark appears when all loads are received.</Tip>
+                  <p className="text-xs text-teal-700">Auto-numbered: IN-001, IN-002...</p>
                 </div>
+              </div>
+
+              {/* Two workflows */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                  Quick Ship (Simple)
+                </h4>
+                <p className="text-sm text-gray-600 mb-2">
+                  For fast recording without details, click the
+                  <span className="inline-flex items-center mx-1 px-2 py-0.5 rounded bg-white border border-gray-300 text-gray-700 text-xs font-semibold">Quick</span>
+                  button. This creates a Delivered load instantly — same as the old "+1 Load" workflow.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                  Detailed Load (Full Tracking)
+                </h4>
+                <div className="space-y-2">
+                  <Step number="1">
+                    Click
+                    <span className="inline-flex items-center mx-1 px-2 py-0.5 rounded bg-blue-600 text-white text-xs font-semibold">
+                      <Plus className="w-3 h-3 mr-1" /> Load
+                    </span>
+                    in the appropriate column.
+                  </Step>
+                  <Step number="2">Fill in truck company, trailer number, driver, BOL, dates, weight, notes.</Step>
+                  <Step number="3">Click <strong>Create Load</strong>. The load appears as a card.</Step>
+                  <Step number="4">Assign items or pallets using the <strong>+</strong> button on the load card.</Step>
+                  <Step number="5">Update status as it progresses using the inline dropdown.</Step>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                  Load Status Flow
+                </h4>
+                <div className="flex flex-wrap items-center gap-1 py-2">
+                  {[
+                    { label: 'Planned', bg: 'bg-gray-100', text: 'text-gray-800' },
+                    { label: 'Loading', bg: 'bg-blue-100', text: 'text-blue-800' },
+                    { label: 'In Transit', bg: 'bg-yellow-100', text: 'text-yellow-800' },
+                    { label: 'Delivered', bg: 'bg-green-100', text: 'text-green-800' },
+                  ].map((s, i) => (
+                    <div key={i} className="flex items-center gap-1">
+                      <span className={clsx('px-3 py-1 rounded-full text-xs font-semibold', s.bg, s.text)}>{s.label}</span>
+                      {i < 3 && <ArrowRight className="w-4 h-4 text-gray-300" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Tip>Each load card has buttons to: assign items/pallets (+), edit, and delete. Expand a load to see its truck info, pallets, and direct items.</Tip>
+            </div>
+          </GuideSection>
+
+          {/* Managing Pallets */}
+          <GuideSection icon={Package} title="Managing Pallets" color="purple">
+            <div className="bg-white rounded-lg p-4 space-y-4">
+              <p className="text-sm text-gray-700">
+                The <strong>Pallets Section</strong> lets you group "Parts on Pallets" items into named pallets before assigning them to loads.
+              </p>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                  Creating a Pallet
+                </h4>
+                <div className="space-y-2">
+                  <Step number="1">
+                    Click
+                    <span className="inline-flex items-center mx-1 px-2 py-0.5 rounded bg-blue-600 text-white text-xs font-semibold">
+                      <Plus className="w-3 h-3 mr-1" /> New Pallet
+                    </span>
+                    in the Pallets section.
+                  </Step>
+                  <Step number="2">Fill in weight, dimensions (L × W × H), photo URL, and notes.</Step>
+                  <Step number="3">Click <strong>Create Pallet</strong>. Auto-numbered as P-001, P-002, etc.</Step>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                  Adding Items to a Pallet
+                </h4>
+                <div className="space-y-2">
+                  <Step number="1">Click the <strong>+</strong> icon on a pallet card to open the item assigner.</Step>
+                  <Step number="2">Select items from the list (only shows "Parts on Pallets" type items not already on another pallet).</Step>
+                  <Step number="3">Click <strong>Assign to Pallet</strong>.</Step>
+                </div>
+                <Tip>Expand a pallet to see all its assigned items. Click the trash icon on an item to remove it from the pallet.</Tip>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                  Pallet Status Flow
+                </h4>
+                <div className="flex flex-wrap items-center gap-1 py-2">
+                  {[
+                    { label: 'Open', bg: 'bg-gray-100', text: 'text-gray-800' },
+                    { label: 'Closed', bg: 'bg-blue-100', text: 'text-blue-800' },
+                    { label: 'Loaded', bg: 'bg-yellow-100', text: 'text-yellow-800' },
+                    { label: 'Shipped', bg: 'bg-purple-100', text: 'text-purple-800' },
+                    { label: 'Received', bg: 'bg-green-100', text: 'text-green-800' },
+                  ].map((s, i) => (
+                    <div key={i} className="flex items-center gap-1">
+                      <span className={clsx('px-3 py-1 rounded-full text-xs font-semibold', s.bg, s.text)}>{s.label}</span>
+                      {i < 4 && <ArrowRight className="w-4 h-4 text-gray-300" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                <p className="text-sm text-purple-800">
+                  <strong>Assigning to a load:</strong> Use the load dropdown on each pallet card to assign it to an outbound load. This also moves all items on the pallet to that load.
+                </p>
               </div>
             </div>
           </GuideSection>
@@ -609,11 +747,20 @@ export default function Settings() {
                 </Step>
 
                 <Step number="3">
-                  Choose a tab to browse items:
-                  <div className="mt-2 flex gap-2">
-                    <span className="px-3 py-1 rounded-t-lg bg-blue-100 text-blue-700 text-xs font-semibold border-b-2 border-blue-500">LongShapes</span>
-                    <span className="px-3 py-1 rounded-t-lg bg-gray-100 text-gray-600 text-xs font-semibold">Parts</span>
-                    <span className="px-3 py-1 rounded-t-lg bg-gray-100 text-gray-600 text-xs font-semibold">PullList/Raw</span>
+                  Choose a tab to browse items. Each tab sets a default <strong>send type</strong>:
+                  <div className="mt-2 flex gap-2 flex-wrap">
+                    <div className="flex items-center gap-1">
+                      <span className="px-3 py-1 rounded-t-lg bg-blue-100 text-blue-700 text-xs font-semibold border-b-2 border-blue-500">LongShapes</span>
+                      <span className="text-xs text-gray-400">→ Cut to Length</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="px-3 py-1 rounded-t-lg bg-gray-100 text-gray-600 text-xs font-semibold">Parts</span>
+                      <span className="text-xs text-gray-400">→ Parts on Pallets</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="px-3 py-1 rounded-t-lg bg-gray-100 text-gray-600 text-xs font-semibold">PullList/Raw</span>
+                      <span className="text-xs text-gray-400">→ Raw</span>
+                    </div>
                   </div>
                 </Step>
 
@@ -627,14 +774,14 @@ export default function Settings() {
                 </Step>
 
                 <Step number="6">
-                  Review the selection summary at the bottom showing count, pieces, and total weight, then click
+                  Review the selection summary showing count, pieces, weight, and the <strong>send type selector</strong>. Override the default send type if needed, then click
                   <span className="inline-flex items-center mx-1 px-3 py-0.5 rounded bg-blue-600 text-white text-xs font-semibold">
                     Add Selected Items
                   </span>.
                 </Step>
               </div>
 
-              <Tip>Items track their source (LongShapes, Parts, PullList) and carry material data like Heat Number, Cert Number, and Barcode when available.</Tip>
+              <Tip>Items track their source (LongShapes, Parts, PullList), send type (Raw, Cut to Length, Parts on Pallets), and carry material data like Heat Number, Cert Number, and Barcode when available.</Tip>
             </div>
           </GuideSection>
 
@@ -681,7 +828,7 @@ export default function Settings() {
                     <Step number="3">Confirm in the modal</Step>
                   </div>
                   <div className="mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                    <span className="text-xs text-red-800"><strong>Warning:</strong> This permanently deletes the sub out and all its items. This cannot be undone.</span>
+                    <span className="text-xs text-red-800"><strong>Warning:</strong> This permanently deletes the sub out and all its items, pallets, and loads. This cannot be undone.</span>
                   </div>
                 </div>
               </div>

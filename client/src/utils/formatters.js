@@ -71,6 +71,35 @@ export function truncate(text, maxLength = 50) {
   return text.substring(0, maxLength) + '...'
 }
 
+// Dimension formatter (for pallets)
+export function formatDimensions(length, width, height) {
+  if (!length && !width && !height) return '-'
+  return `${length || 0}" x ${width || 0}" x ${height || 0}"`
+}
+
+// Send type labels
+export const sendTypeLabels = {
+  'Raw': 'Raw',
+  'CutToLength': 'Cut to Length',
+  'PartsOnPallets': 'Parts on Pallets'
+}
+
+export function formatSendType(sendType) {
+  return sendTypeLabels[sendType] || sendType || 'Raw'
+}
+
+// Load status labels
+export const loadStatusLabels = {
+  'Planned': 'Planned',
+  'Loading': 'Loading',
+  'InTransit': 'In Transit',
+  'Delivered': 'Delivered'
+}
+
+export function formatLoadStatus(status) {
+  return loadStatusLabels[status] || status || 'Planned'
+}
+
 // Generate lot number
 export function generateLotNumber(existingLots = []) {
   const numbers = existingLots
