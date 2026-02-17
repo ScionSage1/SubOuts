@@ -13,6 +13,8 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
   const [sendTypeFilter, setSendTypeFilter] = useState('')
   const [editingRMNumber, setEditingRMNumber] = useState({})
   const [selectedPullListIds, setSelectedPullListIds] = useState(new Set())
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
+  const [searchFilter, setSearchFilter] = useState('')
 
   const tabs = [
     { key: 'LongShapes', label: 'LongShapes' },
@@ -21,15 +23,82 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
     { key: 'Combined', label: 'Combined' }
   ]
 
+  // --- Sort helpers ---
+  const handleSort = (key) => {
+    setSortConfig(prev => {
+      if (prev.key === key) {
+        if (prev.direction === 'asc') return { key, direction: 'desc' }
+        return { key: null, direction: 'asc' }
+      }
+      return { key, direction: 'asc' }
+    })
+  }
+
+  const sortComparator = (a, b) => {
+    if (!sortConfig.key) return 0
+    let aVal = a[sortConfig.key]
+    let bVal = b[sortConfig.key]
+    if (aVal == null) aVal = ''
+    if (bVal == null) bVal = ''
+    const aNum = Number(aVal)
+    const bNum = Number(bVal)
+    if (!isNaN(aNum) && !isNaN(bNum) && aVal !== '' && bVal !== '') {
+      return sortConfig.direction === 'asc' ? aNum - bNum : bNum - aNum
+    }
+    const aStr = String(aVal).toLowerCase()
+    const bStr = String(bVal).toLowerCase()
+    if (aStr < bStr) return sortConfig.direction === 'asc' ? -1 : 1
+    if (aStr > bStr) return sortConfig.direction === 'asc' ? 1 : -1
+    return 0
+  }
+
+  const renderSortHeader = (label, sortKey, options = {}) => {
+    const { center = false, px = 'px-4' } = options
+    const isActive = sortConfig.key === sortKey
+    return (
+      <th
+        className={clsx(
+          px, 'py-3 text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700 select-none group',
+          center ? 'text-center' : 'text-left'
+        )}
+        onClick={() => handleSort(sortKey)}
+      >
+        <div className={clsx('flex items-center gap-1', center && 'justify-center')}>
+          {label}
+          <span className={clsx('text-[10px]', isActive ? 'text-blue-500' : 'text-gray-300 opacity-0 group-hover:opacity-100')}>
+            {isActive ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}
+          </span>
+        </div>
+      </th>
+    )
+  }
+
+  // --- Data pipeline ---
   const allFilteredItems = useMemo(() => {
     let result = items || []
     if (sendTypeFilter) {
       result = result.filter(item => item.SendType === sendTypeFilter)
     }
+    if (searchFilter) {
+      const search = searchFilter.toLowerCase()
+      result = result.filter(item => {
+        const fields = [
+          item.MainMark, item.PieceMark, item.Shape, item.Dimension,
+          item.Grade, item.Barcode, item.RMNumber, item.PalletNumber,
+          item.LoadNumber, item.Status, item.SendType
+        ]
+        if (item.Length != null) fields.push(String(item.Length))
+        return fields.some(val => val && String(val).toLowerCase().includes(search))
+      })
+    }
     return result
-  }, [items, sendTypeFilter])
+  }, [items, sendTypeFilter, searchFilter])
 
-  const filteredItems = allFilteredItems.filter(item => item.SourceTable === activeTab)
+  const sortedItems = useMemo(() => {
+    const tabItems = allFilteredItems.filter(item => item.SourceTable === activeTab)
+    if (!sortConfig.key) return tabItems
+    return [...tabItems].sort(sortComparator)
+  }, [allFilteredItems, activeTab, sortConfig])
 
   const getCounts = (sourceTable) => {
     if (sourceTable === 'Combined') {
@@ -57,16 +126,26 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
       }
     })
 
-    const hierarchy = pullListItems.map(pullItem => ({
+    let hierarchy = pullListItems.map(pullItem => ({
       ...pullItem,
       children: pullItem.Barcode ? (longShapesByBarcode[pullItem.Barcode] || []) : []
     }))
 
     const usedBarcodes = new Set(pullListItems.map(p => p.Barcode).filter(Boolean))
-    const orphanLongShapes = longShapesItems.filter(item => !item.Barcode || !usedBarcodes.has(item.Barcode))
+    let orphanLongShapes = longShapesItems.filter(item => !item.Barcode || !usedBarcodes.has(item.Barcode))
+
+    // Apply sorting to hierarchy parents, orphans, and children
+    if (sortConfig.key) {
+      hierarchy = [...hierarchy].sort(sortComparator)
+      orphanLongShapes = [...orphanLongShapes].sort(sortComparator)
+      hierarchy = hierarchy.map(item => ({
+        ...item,
+        children: item.children.length > 1 ? [...item.children].sort(sortComparator) : item.children
+      }))
+    }
 
     return { hierarchy, orphanLongShapes }
-  }, [allFilteredItems])
+  }, [allFilteredItems, sortConfig])
 
   const toggleExpand = (barcode) => {
     setExpandedBarcodes(prev => {
@@ -91,6 +170,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
     setExpandedBarcodes(new Set())
   }
 
+  // --- Cell renderers ---
   const renderSendTypeCell = (item) => {
     if (!onUpdateSendType) {
       return <SendTypeBadge sendType={item.SendType} />
@@ -183,7 +263,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
     </>
   )
 
-  // Multi-select helpers for PullList tab
+  // --- Multi-select helpers for PullList tab ---
   const pullListFilteredItems = allFilteredItems.filter(item => item.SourceTable === 'PullList')
   const allPullListSelected = pullListFilteredItems.length > 0 && pullListFilteredItems.every(item => selectedPullListIds.has(item.SourceID))
 
@@ -237,6 +317,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
     )
   }
 
+  // --- Table renderers ---
   const renderStandardTable = () => (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
@@ -252,32 +333,32 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                 />
               </th>
             )}
-            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+            {renderSortHeader('Type', 'SendType', { px: 'px-3' })}
             {activeTab === 'PullList' && (
               <>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pull Status</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">RM#</th>
+                {renderSortHeader('Pull Status', 'PullStatus', { px: 'px-3' })}
+                {renderSortHeader('RM#', 'RMNumber', { px: 'px-3' })}
               </>
             )}
             {activeTab !== 'PullList' && (
               <>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Main Mark</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Piece Mark</th>
+                {renderSortHeader('Main Mark', 'MainMark')}
+                {renderSortHeader('Piece Mark', 'PieceMark')}
               </>
             )}
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Shape</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Size</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Length</th>
-            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Qty</th>
-            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pallet</th>
-            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Load</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+            {renderSortHeader('Shape', 'Shape')}
+            {renderSortHeader('Size', 'Dimension')}
+            {renderSortHeader('Grade', 'Grade')}
+            {renderSortHeader('Length', 'Length')}
+            {renderSortHeader('Qty', 'Quantity', { center: true })}
+            {renderSortHeader('Pallet', 'PalletNumber', { px: 'px-3' })}
+            {renderSortHeader('Load', 'LoadNumber', { px: 'px-3' })}
+            {renderSortHeader('Status', 'Status')}
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {filteredItems.map(item => (
+          {sortedItems.map(item => (
             <tr key={item.SubOutItemID} className={clsx('hover:bg-gray-50', activeTab === 'PullList' && selectedPullListIds.has(item.SourceID) && 'bg-blue-50')}>
               {activeTab === 'PullList' && (
                 <td className="w-10 px-2 py-3">
@@ -370,20 +451,20 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
             <thead className="bg-gray-50">
               <tr>
                 <th className="w-10 px-2 py-3"></th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pull Status</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">RM#</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barcode</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Main Mark</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Piece Mark</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Shape</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Size</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Length</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Qty</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pallet</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Load</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                {renderSortHeader('Type', 'SendType', { px: 'px-3' })}
+                {renderSortHeader('Pull Status', 'PullStatus', { px: 'px-3' })}
+                {renderSortHeader('RM#', 'RMNumber', { px: 'px-3' })}
+                {renderSortHeader('Barcode', 'Barcode')}
+                {renderSortHeader('Main Mark', 'MainMark')}
+                {renderSortHeader('Piece Mark', 'PieceMark')}
+                {renderSortHeader('Shape', 'Shape')}
+                {renderSortHeader('Size', 'Dimension')}
+                {renderSortHeader('Grade', 'Grade')}
+                {renderSortHeader('Length', 'Length')}
+                {renderSortHeader('Qty', 'Quantity', { center: true })}
+                {renderSortHeader('Pallet', 'PalletNumber', { px: 'px-3' })}
+                {renderSortHeader('Load', 'LoadNumber', { px: 'px-3' })}
+                {renderSortHeader('Status', 'Status')}
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
@@ -519,6 +600,12 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
     )
   }
 
+  const handleTabChange = (tabKey) => {
+    setActiveTab(tabKey)
+    setSelectedPullListIds(new Set())
+    setSortConfig({ key: null, direction: 'asc' })
+  }
+
   return (
     <div>
       {/* Filter bar + Tabs */}
@@ -528,7 +615,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
             {tabs.map(tab => (
               <button
                 key={tab.key}
-                onClick={() => { setActiveTab(tab.key); setSelectedPullListIds(new Set()) }}
+                onClick={() => handleTabChange(tab.key)}
                 className={clsx(
                   'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
                   activeTab === tab.key
@@ -541,7 +628,24 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
             ))}
           </nav>
         </div>
-        <div className="ml-4 flex-shrink-0">
+        <div className="ml-4 flex-shrink-0 flex items-center gap-2">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              placeholder="Search items..."
+              className="text-sm border border-gray-300 rounded-md pl-2 pr-7 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 w-44"
+            />
+            {searchFilter && (
+              <button
+                onClick={() => setSearchFilter('')}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <span className="text-xs font-bold">✕</span>
+              </button>
+            )}
+          </div>
           <select
             value={sendTypeFilter}
             onChange={(e) => setSendTypeFilter(e.target.value)}
@@ -561,9 +665,9 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
       {/* Table Content */}
       {activeTab === 'Combined' ? (
         renderCombinedTable()
-      ) : filteredItems.length === 0 ? (
+      ) : sortedItems.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
-          No {activeTab} items added yet
+          No {activeTab} items {searchFilter ? 'match your search' : 'added yet'}
         </div>
       ) : (
         renderStandardTable()
@@ -572,8 +676,15 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
       {/* Summary */}
       {items && items.length > 0 && (
         <div className="mt-4 text-sm text-gray-500">
-          Total: {allFilteredItems.length}{sendTypeFilter ? ` (filtered from ${items.length})` : ''} items |
+          Total: {allFilteredItems.length}{(sendTypeFilter || searchFilter) ? ` (filtered from ${items.length})` : ''} items |
           Qty columns: Total / Sent / Received
+          {sortConfig.key && (
+            <>
+              {' | '}
+              Sorted by: <span className="font-medium">{sortConfig.key}</span> {sortConfig.direction === 'asc' ? '▲' : '▼'}
+              <button onClick={() => setSortConfig({ key: null, direction: 'asc' })} className="ml-1 text-blue-500 hover:text-blue-700">clear</button>
+            </>
+          )}
         </div>
       )}
     </div>
