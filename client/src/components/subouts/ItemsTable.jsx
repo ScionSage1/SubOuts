@@ -7,11 +7,12 @@ import SendTypeBadge from './SendTypeBadge'
 import { sendTypeOptions } from '../../utils/statusColors'
 import { formatSendType } from '../../utils/formatters'
 
-export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, onUpdatePullListSource, pullStatuses, isDeleting }) {
+export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, onUpdatePullListSource, onBulkUpdatePullListStatus, pullStatuses, isDeleting }) {
   const [activeTab, setActiveTab] = useState('LongShapes')
   const [expandedBarcodes, setExpandedBarcodes] = useState(new Set())
   const [sendTypeFilter, setSendTypeFilter] = useState('')
   const [editingRMNumber, setEditingRMNumber] = useState({})
+  const [selectedPullListIds, setSelectedPullListIds] = useState(new Set())
 
   const tabs = [
     { key: 'LongShapes', label: 'LongShapes' },
@@ -182,11 +183,75 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
     </>
   )
 
+  // Multi-select helpers for PullList tab
+  const pullListFilteredItems = allFilteredItems.filter(item => item.SourceTable === 'PullList')
+  const allPullListSelected = pullListFilteredItems.length > 0 && pullListFilteredItems.every(item => selectedPullListIds.has(item.SourceID))
+
+  const togglePullListSelect = (sourceId) => {
+    setSelectedPullListIds(prev => {
+      const next = new Set(prev)
+      if (next.has(sourceId)) next.delete(sourceId)
+      else next.add(sourceId)
+      return next
+    })
+  }
+
+  const toggleSelectAllPullList = () => {
+    if (allPullListSelected) {
+      setSelectedPullListIds(new Set())
+    } else {
+      setSelectedPullListIds(new Set(pullListFilteredItems.map(item => item.SourceID)))
+    }
+  }
+
+  const handleBulkPullStatusChange = (pullStatus) => {
+    if (selectedPullListIds.size === 0 || !onBulkUpdatePullListStatus) return
+    onBulkUpdatePullListStatus(Array.from(selectedPullListIds), pullStatus === '' ? null : parseInt(pullStatus))
+    setSelectedPullListIds(new Set())
+  }
+
+  const renderBulkActionBar = () => {
+    if (selectedPullListIds.size === 0 || !onBulkUpdatePullListStatus) return null
+    return (
+      <div className="flex items-center gap-3 mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+        <span className="text-sm font-medium text-blue-800">{selectedPullListIds.size} selected</span>
+        <span className="text-gray-300">|</span>
+        <label className="text-sm text-gray-600">Set Pull Status:</label>
+        <select
+          onChange={(e) => handleBulkPullStatusChange(e.target.value)}
+          defaultValue=""
+          className="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="" disabled>Choose...</option>
+          {(pullStatuses || []).map(s => (
+            <option key={s.ConfigValue} value={s.ConfigValue}>{s.ConfigDesc}</option>
+          ))}
+        </select>
+        <button
+          onClick={() => setSelectedPullListIds(new Set())}
+          className="text-sm text-gray-500 hover:text-gray-700 ml-auto"
+        >
+          Clear selection
+        </button>
+      </div>
+    )
+  }
+
   const renderStandardTable = () => (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
+            {activeTab === 'PullList' && (
+              <th className="w-10 px-2 py-3">
+                <input
+                  type="checkbox"
+                  checked={allPullListSelected}
+                  onChange={toggleSelectAllPullList}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+              </th>
+            )}
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
             {activeTab === 'PullList' && (
               <>
@@ -213,7 +278,17 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {filteredItems.map(item => (
-            <tr key={item.SubOutItemID} className="hover:bg-gray-50">
+            <tr key={item.SubOutItemID} className={clsx('hover:bg-gray-50', activeTab === 'PullList' && selectedPullListIds.has(item.SourceID) && 'bg-blue-50')}>
+              {activeTab === 'PullList' && (
+                <td className="w-10 px-2 py-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedPullListIds.has(item.SourceID)}
+                    onChange={() => togglePullListSelect(item.SourceID)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </td>
+              )}
               <td className="px-3 py-3">{renderSendTypeCell(item)}</td>
               {activeTab === 'PullList' && (
                 <>
@@ -241,13 +316,15 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
               </td>
               <td className="px-4 py-3 text-right">
                 <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => onEdit(item)}
-                    className="p-1 text-gray-400 hover:text-blue-600"
-                    title="Edit"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
+                  {activeTab !== 'PullList' && (
+                    <button
+                      onClick={() => onEdit(item)}
+                      className="p-1 text-gray-400 hover:text-blue-600"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     onClick={() => onDelete(item.SubOutItemID)}
                     disabled={isDeleting}
@@ -351,9 +428,6 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                       <td className="px-4 py-3"><StatusBadge status={pullItem.Status} /></td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => onEdit(pullItem)} className="p-1 text-gray-400 hover:text-blue-600" title="Edit">
-                            <Edit2 className="w-4 h-4" />
-                          </button>
                           <button onClick={() => onDelete(pullItem.SubOutItemID)} disabled={isDeleting} className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50" title="Remove">
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -454,7 +528,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
             {tabs.map(tab => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => { setActiveTab(tab.key); setSelectedPullListIds(new Set()) }}
                 className={clsx(
                   'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
                   activeTab === tab.key
@@ -480,6 +554,9 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
           </select>
         </div>
       </div>
+
+      {/* Bulk action bar for PullList multi-select */}
+      {activeTab === 'PullList' && renderBulkActionBar()}
 
       {/* Table Content */}
       {activeTab === 'Combined' ? (

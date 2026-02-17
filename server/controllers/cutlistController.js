@@ -302,11 +302,44 @@ async function updatePullListItem(req, res, next) {
   }
 }
 
+// Bulk update PullStatus on multiple PullList items
+async function bulkUpdatePullListStatus(req, res, next) {
+  try {
+    const { pullListIds, pullStatus } = req.body;
+
+    if (!pullListIds || !Array.isArray(pullListIds) || pullListIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'pullListIds array is required' });
+    }
+    if (pullStatus === undefined) {
+      return res.status(400).json({ success: false, error: 'pullStatus is required' });
+    }
+
+    const params = { pullStatus: pullStatus === null ? null : parseInt(pullStatus) };
+    const placeholders = pullListIds.map((id, idx) => {
+      params[`id${idx}`] = parseInt(id);
+      return `@id${idx}`;
+    });
+
+    const sqlQuery = `
+      UPDATE FabTracker.PullList
+      SET PullStatus = @pullStatus
+      WHERE ID IN (${placeholders.join(',')})
+    `;
+
+    const result = await query(sqlQuery, params);
+
+    res.json({ success: true, updated: result.rowsAffected[0] });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getPackages,
   getLongShapes,
   getParts,
   getPullList,
   getAvailableItems,
-  updatePullListItem
+  updatePullListItem,
+  bulkUpdatePullListStatus
 };

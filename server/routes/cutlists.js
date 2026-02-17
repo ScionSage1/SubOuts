@@ -6,7 +6,8 @@ const {
   getParts,
   getPullList,
   getAvailableItems,
-  updatePullListItem
+  updatePullListItem,
+  bulkUpdatePullListStatus
 } = require('../controllers/cutlistController');
 
 // GET /api/cutlists/packages/:jobCode - Get available packages for a job
@@ -26,5 +27,8 @@ router.get('/available/:jobCode', getAvailableItems);
 
 // PUT /api/cutlists/pulllist/:pullListId - Update PullList source data (PullStatus, RMNumber)
 router.put('/pulllist/:pullListId', updatePullListItem);
+
+// PATCH /api/cutlists/pulllist/bulk-status - Bulk update PullStatus on multiple items
+router.patch('/pulllist/bulk-status', bulkUpdatePullListStatus);
 
 module.exports = router;

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { useSubOut, useDeleteSubOut, useIncrementLoadsOut, useIncrementLoadsIn, useUpdateStatus } from '../hooks/useSubOuts'
 import { useDeleteItem, useBulkAddItems, useUpdateItem } from '../hooks/useSubOutItems'
-import { useUpdatePullListSource } from '../hooks/useCutlists'
+import { useUpdatePullListSource, useBulkUpdatePullListStatus } from '../hooks/useCutlists'
 import { usePullStatuses } from '../hooks/useConfig'
 import { usePallets, useCreatePallet, useUpdatePallet, useDeletePallet, useUpdatePalletStatus, useAssignItemsToPallet, useRemoveItemFromPallet, useAssignPalletToLoad } from '../hooks/usePallets'
 import { useLoads, useCreateLoad, useUpdateLoad, useDeleteLoad, useUpdateLoadStatus, useAssignItemsToLoad, useAssignPalletsToLoad } from '../hooks/useLoads'
@@ -44,6 +44,7 @@ export default function SubOutDetailPage() {
   const { data: pullStatusesData } = usePullStatuses()
   const pullStatuses = pullStatusesData?.data || []
   const updatePullListSourceMutation = useUpdatePullListSource()
+  const bulkUpdatePullListStatusMutation = useBulkUpdatePullListStatus()
 
   // Pallet mutations
   const createPalletMutation = useCreatePallet()
@@ -112,6 +113,10 @@ export default function SubOutDetailPage() {
 
   const handleUpdatePullListSource = (pullListId, data) => {
     updatePullListSourceMutation.mutate({ pullListId, data })
+  }
+
+  const handleBulkUpdatePullListStatus = (pullListIds, pullStatus) => {
+    bulkUpdatePullListStatusMutation.mutate({ pullListIds, pullStatus })
   }
 
   // --- Load handlers ---
@@ -218,6 +223,7 @@ export default function SubOutDetailPage() {
               onEdit={handleEditItem}
               onUpdateSendType={handleUpdateSendType}
               onUpdatePullListSource={handleUpdatePullListSource}
+              onBulkUpdatePullListStatus={handleBulkUpdatePullListStatus}
               pullStatuses={pullStatuses}
               isDeleting={deleteItemMutation.isPending}
             />

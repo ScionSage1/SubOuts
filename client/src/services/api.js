@@ -61,7 +61,8 @@ export const cutlistsApi = {
   getParts: (jobCode, pkg) => api.get(`/cutlists/parts/${jobCode}`, { params: { package: pkg } }),
   getPullList: (jobCode, pkg) => api.get(`/cutlists/pulllist/${jobCode}`, { params: { package: pkg } }),
   getAvailable: (jobCode, pkg) => api.get(`/cutlists/available/${jobCode}`, { params: { package: pkg } }),
-  updatePullListSource: (pullListId, data) => api.put(`/cutlists/pulllist/${pullListId}`, data)
+  updatePullListSource: (pullListId, data) => api.put(`/cutlists/pulllist/${pullListId}`, data),
+  bulkUpdatePullListStatus: (pullListIds, pullStatus) => api.patch('/cutlists/pulllist/bulk-status', { pullListIds, pullStatus })
 }
 
 // Config API

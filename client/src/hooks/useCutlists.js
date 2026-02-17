@@ -52,3 +52,15 @@ export function useUpdatePullListSource() {
     }
   })
 }
+
+export function useBulkUpdatePullListStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ pullListIds, pullStatus }) => cutlistsApi.bulkUpdatePullListStatus(pullListIds, pullStatus),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subouts'] })
+      queryClient.invalidateQueries({ queryKey: ['cutlists'] })
+    }
+  })
+}
