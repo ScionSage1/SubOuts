@@ -131,6 +131,8 @@ async function getPullList(req, res, next) {
         pl.Barcode,
         pl.HeatNumber,
         pl.PONumber,
+        pl.PullStatus,
+        pl.RMNumber,
         'PullList' AS SourceTable
       FROM FabTracker.PullList pl
       JOIN FabTracker.LongShapeCutlist lsc ON pl.LongShapeCutlistID = lsc.ID
@@ -225,6 +227,8 @@ async function getAvailableItems(req, res, next) {
         pl.HeatNumber,
         NULL AS CertNumber,
         pl.Barcode,
+        pl.PullStatus,
+        pl.RMNumber,
         'PullList' AS SourceTable,
         si.SubOutID AS AssignedToSubOutID,
         so.Lot AS AssignedToLot
@@ -255,10 +259,54 @@ async function getAvailableItems(req, res, next) {
   }
 }
 
+// Update PullStatus and/or RMNumber on source PullList table
+async function updatePullListItem(req, res, next) {
+  try {
+    const { pullListId } = req.params;
+    const { pullStatus, rmNumber } = req.body;
+
+    const setClauses = [];
+    const params = { pullListId: parseInt(pullListId) };
+
+    if (pullStatus !== undefined) {
+      setClauses.push('PullStatus = @pullStatus');
+      params.pullStatus = pullStatus === null ? null : parseInt(pullStatus);
+    }
+    if (rmNumber !== undefined) {
+      setClauses.push('RMNumber = @rmNumber');
+      params.rmNumber = rmNumber;
+    }
+
+    if (setClauses.length === 0) {
+      return res.status(400).json({ success: false, error: 'No fields to update' });
+    }
+
+    const sqlQuery = `
+      UPDATE FabTracker.PullList
+      SET ${setClauses.join(', ')}
+      WHERE ID = @pullListId
+    `;
+
+    const result = await query(sqlQuery, params);
+
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({ success: false, error: 'PullList item not found' });
+    }
+
+    const getQuery = `SELECT ID, PullStatus, RMNumber FROM FabTracker.PullList WHERE ID = @pullListId`;
+    const getResult = await query(getQuery, { pullListId: parseInt(pullListId) });
+
+    res.json({ success: true, data: getResult.recordset[0] });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getPackages,
   getLongShapes,
   getParts,
   getPullList,
-  getAvailableItems
+  getAvailableItems,
+  updatePullListItem
 };

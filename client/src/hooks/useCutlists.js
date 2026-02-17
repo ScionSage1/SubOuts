@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { cutlistsApi } from '../services/api'
 
 export function usePackages(jobCode) {
@@ -38,5 +38,17 @@ export function useAvailableItems(jobCode, pkg) {
     queryKey: ['cutlists', 'available', jobCode, pkg],
     queryFn: () => cutlistsApi.getAvailable(jobCode, pkg),
     enabled: !!jobCode && !!pkg
+  })
+}
+
+export function useUpdatePullListSource() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ pullListId, data }) => cutlistsApi.updatePullListSource(pullListId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subouts'] })
+      queryClient.invalidateQueries({ queryKey: ['cutlists'] })
+    }
   })
 }

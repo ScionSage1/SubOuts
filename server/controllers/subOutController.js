@@ -110,6 +110,32 @@ async function getSubOutById(req, res, next) {
       query(loadsQuery, { id: parseInt(id) })
     ]);
 
+    // Enrich PullList items with current PullStatus and RMNumber from source table
+    const pullListItems = itemsResult.recordset.filter(i => i.SourceTable === 'PullList');
+    if (pullListItems.length > 0) {
+      const params = {};
+      const placeholders = pullListItems.map((item, idx) => {
+        params[`id${idx}`] = item.SourceID;
+        return `@id${idx}`;
+      });
+      const pullDataQuery = `
+        SELECT ID, PullStatus, RMNumber
+        FROM FabTracker.PullList
+        WHERE ID IN (${placeholders.join(',')})
+      `;
+      const pullDataResult = await query(pullDataQuery, params);
+      const pullDataMap = {};
+      pullDataResult.recordset.forEach(row => {
+        pullDataMap[row.ID] = { PullStatus: row.PullStatus, RMNumber: row.RMNumber };
+      });
+      itemsResult.recordset.forEach(item => {
+        if (item.SourceTable === 'PullList' && pullDataMap[item.SourceID]) {
+          item.PullStatus = pullDataMap[item.SourceID].PullStatus;
+          item.RMNumber = pullDataMap[item.SourceID].RMNumber;
+        }
+      });
+    }
+
     res.json({
       success: true,
       data: {

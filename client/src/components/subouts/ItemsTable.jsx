@@ -7,10 +7,11 @@ import SendTypeBadge from './SendTypeBadge'
 import { sendTypeOptions } from '../../utils/statusColors'
 import { formatSendType } from '../../utils/formatters'
 
-export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, isDeleting }) {
+export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, onUpdatePullListSource, pullStatuses, isDeleting }) {
   const [activeTab, setActiveTab] = useState('LongShapes')
   const [expandedBarcodes, setExpandedBarcodes] = useState(new Set())
   const [sendTypeFilter, setSendTypeFilter] = useState('')
+  const [editingRMNumber, setEditingRMNumber] = useState({})
 
   const tabs = [
     { key: 'LongShapes', label: 'LongShapes' },
@@ -106,6 +107,70 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
     )
   }
 
+  const renderPullStatusCell = (item) => {
+    if (item.SourceTable !== 'PullList') return null
+    if (!onUpdatePullListSource || !pullStatuses?.length) {
+      const statusConfig = pullStatuses?.find(s => s.ConfigValue === item.PullStatus)
+      return <span className="text-xs text-gray-600">{statusConfig?.ConfigDesc || (item.PullStatus ?? '-')}</span>
+    }
+    return (
+      <select
+        value={item.PullStatus ?? ''}
+        onChange={(e) => onUpdatePullListSource(item.SourceID, { pullStatus: e.target.value === '' ? null : parseInt(e.target.value) })}
+        className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        <option value="">-</option>
+        {pullStatuses.map(s => (
+          <option key={s.ConfigValue} value={s.ConfigValue}>{s.ConfigDesc}</option>
+        ))}
+      </select>
+    )
+  }
+
+  const renderRMNumberCell = (item) => {
+    if (item.SourceTable !== 'PullList') return null
+    if (!onUpdatePullListSource) {
+      return <span className="text-xs text-gray-600">{item.RMNumber || '-'}</span>
+    }
+
+    const isEditing = editingRMNumber[item.SourceID] !== undefined
+    const editValue = editingRMNumber[item.SourceID]
+
+    if (isEditing) {
+      return (
+        <input
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditingRMNumber(prev => ({ ...prev, [item.SourceID]: e.target.value }))}
+          onBlur={() => {
+            if (editValue !== (item.RMNumber || '')) {
+              onUpdatePullListSource(item.SourceID, { rmNumber: editValue || null })
+            }
+            setEditingRMNumber(prev => { const next = { ...prev }; delete next[item.SourceID]; return next })
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.target.blur()
+            if (e.key === 'Escape') {
+              setEditingRMNumber(prev => { const next = { ...prev }; delete next[item.SourceID]; return next })
+            }
+          }}
+          autoFocus
+          className="text-xs border border-blue-300 rounded px-1.5 py-0.5 w-24 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      )
+    }
+
+    return (
+      <span
+        onClick={() => setEditingRMNumber(prev => ({ ...prev, [item.SourceID]: item.RMNumber || '' }))}
+        className="text-xs text-gray-600 cursor-pointer hover:text-blue-600 hover:underline min-w-[2rem] inline-block"
+        title="Click to edit"
+      >
+        {item.RMNumber || '-'}
+      </span>
+    )
+  }
+
   const renderAssignmentCells = (item) => (
     <>
       <td className="px-3 py-3 text-xs text-gray-500">
@@ -123,6 +188,12 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
         <thead className="bg-gray-50">
           <tr>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+            {activeTab === 'PullList' && (
+              <>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pull Status</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">RM#</th>
+              </>
+            )}
             {activeTab !== 'PullList' && (
               <>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Main Mark</th>
@@ -144,6 +215,12 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
           {filteredItems.map(item => (
             <tr key={item.SubOutItemID} className="hover:bg-gray-50">
               <td className="px-3 py-3">{renderSendTypeCell(item)}</td>
+              {activeTab === 'PullList' && (
+                <>
+                  <td className="px-3 py-3">{renderPullStatusCell(item)}</td>
+                  <td className="px-3 py-3">{renderRMNumberCell(item)}</td>
+                </>
+              )}
               {activeTab !== 'PullList' && (
                 <>
                   <td className="px-4 py-3 text-sm text-gray-900">{item.MainMark || '-'}</td>
@@ -217,6 +294,8 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
               <tr>
                 <th className="w-10 px-2 py-3"></th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pull Status</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">RM#</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barcode</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Main Mark</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Piece Mark</th>
@@ -250,6 +329,8 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                         )}
                       </td>
                       <td className="px-3 py-3">{renderSendTypeCell(pullItem)}</td>
+                      <td className="px-3 py-3">{renderPullStatusCell(pullItem)}</td>
+                      <td className="px-3 py-3">{renderRMNumberCell(pullItem)}</td>
                       <td className="px-4 py-3 text-sm font-medium text-blue-800">
                         {pullItem.Barcode || '-'}
                         {hasChildren && (
@@ -284,6 +365,8 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                       <tr key={child.SubOutItemID} className="bg-gray-50 hover:bg-gray-100">
                         <td className="px-2 py-3"></td>
                         <td className="px-3 py-3">{renderSendTypeCell(child)}</td>
+                        <td className="px-3 py-3"></td>
+                        <td className="px-3 py-3"></td>
                         <td className="px-4 py-3 text-sm text-gray-400 pl-8">
                           <span className="text-gray-300">└</span> {child.Barcode || '-'}
                         </td>
@@ -318,7 +401,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
               {orphanLongShapes.length > 0 && (
                 <>
                   <tr className="bg-yellow-50">
-                    <td colSpan="14" className="px-4 py-2 text-sm font-medium text-yellow-800">
+                    <td colSpan="16" className="px-4 py-2 text-sm font-medium text-yellow-800">
                       Unmatched LongShapes ({orphanLongShapes.length})
                     </td>
                   </tr>
@@ -326,6 +409,8 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                     <tr key={item.SubOutItemID} className="hover:bg-gray-50">
                       <td className="px-2 py-3"></td>
                       <td className="px-3 py-3">{renderSendTypeCell(item)}</td>
+                      <td className="px-3 py-3"></td>
+                      <td className="px-3 py-3"></td>
                       <td className="px-4 py-3 text-sm text-gray-400">{item.Barcode || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{item.MainMark || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{item.PieceMark || '-'}</td>

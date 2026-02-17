@@ -60,7 +60,13 @@ export const cutlistsApi = {
   getLongShapes: (jobCode, pkg) => api.get(`/cutlists/longshapes/${jobCode}`, { params: { package: pkg } }),
   getParts: (jobCode, pkg) => api.get(`/cutlists/parts/${jobCode}`, { params: { package: pkg } }),
   getPullList: (jobCode, pkg) => api.get(`/cutlists/pulllist/${jobCode}`, { params: { package: pkg } }),
-  getAvailable: (jobCode, pkg) => api.get(`/cutlists/available/${jobCode}`, { params: { package: pkg } })
+  getAvailable: (jobCode, pkg) => api.get(`/cutlists/available/${jobCode}`, { params: { package: pkg } }),
+  updatePullListSource: (pullListId, data) => api.put(`/cutlists/pulllist/${pullListId}`, data)
+}
+
+// Config API
+export const configApi = {
+  getPullStatuses: () => api.get('/config/pull-statuses')
 }
 
 // Dashboard API

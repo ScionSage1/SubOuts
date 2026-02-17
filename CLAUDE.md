@@ -38,7 +38,7 @@ D:\Claude\SubOuts\
 │   │   │   │   └── cortex-config.js  # MFCCortex server config
 │   │   │   ├── subouts/             # SubOut-specific components
 │   │   │   │   ├── ItemPicker.jsx    # Cutlist item selector with send type defaults
-│   │   │   │   ├── ItemsTable.jsx    # Items table with SendType column & filter
+│   │   │   │   ├── ItemsTable.jsx    # Items table with SendType, PullStatus, RMNumber columns
 │   │   │   │   ├── JobGroup.jsx
 │   │   │   │   ├── LoadForm.jsx      # Load create/edit modal
 │   │   │   │   ├── LoadItemAssigner.jsx  # Assign items/pallets to a load
@@ -64,7 +64,8 @@ D:\Claude\SubOuts\
 │   │   │   ├── useLoads.js          # Load CRUD, status, item/pallet assignment hooks
 │   │   │   ├── useVendors.js
 │   │   │   ├── useJobs.js
-│   │   │   ├── useCutlists.js
+│   │   │   ├── useCutlists.js       # Cutlist queries + PullList source update mutation
+│   │   │   ├── useConfig.js         # Config lookup hooks (pull statuses)
 │   │   │   ├── useDashboard.js
 │   │   │   └── useCommunications.js  # Communication log hooks
 │   │   ├── pages/
@@ -97,7 +98,8 @@ D:\Claude\SubOuts\
 │   │   ├── loadController.js        # Load CRUD, status, item/pallet assignment
 │   │   ├── vendorController.js
 │   │   ├── jobController.js
-│   │   ├── cutlistController.js
+│   │   ├── cutlistController.js     # Cutlist queries + PullList source update
+│   │   ├── configController.js      # Config lookup (pull statuses)
 │   │   └── dashboardController.js
 │   ├── routes/
 │   │   ├── subouts.js
@@ -106,7 +108,8 @@ D:\Claude\SubOuts\
 │   │   ├── loads.js                 # Load routes under /api/subouts/:subOutId/loads
 │   │   ├── vendors.js
 │   │   ├── jobs.js
-│   │   ├── cutlists.js
+│   │   ├── cutlists.js              # Includes PUT for PullList source update
+│   │   ├── config.js                # Config lookup routes (/api/config)
 │   │   ├── dashboard.js
 │   │   └── communications.js        # Communication log API
 │   ├── middleware/
@@ -180,6 +183,14 @@ CORS_ORIGIN=http://localhost:4000
   - LoadID (FK to SubOutLoads, nullable)
   - PhotoURL, Notes
   - Unique: (SubOutID, PalletNumber)
+- **FabTracker.ConfigItems** - Configuration lookup table (shared, read from MFC_NTLIVE)
+  - ConfigName = 'LongPullStatus' provides PullStatus integer-to-label mapping
+  - ConfigValue (INT) = the status integer stored on PullList/LongShapes
+  - ConfigDesc (NVARCHAR) = human-readable label (e.g., "Not Pulled", "On Sweeps", "Staged")
+- **FabTracker.PullList** - Source pull list items (shared, read/write from MFC_NTLIVE)
+  - PullStatus (INT) - Maps to ConfigItems where ConfigName = 'LongPullStatus'
+  - RMNumber (NVARCHAR) - Requisition material number
+  - These fields are fetched live and displayed on SubOut items; edits write back to this table
 - **SubFabricatorCommunicationLog** - Communication history with vendors
   - Fields: ContactDate, ContactType, ContactPerson, MFCEmployee, Summary, Details
   - Follow-up tracking: FollowUpRequired, FollowUpDate, FollowUpType, FollowUpNotes, FollowUpCompleted
@@ -262,12 +273,16 @@ Run these scripts on the FabTracker database:
 - `GET /:jobCode` - Get single job
 - `GET /:jobCode/subouts` - Get job's sub outs
 
+### Config (`/api/config`)
+- `GET /pull-statuses` - Get PullStatus lookup values from ConfigItems (LongPullStatus)
+
 ### Cutlists (`/api/cutlists`)
 - `GET /packages/:jobCode` - Get available packages
 - `GET /longshapes/:jobCode` - Get long shapes (query: package)
 - `GET /parts/:jobCode` - Get parts (query: package)
-- `GET /pulllist/:jobCode` - Get pull list (query: package)
-- `GET /available/:jobCode` - Get available items (query: package)
+- `GET /pulllist/:jobCode` - Get pull list with PullStatus & RMNumber (query: package)
+- `GET /available/:jobCode` - Get available items with PullStatus & RMNumber for PullList (query: package)
+- `PUT /pulllist/:pullListId` - Update PullStatus/RMNumber on source FabTracker.PullList (body: { pullStatus, rmNumber })
 
 ### Dashboard (`/api/dashboard`)
 - `GET /stats` - Overall statistics
@@ -354,6 +369,15 @@ Items can be classified into three send types reflecting real-world scenarios:
 - Send type tracking: Raw, CutToLength, PartsOnPallets
 - Pallet and Load assignment tracking
 - Lot number generation: SUB#001, SUB#002, etc.
+
+### Pull Status & RM Number Tracking
+- PullStatus and RMNumber are fetched live from `FabTracker.PullList` source table when a SubOut is opened
+- PullStatus is an integer mapped to ConfigItems lookup (ConfigName = 'LongPullStatus')
+- Available statuses: Not Pulled (0), On Sweeps (1), Staged (2), Locating (3), On Order (4), Processing (5), TFS/Done (6), Pulled Sub (7), Direct To Sub (8), ON HOLD (9), Loaded Sub (10)
+- Inline dropdown on PullList/Raw tab and Combined tab parent rows
+- RMNumber is editable inline (click to edit, blur/Enter saves, Escape cancels)
+- Changes write back to the source `FabTracker.PullList` table, not to SubOutItems
+- Config lookup cached for 30 minutes (rarely changes)
 
 ### Database
 - Connection pooling (max 10, timeout 30s)
@@ -489,6 +513,8 @@ Click on any sub out card or table row to open its detail page. The detail page 
 
 5. **Items Section** - All items in a tabbed table (LongShapes, Parts, PullList, Combined):
    - **SendType column** with inline dropdown to change type (Raw / Cut to Length / Parts on Pallets)
+   - **Pull Status column** (PullList tab + Combined parent rows) - Inline dropdown to update status on source FabTracker.PullList
+   - **RM# column** (PullList tab + Combined parent rows) - Click-to-edit text field, writes back to source FabTracker.PullList
    - **Pallet** and **Load** columns showing assignments
    - **Send type filter** dropdown above the tabs
    - Use **"+ Add Items"** to add from the job's cutlist
@@ -573,6 +599,29 @@ Each item has a **Send Type** indicating how it will be handled:
 - On the Items table, change send type inline via the dropdown in the Type column.
 - Filter items by send type using the dropdown above the tabs.
 - Only items with SendType = "PartsOnPallets" can be assigned to pallets.
+
+---
+
+### Managing Pull Status & RM Numbers
+
+Pull list items display their **Pull Status** and **RM Number** from the source `FabTracker.PullList` table. These columns appear on the **PullList/Raw tab** and on **parent rows in the Combined tab**.
+
+**Viewing Pull Status:**
+- The Pull Status column shows a dropdown with status options loaded from the ConfigItems lookup table.
+- Statuses include: Not Pulled, On Sweeps, Staged, Locating, On Order, Processing, TFS/Done, Pulled Sub, Direct To Sub, ON HOLD, Loaded Sub.
+
+**Changing Pull Status:**
+1. Open a sub out's detail page and navigate to the **PullList/Raw** tab (or **Combined** tab).
+2. Click the **Pull Status** dropdown on any pull list item.
+3. Select a new status. The change is saved immediately back to the source `FabTracker.PullList` table.
+
+**Editing RM Number:**
+1. On the PullList/Raw or Combined tab, click the **RM#** value (or the "-" placeholder if empty).
+2. An inline text input appears. Type the RM number.
+3. Press **Enter** or click away (blur) to save. Press **Escape** to cancel without saving.
+4. The change is saved immediately back to the source `FabTracker.PullList` table.
+
+**Important:** Pull Status and RM Number are properties of the source pull list item, not the SubOut. Changes affect the source data and will be reflected anywhere the same pull list item appears.
 
 ---
 

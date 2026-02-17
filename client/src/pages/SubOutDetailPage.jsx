@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { useSubOut, useDeleteSubOut, useIncrementLoadsOut, useIncrementLoadsIn, useUpdateStatus } from '../hooks/useSubOuts'
 import { useDeleteItem, useBulkAddItems, useUpdateItem } from '../hooks/useSubOutItems'
+import { useUpdatePullListSource } from '../hooks/useCutlists'
+import { usePullStatuses } from '../hooks/useConfig'
 import { usePallets, useCreatePallet, useUpdatePallet, useDeletePallet, useUpdatePalletStatus, useAssignItemsToPallet, useRemoveItemFromPallet, useAssignPalletToLoad } from '../hooks/usePallets'
 import { useLoads, useCreateLoad, useUpdateLoad, useDeleteLoad, useUpdateLoadStatus, useAssignItemsToLoad, useAssignPalletsToLoad } from '../hooks/useLoads'
 import SubOutDetail from '../components/subouts/SubOutDetail'
@@ -37,6 +39,11 @@ export default function SubOutDetailPage() {
   const deleteItemMutation = useDeleteItem()
   const bulkAddMutation = useBulkAddItems()
   const updateItemMutation = useUpdateItem()
+
+  // PullList source data
+  const { data: pullStatusesData } = usePullStatuses()
+  const pullStatuses = pullStatusesData?.data || []
+  const updatePullListSourceMutation = useUpdatePullListSource()
 
   // Pallet mutations
   const createPalletMutation = useCreatePallet()
@@ -101,6 +108,10 @@ export default function SubOutDetailPage() {
 
   const handleUpdateSendType = (itemId, sendType) => {
     updateItemMutation.mutate({ subOutId: id, itemId, data: { sendType } })
+  }
+
+  const handleUpdatePullListSource = (pullListId, data) => {
+    updatePullListSourceMutation.mutate({ pullListId, data })
   }
 
   // --- Load handlers ---
@@ -206,6 +217,8 @@ export default function SubOutDetailPage() {
               onDelete={handleDeleteItem}
               onEdit={handleEditItem}
               onUpdateSendType={handleUpdateSendType}
+              onUpdatePullListSource={handleUpdatePullListSource}
+              pullStatuses={pullStatuses}
               isDeleting={deleteItemMutation.isPending}
             />
           </Card.Body>

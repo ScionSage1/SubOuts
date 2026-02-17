@@ -5,7 +5,8 @@ const {
   getLongShapes,
   getParts,
   getPullList,
-  getAvailableItems
+  getAvailableItems,
+  updatePullListItem
 } = require('../controllers/cutlistController');
 
 // GET /api/cutlists/packages/:jobCode - Get available packages for a job
@@ -22,5 +23,8 @@ router.get('/pulllist/:jobCode', getPullList);
 
 // GET /api/cutlists/available/:jobCode - Get all available items not yet assigned
 router.get('/available/:jobCode', getAvailableItems);
+
+// PUT /api/cutlists/pulllist/:pullListId - Update PullList source data (PullStatus, RMNumber)
+router.put('/pulllist/:pullListId', updatePullListItem);
 
 module.exports = router;

@@ -6,6 +6,22 @@ Format: [Date] - Summary of changes
 
 ---
 
+## 2026-02-17
+
+### Added
+- **PullStatus & RMNumber columns** - Pull list items now show PullStatus and RMNumber from source FabTracker.PullList table
+  - `server/controllers/configController.js` + `server/routes/config.js` - New config endpoint to fetch LongPullStatus lookup values from ConfigItems
+  - `server/controllers/cutlistController.js` - Added PullStatus/RMNumber to pulllist queries + new PUT endpoint to update source PullList table
+  - `server/controllers/subOutController.js` - Enriches PullList items with current PullStatus/RMNumber when loading SubOut detail
+  - `client/src/hooks/useConfig.js` - New usePullStatuses hook (30min stale time)
+  - `client/src/hooks/useCutlists.js` - Added useUpdatePullListSource mutation hook
+  - `client/src/services/api.js` - Added configApi and cutlistsApi.updatePullListSource
+  - `client/src/components/subouts/ItemsTable.jsx` - PullStatus inline dropdown + RMNumber click-to-edit on PullList tab and Combined tab parent rows
+  - `client/src/pages/SubOutDetailPage.jsx` - Wired up new hooks and props
+  - `server/server.js` - Mounted /api/config routes
+
+---
+
 ## 2026-02-16
 
 ### Added
