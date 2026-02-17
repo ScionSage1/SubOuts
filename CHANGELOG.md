@@ -9,6 +9,23 @@ Format: [Date] - Summary of changes
 ## 2026-02-17
 
 ### Added
+- **Sortable columns & search filter** - All ItemsTable grids are now sortable and filterable
+  - Click any column header to sort ascending/descending (third click clears sort)
+  - Sort indicators show on hover and turn blue when active
+  - New "Search items..." text input filters across all text fields (Shape, MainMark, PieceMark, Grade, Barcode, etc.)
+  - Clear button (✕) on search input, sort resets on tab change
+  - Combined tab sorts parent rows, orphan rows, and children independently
+  - Summary bar shows active sort column with a "clear" link
+  - `client/src/components/subouts/ItemsTable.jsx` - Added sortConfig state, sortComparator, renderSortHeader, searchFilter
+
+- **Multi-select bulk PullStatus update** - Select multiple PullList items and change their PullStatus at once
+  - Checkbox column on PullList tab with select-all header
+  - Bulk action bar with PullStatus dropdown when items are selected
+  - Removed non-functional edit button from PullList tab rows
+  - `server/controllers/cutlistController.js` - New bulkUpdatePullListStatus endpoint
+  - `server/routes/cutlists.js` - PATCH /pulllist/bulk-status route
+  - `client/src/hooks/useCutlists.js` - useBulkUpdatePullListStatus mutation hook
+
 - **PullStatus & RMNumber columns** - Pull list items now show PullStatus and RMNumber from source FabTracker.PullList table
   - `server/controllers/configController.js` + `server/routes/config.js` - New config endpoint to fetch LongPullStatus lookup values from ConfigItems
   - `server/controllers/cutlistController.js` - Added PullStatus/RMNumber to pulllist queries + new PUT endpoint to update source PullList table
