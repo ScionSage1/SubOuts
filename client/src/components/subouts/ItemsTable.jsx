@@ -694,7 +694,14 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
       {items && items.length > 0 && (
         <div className="mt-4 text-sm text-gray-500">
           Total: {allFilteredItems.length}{(sendTypeFilter || searchFilter) ? ` (filtered from ${items.length})` : ''} items |
-          Qty columns: Total / Sent / Received
+          {(() => {
+            const tabItems = activeTab === 'Combined'
+              ? allFilteredItems.filter(i => i.SourceTable === 'PullList' || i.SourceTable === 'LongShapes')
+              : allFilteredItems.filter(i => i.SourceTable === activeTab)
+            const totalWeight = tabItems.reduce((sum, i) => sum + ((i.TeklaWeight != null ? i.TeklaWeight : i.Weight) || 0) * (i.Quantity || 1), 0)
+            return totalWeight > 0 ? <>{' '}Weight: <span className="font-medium">{formatWeight(totalWeight)}</span> |</> : null
+          })()}
+          {' '}Qty columns: Total / Sent / Received
           {sortConfig.key && (
             <>
               {' | '}
