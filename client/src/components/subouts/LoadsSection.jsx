@@ -63,12 +63,10 @@ export default function LoadsSection({
 
   const handleAssignItems = (itemIds) => {
     onAssignItemsToLoad({ subOutId, loadId: assigningLoad.LoadID, itemIds })
-    setAssigningLoad(null)
   }
 
   const handleAssignPallets = (palletIds) => {
     onAssignPalletsToLoad({ subOutId, loadId: assigningLoad.LoadID, palletIds })
-    setAssigningLoad(null)
   }
 
   const getItemsForLoad = (loadId) => {

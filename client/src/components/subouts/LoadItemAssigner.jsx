@@ -5,22 +5,39 @@ import Button from '../common/Button'
 import SendTypeBadge from './SendTypeBadge'
 import { formatWeight } from '../../utils/formatters'
 
+const itemTabs = [
+  { key: 'LongShapes', label: 'LongShapes' },
+  { key: 'Parts', label: 'Parts' },
+  { key: 'PullList', label: 'PullList/Raw' },
+]
+
+function getItemWeight(item) {
+  return item.TeklaWeight != null ? item.TeklaWeight : item.Weight
+}
+
 export default function LoadItemAssigner({ isOpen, onClose, items, pallets, loadId, loadNumber, onAssignItems, onAssignPallets, isAssigning }) {
-  const [activeTab, setActiveTab] = useState('items')
+  const [activeTab, setActiveTab] = useState('LongShapes')
   const [selectedItemIds, setSelectedItemIds] = useState([])
   const [selectedPalletIds, setSelectedPalletIds] = useState([])
 
-  // Available items: not on any load, or already on this load
-  const availableItems = useMemo(() => {
-    return (items || []).filter(item =>
+  // Available items by source: not on a pallet, not on another load (or already on this load)
+  const availableItemsBySource = useMemo(() => {
+    const base = (items || []).filter(item =>
       !item.PalletID && (!item.LoadID || item.LoadID === loadId)
     )
+    return {
+      LongShapes: base.filter(i => i.SourceTable === 'LongShapes'),
+      Parts: base.filter(i => i.SourceTable === 'Parts'),
+      PullList: base.filter(i => i.SourceTable === 'PullList'),
+    }
   }, [items, loadId])
 
   // Available pallets: not on any load, or already on this load
   const availablePallets = useMemo(() => {
     return (pallets || []).filter(p => !p.LoadID || p.LoadID === loadId)
   }, [pallets, loadId])
+
+  const currentTabItems = availableItemsBySource[activeTab] || []
 
   const toggleItem = (id) => {
     setSelectedItemIds(prev =>
@@ -34,8 +51,13 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
     )
   }
 
-  const selectAllItems = () => {
-    setSelectedItemIds(availableItems.filter(i => !i.LoadID).map(i => i.SubOutItemID))
+  const selectAllTabItems = () => {
+    const unassigned = currentTabItems.filter(i => !i.LoadID).map(i => i.SubOutItemID)
+    setSelectedItemIds(prev => {
+      const existing = new Set(prev)
+      unassigned.forEach(id => existing.add(id))
+      return Array.from(existing)
+    })
   }
 
   const selectAllPallets = () => {
@@ -43,13 +65,15 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
   }
 
   const handleAssign = () => {
-    if (activeTab === 'items' && selectedItemIds.length > 0) {
+    if (selectedItemIds.length > 0) {
       onAssignItems(selectedItemIds)
-    } else if (activeTab === 'pallets' && selectedPalletIds.length > 0) {
+    }
+    if (selectedPalletIds.length > 0) {
       onAssignPallets(selectedPalletIds)
     }
     setSelectedItemIds([])
     setSelectedPalletIds([])
+    onClose()
   }
 
   const handleClose = () => {
@@ -58,13 +82,15 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
     onClose()
   }
 
+  // Summary across all selected items (any tab)
   const itemsSummary = useMemo(() => {
-    const selected = availableItems.filter(i => selectedItemIds.includes(i.SubOutItemID))
+    const allAvailable = [...(availableItemsBySource.LongShapes || []), ...(availableItemsBySource.Parts || []), ...(availableItemsBySource.PullList || [])]
+    const selected = allAvailable.filter(i => selectedItemIds.includes(i.SubOutItemID))
     return {
       count: selected.length,
-      weight: selected.reduce((sum, i) => sum + (parseFloat(i.Weight) || 0), 0)
+      weight: selected.reduce((sum, i) => sum + (parseFloat(getItemWeight(i)) || 0), 0)
     }
-  }, [selectedItemIds, availableItems])
+  }, [selectedItemIds, availableItemsBySource])
 
   const palletsSummary = useMemo(() => {
     const selected = availablePallets.filter(p => selectedPalletIds.includes(p.PalletID))
@@ -75,154 +101,205 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
     }
   }, [selectedPalletIds, availablePallets])
 
-  const hasSelection = activeTab === 'items' ? selectedItemIds.length > 0 : selectedPalletIds.length > 0
+  const hasSelection = selectedItemIds.length > 0 || selectedPalletIds.length > 0
+
+  // Count selected items per tab for badge display
+  const selectedCountForTab = (tabKey) => {
+    const tabItemIds = new Set((availableItemsBySource[tabKey] || []).map(i => i.SubOutItemID))
+    return selectedItemIds.filter(id => tabItemIds.has(id)).length
+  }
+
+  const renderItemTable = () => {
+    if (currentTabItems.length === 0) {
+      return (
+        <div className="text-center py-8 text-gray-500">
+          No unassigned {activeTab === 'PullList' ? 'PullList/Raw' : activeTab} items available.
+        </div>
+      )
+    }
+
+    const unassignedCount = currentTabItems.filter(i => !i.LoadID).length
+    const showMainMark = activeTab === 'LongShapes' || activeTab === 'Parts'
+    const showPieceMark = activeTab === 'LongShapes' || activeTab === 'Parts'
+    const showGrade = activeTab === 'PullList'
+    const showLength = activeTab === 'LongShapes' || activeTab === 'PullList'
+
+    return (
+      <>
+        <div className="flex items-center justify-between mb-2">
+          <button onClick={selectAllTabItems} className="text-sm text-blue-600 hover:text-blue-800">
+            Select all unassigned ({unassignedCount})
+          </button>
+        </div>
+        <div className="max-h-80 overflow-y-auto border rounded-md">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50 sticky top-0">
+              <tr>
+                <th className="w-10 px-3 py-2"></th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Type</th>
+                {showMainMark && <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Main Mark</th>}
+                {showPieceMark && <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Piece Mark</th>}
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Shape</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Size</th>
+                {showGrade && <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Grade</th>}
+                {showLength && <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Length</th>}
+                <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">Qty</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Weight</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {currentTabItems.map(item => {
+                const onThisLoad = item.LoadID === loadId
+                const isSelected = selectedItemIds.includes(item.SubOutItemID)
+                return (
+                  <tr
+                    key={item.SubOutItemID}
+                    className={clsx(
+                      'cursor-pointer',
+                      onThisLoad ? 'bg-green-50' : 'hover:bg-blue-50',
+                      isSelected && 'bg-blue-100'
+                    )}
+                    onClick={() => !onThisLoad && toggleItem(item.SubOutItemID)}
+                  >
+                    <td className="px-3 py-2">
+                      <input
+                        type="checkbox"
+                        checked={isSelected || onThisLoad}
+                        onChange={() => toggleItem(item.SubOutItemID)}
+                        disabled={onThisLoad}
+                        className="rounded border-gray-300"
+                      />
+                    </td>
+                    <td className="px-3 py-2"><SendTypeBadge sendType={item.SendType} /></td>
+                    {showMainMark && <td className="px-3 py-2 text-sm">{item.MainMark || '-'}</td>}
+                    {showPieceMark && <td className="px-3 py-2 text-sm">{item.PieceMark || '-'}</td>}
+                    <td className="px-3 py-2 text-sm">{item.Shape || '-'}</td>
+                    <td className="px-3 py-2 text-sm">{item.Dimension || '-'}</td>
+                    {showGrade && <td className="px-3 py-2 text-sm">{item.Grade || '-'}</td>}
+                    {showLength && <td className="px-3 py-2 text-sm">{item.Length || '-'}</td>}
+                    <td className="px-3 py-2 text-sm text-center">{item.Quantity || 0}</td>
+                    <td className="px-3 py-2 text-sm text-right">
+                      <span className={item.TeklaWeight != null ? 'text-blue-600' : ''}>
+                        {formatWeight(getItemWeight(item))}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </>
+    )
+  }
+
+  const renderPalletsTable = () => {
+    if (availablePallets.length === 0) {
+      return (
+        <div className="text-center py-8 text-gray-500">
+          No pallets available. Create pallets first.
+        </div>
+      )
+    }
+
+    return (
+      <>
+        <div className="flex items-center justify-between mb-2">
+          <button onClick={selectAllPallets} className="text-sm text-blue-600 hover:text-blue-800">
+            Select all unassigned ({availablePallets.filter(p => !p.LoadID).length})
+          </button>
+        </div>
+        <div className="max-h-80 overflow-y-auto border rounded-md">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50 sticky top-0">
+              <tr>
+                <th className="w-10 px-3 py-2"></th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Pallet</th>
+                <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">Items</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Weight</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {availablePallets.map(pallet => (
+                <tr
+                  key={pallet.PalletID}
+                  className={clsx(
+                    'cursor-pointer',
+                    pallet.LoadID === loadId ? 'bg-green-50' : 'hover:bg-blue-50',
+                    selectedPalletIds.includes(pallet.PalletID) && 'bg-blue-100'
+                  )}
+                  onClick={() => !pallet.LoadID && togglePallet(pallet.PalletID)}
+                >
+                  <td className="px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedPalletIds.includes(pallet.PalletID) || pallet.LoadID === loadId}
+                      onChange={() => togglePallet(pallet.PalletID)}
+                      disabled={pallet.LoadID === loadId}
+                      className="rounded border-gray-300"
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-sm font-medium text-purple-700">{pallet.PalletNumber}</td>
+                  <td className="px-3 py-2 text-sm text-center">{pallet.ItemCount || 0}</td>
+                  <td className="px-3 py-2 text-sm">{pallet.Status}</td>
+                  <td className="px-3 py-2 text-sm text-right">{formatWeight(pallet.Weight)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
+    )
+  }
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={`Assign to ${loadNumber}`} size="lg">
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-4">
-        <nav className="flex gap-4">
-          <button
-            onClick={() => setActiveTab('items')}
-            className={clsx(
-              'px-4 py-2 text-sm font-medium border-b-2 -mb-px',
-              activeTab === 'items' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-            )}
-          >
-            Items ({availableItems.length})
-          </button>
+        <nav className="flex gap-2">
+          {itemTabs.map(tab => {
+            const count = (availableItemsBySource[tab.key] || []).length
+            const selCount = selectedCountForTab(tab.key)
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={clsx(
+                  'px-3 py-2 text-sm font-medium border-b-2 -mb-px',
+                  activeTab === tab.key ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                )}
+              >
+                {tab.label} ({count})
+                {selCount > 0 && <span className="ml-1 text-xs bg-blue-100 text-blue-700 rounded-full px-1.5">{selCount}</span>}
+              </button>
+            )
+          })}
           <button
             onClick={() => setActiveTab('pallets')}
             className={clsx(
-              'px-4 py-2 text-sm font-medium border-b-2 -mb-px',
+              'px-3 py-2 text-sm font-medium border-b-2 -mb-px',
               activeTab === 'pallets' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
             )}
           >
             Pallets ({availablePallets.length})
+            {selectedPalletIds.length > 0 && <span className="ml-1 text-xs bg-blue-100 text-blue-700 rounded-full px-1.5">{selectedPalletIds.length}</span>}
           </button>
         </nav>
       </div>
 
-      {activeTab === 'items' ? (
-        <>
-          {availableItems.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No unassigned items available (items on pallets are assigned via the Pallets tab).
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between mb-2">
-                <button onClick={selectAllItems} className="text-sm text-blue-600 hover:text-blue-800">
-                  Select all unassigned ({availableItems.filter(i => !i.LoadID).length})
-                </button>
-              </div>
-              <div className="max-h-80 overflow-y-auto border rounded-md">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50 sticky top-0">
-                    <tr>
-                      <th className="w-10 px-3 py-2"></th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Type</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Mark</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Shape</th>
-                      <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">Qty</th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Weight</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {availableItems.map(item => (
-                      <tr
-                        key={item.SubOutItemID}
-                        className={clsx(
-                          'cursor-pointer',
-                          item.LoadID === loadId ? 'bg-green-50' : 'hover:bg-blue-50',
-                          selectedItemIds.includes(item.SubOutItemID) && 'bg-blue-100'
-                        )}
-                        onClick={() => !item.LoadID && toggleItem(item.SubOutItemID)}
-                      >
-                        <td className="px-3 py-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedItemIds.includes(item.SubOutItemID) || item.LoadID === loadId}
-                            onChange={() => toggleItem(item.SubOutItemID)}
-                            disabled={item.LoadID === loadId}
-                            className="rounded border-gray-300"
-                          />
-                        </td>
-                        <td className="px-3 py-2"><SendTypeBadge sendType={item.SendType} /></td>
-                        <td className="px-3 py-2 text-sm">{item.PieceMark || item.MainMark || '-'}</td>
-                        <td className="px-3 py-2 text-sm">{item.Shape || '-'}</td>
-                        <td className="px-3 py-2 text-sm text-center">{item.Quantity || 0}</td>
-                        <td className="px-3 py-2 text-sm text-right">{formatWeight(item.Weight)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-3 p-3 bg-gray-50 rounded-md text-sm text-gray-600">
-                Selected: {itemsSummary.count} items ({formatWeight(itemsSummary.weight)})
-              </div>
-            </>
+      {activeTab === 'pallets' ? renderPalletsTable() : renderItemTable()}
+
+      {/* Selection summary */}
+      {hasSelection && (
+        <div className="mt-3 p-3 bg-gray-50 rounded-md text-sm text-gray-600 flex items-center gap-4">
+          {itemsSummary.count > 0 && (
+            <span>{itemsSummary.count} items ({formatWeight(itemsSummary.weight)})</span>
           )}
-        </>
-      ) : (
-        <>
-          {availablePallets.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No pallets available. Create pallets first.
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between mb-2">
-                <button onClick={selectAllPallets} className="text-sm text-blue-600 hover:text-blue-800">
-                  Select all unassigned ({availablePallets.filter(p => !p.LoadID).length})
-                </button>
-              </div>
-              <div className="max-h-80 overflow-y-auto border rounded-md">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50 sticky top-0">
-                    <tr>
-                      <th className="w-10 px-3 py-2"></th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Pallet</th>
-                      <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">Items</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Status</th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Weight</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {availablePallets.map(pallet => (
-                      <tr
-                        key={pallet.PalletID}
-                        className={clsx(
-                          'cursor-pointer',
-                          pallet.LoadID === loadId ? 'bg-green-50' : 'hover:bg-blue-50',
-                          selectedPalletIds.includes(pallet.PalletID) && 'bg-blue-100'
-                        )}
-                        onClick={() => !pallet.LoadID && togglePallet(pallet.PalletID)}
-                      >
-                        <td className="px-3 py-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedPalletIds.includes(pallet.PalletID) || pallet.LoadID === loadId}
-                            onChange={() => togglePallet(pallet.PalletID)}
-                            disabled={pallet.LoadID === loadId}
-                            className="rounded border-gray-300"
-                          />
-                        </td>
-                        <td className="px-3 py-2 text-sm font-medium text-purple-700">{pallet.PalletNumber}</td>
-                        <td className="px-3 py-2 text-sm text-center">{pallet.ItemCount || 0}</td>
-                        <td className="px-3 py-2 text-sm">{pallet.Status}</td>
-                        <td className="px-3 py-2 text-sm text-right">{formatWeight(pallet.Weight)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-3 p-3 bg-gray-50 rounded-md text-sm text-gray-600">
-                Selected: {palletsSummary.count} pallets ({palletsSummary.items} items, {formatWeight(palletsSummary.weight)})
-              </div>
-            </>
+          {palletsSummary.count > 0 && (
+            <span>{palletsSummary.count} pallets ({palletsSummary.items} items, {formatWeight(palletsSummary.weight)})</span>
           )}
-        </>
+        </div>
       )}
 
       <Modal.Footer>
