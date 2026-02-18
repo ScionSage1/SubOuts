@@ -24,6 +24,7 @@ export default function LoadsSection({
   onAssignItemsToLoad,
   onAssignPalletsToLoad,
   onRemoveItemFromLoad,
+  onRemovePalletFromLoad,
   onQuickShipOut,
   onQuickShipIn,
   isCreating,
@@ -35,6 +36,7 @@ export default function LoadsSection({
   const [editingLoad, setEditingLoad] = useState(null)
   const [assigningLoad, setAssigningLoad] = useState(null)
   const [expandedLoads, setExpandedLoads] = useState(new Set())
+  const [expandedPallets, setExpandedPallets] = useState(new Set())
 
   const outboundLoads = (loads || []).filter(l => l.Direction === 'Outbound')
   const inboundLoads = (loads || []).filter(l => l.Direction === 'Inbound')
@@ -79,6 +81,19 @@ export default function LoadsSection({
 
   const getPalletsForLoad = (loadId) => {
     return (pallets || []).filter(p => p.LoadID === loadId)
+  }
+
+  const getItemsForPallet = (palletId) => {
+    return (items || []).filter(item => item.PalletID === palletId)
+  }
+
+  const togglePalletExpand = (palletId) => {
+    setExpandedPallets(prev => {
+      const next = new Set(prev)
+      if (next.has(palletId)) next.delete(palletId)
+      else next.add(palletId)
+      return next
+    })
   }
 
   const renderLoadCard = (load) => {
@@ -169,11 +184,46 @@ export default function LoadsSection({
                 <div className="text-xs font-medium text-purple-700 mb-1 flex items-center gap-1">
                   <Package className="w-3 h-3" /> Pallets
                 </div>
-                {loadPallets.map(p => (
-                  <div key={p.PalletID} className="text-xs text-gray-600 ml-4">
-                    {p.PalletNumber} - {p.ItemCount || 0} items, {formatWeight(p.Weight)}
-                  </div>
-                ))}
+                {loadPallets.map(p => {
+                  const palletItems = getItemsForPallet(p.PalletID)
+                  const isPalletExpanded = expandedPallets.has(p.PalletID)
+                  return (
+                    <div key={p.PalletID} className="ml-4">
+                      <div className="flex items-center justify-between">
+                        <div
+                          className="flex items-center gap-1 cursor-pointer text-xs text-gray-600 hover:text-purple-700"
+                          onClick={() => togglePalletExpand(p.PalletID)}
+                        >
+                          {isPalletExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                          <span className="font-medium text-purple-700">{p.PalletNumber}</span>
+                          <span>- {p.ItemCount || 0} items, {formatWeightLbs(p.Weight)}</span>
+                        </div>
+                        {onRemovePalletFromLoad && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onRemovePalletFromLoad({ subOutId, loadId: load.LoadID, palletId: p.PalletID }) }}
+                            className="p-0.5 text-gray-400 hover:text-red-500 flex-shrink-0"
+                            title="Remove pallet from load"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      {isPalletExpanded && palletItems.length > 0 && (
+                        <div className="ml-5 mt-1 mb-1 border-l-2 border-purple-200 pl-2">
+                          {palletItems.map(item => {
+                            const weight = item.TeklaWeight != null ? item.TeklaWeight : item.Weight
+                            return (
+                              <div key={item.SubOutItemID} className="text-xs text-gray-500">
+                                {item.PieceMark || item.MainMark || '-'} - {item.Shape} {item.Dimension || ''}, Qty {item.Quantity}
+                                {weight ? `, ${formatWeightLbs(weight)}` : ''}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
             {/* Direct items (not on pallets) */}
