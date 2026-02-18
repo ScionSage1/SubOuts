@@ -187,6 +187,7 @@ export default function LoadsSection({
                 {loadPallets.map(p => {
                   const palletItems = getItemsForPallet(p.PalletID)
                   const isPalletExpanded = expandedPallets.has(p.PalletID)
+                  const palletWeight = palletItems.reduce((sum, i) => sum + ((i.TeklaWeight != null ? i.TeklaWeight : i.Weight) || 0) * (i.Quantity || 1), 0)
                   return (
                     <div key={p.PalletID} className="ml-4">
                       <div className="flex items-center justify-between">
@@ -196,7 +197,7 @@ export default function LoadsSection({
                         >
                           {isPalletExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                           <span className="font-medium text-purple-700">{p.PalletNumber}</span>
-                          <span>- {p.ItemCount || 0} items, {formatWeightLbs(p.Weight)}</span>
+                          <span>- {p.ItemCount || 0} items{palletWeight > 0 && `, ${formatWeightLbs(palletWeight)}`}</span>
                         </div>
                         {onRemovePalletFromLoad && (
                           <button
