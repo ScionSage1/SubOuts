@@ -172,6 +172,16 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
   }
 
   // --- Cell renderers ---
+  const renderWeightCell = (item) => {
+    const tekla = item.TeklaWeight != null
+    const weight = tekla ? item.TeklaWeight : item.Weight
+    return (
+      <span className={tekla ? 'text-blue-600' : 'text-gray-600'} title={tekla ? 'From Tekla inventory' : ''}>
+        {formatWeight(weight)}
+      </span>
+    )
+  }
+
   const renderSendTypeCell = (item) => {
     if (!onUpdateSendType) {
       return <SendTypeBadge sendType={item.SendType} />
@@ -389,7 +399,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
               <td className="px-4 py-3 text-sm text-gray-900">{item.Dimension || '-'}</td>
               <td className="px-4 py-3 text-sm text-gray-900">{item.Grade || '-'}</td>
               <td className="px-4 py-3 text-sm text-gray-900">{item.Length || '-'}</td>
-              <td className="px-4 py-3 text-sm text-gray-600">{formatWeight(item.Weight)}</td>
+              <td className="px-4 py-3 text-sm">{renderWeightCell(item)}</td>
               <td className="px-4 py-3 text-sm text-gray-900 text-center">
                 <span className="font-medium">{item.Quantity || 0}</span>
                 <span className="text-gray-400">/{item.QuantitySent || 0}/{item.QuantityReceived || 0}</span>
@@ -505,7 +515,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                       <td className="px-4 py-3 text-sm text-gray-900">{pullItem.Dimension || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{pullItem.Grade || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{pullItem.Length || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{formatWeight(pullItem.Weight)}</td>
+                      <td className="px-4 py-3 text-sm">{renderWeightCell(pullItem)}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 text-center">
                         <span className="font-medium">{pullItem.Quantity || 0}</span>
                         <span className="text-gray-400">/{pullItem.QuantitySent || 0}/{pullItem.QuantityReceived || 0}</span>
@@ -536,7 +546,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                         <td className="px-4 py-3 text-sm text-gray-900">{child.Dimension || '-'}</td>
                         <td className="px-4 py-3 text-sm text-gray-900">{child.Grade || '-'}</td>
                         <td className="px-4 py-3 text-sm text-gray-900">{child.Length || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{formatWeight(child.Weight)}</td>
+                        <td className="px-4 py-3 text-sm">{renderWeightCell(child)}</td>
                         <td className="px-4 py-3 text-sm text-gray-900 text-center">
                           <span className="font-medium">{child.Quantity || 0}</span>
                           <span className="text-gray-400">/{child.QuantitySent || 0}/{child.QuantityReceived || 0}</span>
@@ -579,7 +589,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                       <td className="px-4 py-3 text-sm text-gray-900">{item.Dimension || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{item.Grade || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{item.Length || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{formatWeight(item.Weight)}</td>
+                      <td className="px-4 py-3 text-sm">{renderWeightCell(item)}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 text-center">
                         <span className="font-medium">{item.Quantity || 0}</span>
                         <span className="text-gray-400">/{item.QuantitySent || 0}/{item.QuantityReceived || 0}</span>

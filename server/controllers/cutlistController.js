@@ -1,4 +1,5 @@
 const { query } = require('../config/database');
+const { enrichItemsWithTeklaWeight } = require('../config/tekla');
 
 // Get available packages for a job
 async function getPackages(req, res, next) {
@@ -141,6 +142,7 @@ async function getPullList(req, res, next) {
     `;
 
     const result = await query(sqlQuery, { jobCode: parseInt(jobCode), package: pkg });
+    await enrichItemsWithTeklaWeight(result.recordset);
     res.json({ success: true, data: result.recordset });
   } catch (err) {
     next(err);
@@ -245,6 +247,9 @@ async function getAvailableItems(req, res, next) {
       query(partsQuery, { jobCode: parseInt(jobCode), package: pkg }),
       query(pullListQuery, { jobCode: parseInt(jobCode), package: pkg })
     ]);
+
+    // Enrich PullList items with Tekla inventory weights
+    await enrichItemsWithTeklaWeight(pullListResult.recordset);
 
     res.json({
       success: true,

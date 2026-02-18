@@ -17,6 +17,7 @@ const cutlistsRoutes = require('./routes/cutlists');
 const dashboardRoutes = require('./routes/dashboard');
 const communicationsRoutes = require('./routes/communications');
 const configRoutes = require('./routes/config');
+const teklaRoutes = require('./routes/tekla');
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -40,6 +41,7 @@ app.use('/api/cutlists', cutlistsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/communications', communicationsRoutes);
 app.use('/api/config', configRoutes);
+app.use('/api/tekla', teklaRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

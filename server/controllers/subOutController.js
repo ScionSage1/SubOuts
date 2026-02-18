@@ -1,4 +1,5 @@
 const { query, sql } = require('../config/database');
+const { enrichItemsWithTeklaWeight } = require('../config/tekla');
 
 // Get all sub outs with optional filters
 async function getAllSubOuts(req, res, next) {
@@ -135,6 +136,10 @@ async function getSubOutById(req, res, next) {
         }
       });
     }
+
+    // Enrich PullList items with Tekla inventory weights
+    const pullItems = itemsResult.recordset.filter(i => i.SourceTable === 'PullList');
+    await enrichItemsWithTeklaWeight(pullItems);
 
     res.json({
       success: true,

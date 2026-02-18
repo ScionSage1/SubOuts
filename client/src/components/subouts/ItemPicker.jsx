@@ -253,7 +253,9 @@ export default function ItemPicker({ isOpen, onClose, jobCode, onAdd, isAdding }
                         )}
                         <td className="px-3 py-2 text-sm">{item.Shape || '-'}</td>
                         <td className="px-3 py-2 text-sm">{item.Dimension || '-'}</td>
-                        <td className="px-3 py-2 text-sm text-gray-600">{formatWeight(item.Weight)}</td>
+                        <td className={clsx('px-3 py-2 text-sm', item.TeklaWeight != null ? 'text-blue-600' : 'text-gray-600')} title={item.TeklaWeight != null ? 'From Tekla inventory' : ''}>
+                          {formatWeight(item.TeklaWeight != null ? item.TeklaWeight : item.Weight)}
+                        </td>
                         <td className="px-3 py-2 text-sm">{item.Quantity || '-'}</td>
                         <td className="px-3 py-2 text-sm">
                           {assigned ? (
