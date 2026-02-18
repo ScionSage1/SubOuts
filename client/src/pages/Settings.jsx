@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Settings as SettingsIcon, BookOpen, ChevronRight, ChevronDown, LayoutDashboard, Package, Building2, Plus, Edit2, Trash2, Truck, ClipboardList, Filter, Eye, MousePointer, ArrowRight, CheckCircle2, AlertTriangle, Info } from 'lucide-react'
+import { Settings as SettingsIcon, BookOpen, ChevronRight, ChevronDown, LayoutDashboard, Package, Building2, Plus, Edit2, Trash2, Truck, ClipboardList, Filter, Eye, MousePointer, ArrowRight, CheckCircle2, AlertTriangle, Info, Layers } from 'lucide-react'
 import Card from '../components/common/Card'
 import clsx from 'clsx'
 
@@ -770,6 +770,46 @@ export default function Settings() {
               </div>
 
               <Tip>Items track their source (LongShapes, Parts, PullList), send type (Raw, Cut to Length, Parts on Pallets), and carry material data like Heat Number, Cert Number, and Barcode when available.</Tip>
+            </div>
+          </GuideSection>
+
+          {/* Adding Raw Material */}
+          <GuideSection icon={Layers} title="Adding Raw Material from Inventory" color="teal">
+            <div className="bg-white rounded-lg p-4 space-y-4">
+              <p className="text-sm text-gray-700 mb-2">
+                Raw material (plates, angles, channels, etc.) can be added directly from Tekla inventory by selecting a shape and grade.
+              </p>
+
+              <div className="space-y-3">
+                <Step number="1">
+                  Open a sub out's detail page and click
+                  <span className="inline-flex items-center mx-1 px-2 py-0.5 rounded bg-white border border-gray-300 text-gray-700 text-xs font-semibold">
+                    <Layers className="w-3 h-3 mr-1" /> Add Raw Material
+                  </span>
+                  above the items table.
+                </Step>
+
+                <Step number="2">
+                  In the Raw Material Matcher modal, <strong>select a Shape</strong> from the dropdown (e.g., PL, L, C, W). Shapes are populated from all available Tekla inventory.
+                </Step>
+
+                <Step number="3">
+                  <strong>Select a Grade</strong> from the dropdown (e.g., A36, 50). Grades are filtered to those available for the selected shape.
+                </Step>
+
+                <Step number="4">
+                  A table shows matching inventory with <strong>dimension</strong>, <strong>stock length</strong>, <strong>weight per piece</strong>, and <strong>in-stock count</strong>. Click a row to select it — a quantity picker appears to choose how many sticks to add.
+                </Step>
+
+                <Step number="5">
+                  Review the selection summary showing total sticks and combined weight, then click
+                  <span className="inline-flex items-center mx-1 px-3 py-0.5 rounded bg-blue-600 text-white text-xs font-semibold">
+                    Add Sticks as Raw Material
+                  </span>.
+                </Step>
+              </div>
+
+              <Tip>Raw material items appear on the <strong>PullList/Raw</strong> tab with SendType "Raw" and are selectable when assigning items to loads.</Tip>
             </div>
           </GuideSection>
 
