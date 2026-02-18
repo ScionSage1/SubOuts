@@ -25,8 +25,13 @@ export default function SubOutCard({ subOut }) {
   const outOverdue = dateToLeave && dateToLeave < now && outShipped < outTotal
   const inOverdue = dateToShip && dateToShip < now && inShipped < inTotal
 
-  const outPct = outTotal > 0 ? Math.round((outShipped / outTotal) * 100) : 0
-  const inPct = inTotal > 0 ? Math.round((inShipped / inTotal) * 100) : 0
+  // Progress: delivered loads fill fully, in-progress loads fill partially
+  const outActive = outTotal - outShipped
+  const inActive = inTotal - inShipped
+  const outPct = outTotal > 0 ? Math.round(((outShipped + outActive * 0.5) / outTotal) * 100) : 0
+  const inPct = inTotal > 0 ? Math.round(((inShipped + inActive * 0.5) / inTotal) * 100) : 0
+  const outDone = outTotal > 0 && outShipped >= outTotal
+  const inDone = inTotal > 0 && inShipped >= inTotal
 
   return (
     <div
@@ -83,13 +88,14 @@ export default function SubOutCard({ subOut }) {
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] uppercase tracking-wider text-gray-400">Out</span>
               <span className="text-xs text-gray-600 flex items-center gap-1">
-                {formatLoadsProgress(outShipped, outTotal)}
-                {isLoadsComplete(outShipped, outTotal) && <Check className="w-3 h-3 text-green-500" />}
+                {outTotal > 0 ? `${outShipped}/${outTotal}` : 'none'}
+                {outActive > 0 && !outDone && <span className="text-blue-500">({outActive} active)</span>}
+                {outDone && <Check className="w-3 h-3 text-green-500" />}
               </span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-1.5">
               <div
-                className={clsx('h-1.5 rounded-full transition-all', outPct >= 100 ? 'bg-green-500' : outOverdue ? 'bg-red-400' : 'bg-blue-400')}
+                className={clsx('h-1.5 rounded-full transition-all', outDone ? 'bg-green-500' : outOverdue ? 'bg-red-400' : 'bg-blue-400')}
                 style={{ width: `${Math.min(outPct, 100)}%` }}
               />
             </div>
@@ -98,13 +104,14 @@ export default function SubOutCard({ subOut }) {
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] uppercase tracking-wider text-gray-400">In</span>
               <span className="text-xs text-gray-600 flex items-center gap-1">
-                {formatLoadsProgress(inShipped, inTotal)}
-                {isLoadsComplete(inShipped, inTotal) && <Check className="w-3 h-3 text-green-500" />}
+                {inTotal > 0 ? `${inShipped}/${inTotal}` : 'none'}
+                {inActive > 0 && !inDone && <span className="text-blue-500">({inActive} active)</span>}
+                {inDone && <Check className="w-3 h-3 text-green-500" />}
               </span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-1.5">
               <div
-                className={clsx('h-1.5 rounded-full transition-all', inPct >= 100 ? 'bg-green-500' : inOverdue ? 'bg-orange-400' : 'bg-blue-400')}
+                className={clsx('h-1.5 rounded-full transition-all', inDone ? 'bg-green-500' : inOverdue ? 'bg-orange-400' : 'bg-blue-400')}
                 style={{ width: `${Math.min(inPct, 100)}%` }}
               />
             </div>
