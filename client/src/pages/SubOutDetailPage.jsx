@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Plus } from 'lucide-react'
-import { useSubOut, useDeleteSubOut, useIncrementLoadsOut, useIncrementLoadsIn, useUpdateStatus } from '../hooks/useSubOuts'
+import { useSubOut, useDeleteSubOut, useUpdateStatus } from '../hooks/useSubOuts'
 import { useDeleteItem, useBulkAddItems, useUpdateItem } from '../hooks/useSubOutItems'
 import { useUpdatePullListSource, useBulkUpdatePullListStatus } from '../hooks/useCutlists'
 import { usePullStatuses } from '../hooks/useConfig'
@@ -31,8 +31,6 @@ export default function SubOutDetailPage() {
 
   // SubOut mutations
   const deleteMutation = useDeleteSubOut()
-  const incrementOutMutation = useIncrementLoadsOut()
-  const incrementInMutation = useIncrementLoadsIn()
   const updateStatusMutation = useUpdateStatus()
 
   // Item mutations
@@ -121,15 +119,6 @@ export default function SubOutDetailPage() {
     bulkUpdatePullListStatusMutation.mutate({ pullListIds, pullStatus })
   }
 
-  // --- Load handlers ---
-  const handleQuickShipOut = () => {
-    incrementOutMutation.mutate(id)
-  }
-
-  const handleQuickShipIn = () => {
-    incrementInMutation.mutate(id)
-  }
-
   if (isLoading) {
     return <LoadingSpinner className="py-20" size="lg" message="Fetching inventory from Tekla..." />
   }
@@ -185,11 +174,8 @@ export default function SubOutDetailPage() {
           onAssignPalletsToLoad={assignPalletsToLoadMutation.mutate}
           onRemoveItemFromLoad={removeItemFromLoadMutation.mutate}
           onRemovePalletFromLoad={removePalletFromLoadMutation.mutate}
-          onQuickShipOut={handleQuickShipOut}
-          onQuickShipIn={handleQuickShipIn}
           isCreating={createLoadMutation.isPending}
           isUpdating={updateLoadMutation.isPending || updateLoadStatusMutation.isPending || assignItemsToLoadMutation.isPending || assignPalletsToLoadMutation.isPending}
-          isQuickShipping={incrementOutMutation.isPending || incrementInMutation.isPending}
         />
 
         {/* Pallets Section */}

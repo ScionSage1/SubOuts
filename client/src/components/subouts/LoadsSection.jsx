@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import clsx from 'clsx'
-import { Plus, Edit2, Trash2, Truck, ChevronDown, ChevronRight, Zap, Package, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Truck, ChevronDown, ChevronRight, Package, X } from 'lucide-react'
 import Card from '../common/Card'
 import Button from '../common/Button'
 import LoadForm from './LoadForm'
@@ -25,11 +25,8 @@ export default function LoadsSection({
   onAssignPalletsToLoad,
   onRemoveItemFromLoad,
   onRemovePalletFromLoad,
-  onQuickShipOut,
-  onQuickShipIn,
   isCreating,
-  isUpdating,
-  isQuickShipping
+  isUpdating
 }) {
   const [showForm, setShowForm] = useState(false)
   const [formDirection, setFormDirection] = useState('Outbound')
@@ -270,7 +267,7 @@ export default function LoadsSection({
     )
   }
 
-  const renderColumn = (title, columnLoads, deliveredCount, direction, scheduledDate, onQuickShip) => (
+  const renderColumn = (title, columnLoads, deliveredCount, direction, scheduledDate) => (
     <div className="flex-1">
       <div className="flex items-center justify-between mb-3">
         <div>
@@ -280,16 +277,10 @@ export default function LoadsSection({
             {scheduledDate && ` | Due: ${formatDate(scheduledDate)}`}
           </p>
         </div>
-        <div className="flex items-center gap-1">
-          <Button size="sm" variant="ghost" onClick={onQuickShip} disabled={isQuickShipping} title="Quick ship (no details)">
-            <Zap className="w-3.5 h-3.5 mr-1" />
-            Quick
-          </Button>
-          <Button size="sm" onClick={() => openNewLoad(direction)}>
-            <Plus className="w-3.5 h-3.5 mr-1" />
-            Load
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => openNewLoad(direction)}>
+          <Plus className="w-3.5 h-3.5 mr-1" />
+          Load
+        </Button>
       </div>
 
       {/* Progress bar */}
@@ -329,8 +320,7 @@ export default function LoadsSection({
             outboundLoads,
             outboundDelivered,
             'Outbound',
-            dateToLeaveMFC,
-            onQuickShipOut
+            dateToLeaveMFC
           )}
           <div className="hidden lg:block border-l border-gray-200" />
           {renderColumn(
@@ -338,8 +328,7 @@ export default function LoadsSection({
             inboundLoads,
             inboundDelivered,
             'Inbound',
-            dateToShipFromSub,
-            onQuickShipIn
+            dateToShipFromSub
           )}
         </div>
       </Card.Body>
