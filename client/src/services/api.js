@@ -105,6 +105,11 @@ export const loadsApi = {
   removePallet: (subOutId, loadId, palletId) => api.delete(`/subouts/${subOutId}/loads/${loadId}/pallets/${palletId}`)
 }
 
+// Tekla Inventory API
+export const teklaApi = {
+  getMatchingInventory: (shapes) => api.get('/tekla/inventory/match', { params: { shapes: JSON.stringify(shapes) } })
+}
+
 // Communications API
 export const communicationsApi = {
   getAll: (params) => api.get('/communications', { params }),

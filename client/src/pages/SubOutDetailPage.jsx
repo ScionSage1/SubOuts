@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, Plus, Layers } from 'lucide-react'
 import { useSubOut, useDeleteSubOut, useUpdateStatus } from '../hooks/useSubOuts'
 import { useDeleteItem, useBulkAddItems, useUpdateItem } from '../hooks/useSubOutItems'
 import { useUpdatePullListSource, useBulkUpdatePullListStatus } from '../hooks/useCutlists'
@@ -12,6 +12,7 @@ import LoadsSection from '../components/subouts/LoadsSection'
 import PalletsSection from '../components/subouts/PalletsSection'
 import ItemsTable from '../components/subouts/ItemsTable'
 import ItemPicker from '../components/subouts/ItemPicker'
+import RawMaterialMatcher from '../components/subouts/RawMaterialMatcher'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import Modal from '../components/common/Modal'
@@ -21,6 +22,7 @@ export default function SubOutDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [showItemPicker, setShowItemPicker] = useState(false)
+  const [showRawMatcher, setShowRawMatcher] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showReopenModal, setShowReopenModal] = useState(false)
 
@@ -104,6 +106,15 @@ export default function SubOutDetailPage() {
       setShowItemPicker(false)
     } catch (err) {
       alert('Failed to add items: ' + err.message)
+    }
+  }
+
+  const handleAddRawMaterial = async (items) => {
+    try {
+      await bulkAddMutation.mutateAsync({ subOutId: id, items })
+      setShowRawMatcher(false)
+    } catch (err) {
+      alert('Failed to add raw material: ' + err.message)
     }
   }
 
@@ -200,6 +211,10 @@ export default function SubOutDetailPage() {
           <Card.Header className="flex items-center justify-between">
             <h2 className="font-semibold">Items ({subOut.items?.length || 0} total)</h2>
             <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setShowRawMatcher(true)}>
+                <Layers className="w-4 h-4 mr-1" />
+                Add Raw Material
+              </Button>
               <Button variant="secondary" size="sm" onClick={() => setShowItemPicker(true)}>
                 <Plus className="w-4 h-4 mr-1" />
                 Add Items
@@ -227,6 +242,16 @@ export default function SubOutDetailPage() {
         onClose={() => setShowItemPicker(false)}
         jobCode={subOut.JobCode}
         onAdd={handleAddItems}
+        isAdding={bulkAddMutation.isPending}
+      />
+
+      {/* Raw Material Matcher Modal */}
+      <RawMaterialMatcher
+        isOpen={showRawMatcher}
+        onClose={() => setShowRawMatcher(false)}
+        items={subOut.items}
+        subOutId={id}
+        onAddItems={handleAddRawMaterial}
         isAdding={bulkAddMutation.isPending}
       />
 
