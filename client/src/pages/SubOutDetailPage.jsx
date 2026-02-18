@@ -129,7 +129,7 @@ export default function SubOutDetailPage() {
   }
 
   if (isLoading) {
-    return <LoadingSpinner className="py-20" size="lg" />
+    return <LoadingSpinner className="py-20" size="lg" message="Fetching inventory from Tekla..." />
   }
 
   if (error) {
