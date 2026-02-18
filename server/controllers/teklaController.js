@@ -124,4 +124,33 @@ async function getMatchingInventory(req, res, next) {
   }
 }
 
-module.exports = { getInventoryItems, getMatchingInventory };
+// GET /api/tekla/inventory/filters — return distinct shapes and grades for dropdowns
+async function getInventoryFilters(req, res, next) {
+  try {
+    const rawItems = await getInventory();
+    const shapeSet = new Set();
+    const gradesByShape = {};
+
+    for (const item of rawItems) {
+      const shape = (item.Shape || '').trim();
+      const grade = (item.Grade || '').trim();
+      if (!shape) continue;
+
+      shapeSet.add(shape);
+      if (!gradesByShape[shape]) gradesByShape[shape] = new Set();
+      if (grade) gradesByShape[shape].add(grade);
+    }
+
+    const shapes = Array.from(shapeSet).sort();
+    const grades = {};
+    for (const [shape, gradeSet] of Object.entries(gradesByShape)) {
+      grades[shape] = Array.from(gradeSet).sort();
+    }
+
+    res.json({ success: true, data: { shapes, grades } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getInventoryItems, getMatchingInventory, getInventoryFilters };

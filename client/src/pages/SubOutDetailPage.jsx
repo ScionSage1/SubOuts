@@ -249,7 +249,6 @@ export default function SubOutDetailPage() {
       <RawMaterialMatcher
         isOpen={showRawMatcher}
         onClose={() => setShowRawMatcher(false)}
-        items={subOut.items}
         subOutId={id}
         onAddItems={handleAddRawMaterial}
         isAdding={bulkAddMutation.isPending}

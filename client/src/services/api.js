@@ -107,6 +107,7 @@ export const loadsApi = {
 
 // Tekla Inventory API
 export const teklaApi = {
+  getInventoryFilters: () => api.get('/tekla/inventory/filters'),
   getMatchingInventory: (shapes) => api.get('/tekla/inventory/match', { params: { shapes: JSON.stringify(shapes) } })
 }
 
