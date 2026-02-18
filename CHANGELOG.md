@@ -6,6 +6,18 @@ Format: [Date] - Summary of changes
 
 ---
 
+## 2026-02-18
+
+### Added
+- **Weight column on ItemsTable & ItemPicker** - Weight now visible on all item grids
+  - Sortable Weight column added to LongShapes, Parts, PullList, and Combined tabs
+  - Weight column added to ItemPicker modal (LongShapes, Parts, PullList/Raw tabs)
+  - Uses `formatWeight` formatter (lbs or tons)
+  - Weight included in search filter
+  - `client/src/components/subouts/ItemsTable.jsx`, `client/src/components/subouts/ItemPicker.jsx`
+
+---
+
 ## 2026-02-17
 
 ### Added

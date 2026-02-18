@@ -5,7 +5,7 @@ import Button from '../common/Button'
 import StatusBadge from '../common/StatusBadge'
 import SendTypeBadge from './SendTypeBadge'
 import { sendTypeOptions } from '../../utils/statusColors'
-import { formatSendType } from '../../utils/formatters'
+import { formatSendType, formatWeight } from '../../utils/formatters'
 
 export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, onUpdatePullListSource, onBulkUpdatePullListStatus, pullStatuses, isDeleting }) {
   const [activeTab, setActiveTab] = useState('LongShapes')
@@ -88,6 +88,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
           item.LoadNumber, item.Status, item.SendType
         ]
         if (item.Length != null) fields.push(String(item.Length))
+        if (item.Weight != null) fields.push(String(item.Weight))
         return fields.some(val => val && String(val).toLowerCase().includes(search))
       })
     }
@@ -350,6 +351,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
             {renderSortHeader('Size', 'Dimension')}
             {renderSortHeader('Grade', 'Grade')}
             {renderSortHeader('Length', 'Length')}
+            {renderSortHeader('Weight', 'Weight')}
             {renderSortHeader('Qty', 'Quantity', { center: true })}
             {renderSortHeader('Pallet', 'PalletNumber', { px: 'px-3' })}
             {renderSortHeader('Load', 'LoadNumber', { px: 'px-3' })}
@@ -387,6 +389,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
               <td className="px-4 py-3 text-sm text-gray-900">{item.Dimension || '-'}</td>
               <td className="px-4 py-3 text-sm text-gray-900">{item.Grade || '-'}</td>
               <td className="px-4 py-3 text-sm text-gray-900">{item.Length || '-'}</td>
+              <td className="px-4 py-3 text-sm text-gray-600">{formatWeight(item.Weight)}</td>
               <td className="px-4 py-3 text-sm text-gray-900 text-center">
                 <span className="font-medium">{item.Quantity || 0}</span>
                 <span className="text-gray-400">/{item.QuantitySent || 0}/{item.QuantityReceived || 0}</span>
@@ -461,6 +464,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                 {renderSortHeader('Size', 'Dimension')}
                 {renderSortHeader('Grade', 'Grade')}
                 {renderSortHeader('Length', 'Length')}
+                {renderSortHeader('Weight', 'Weight')}
                 {renderSortHeader('Qty', 'Quantity', { center: true })}
                 {renderSortHeader('Pallet', 'PalletNumber', { px: 'px-3' })}
                 {renderSortHeader('Load', 'LoadNumber', { px: 'px-3' })}
@@ -501,6 +505,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                       <td className="px-4 py-3 text-sm text-gray-900">{pullItem.Dimension || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{pullItem.Grade || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{pullItem.Length || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{formatWeight(pullItem.Weight)}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 text-center">
                         <span className="font-medium">{pullItem.Quantity || 0}</span>
                         <span className="text-gray-400">/{pullItem.QuantitySent || 0}/{pullItem.QuantityReceived || 0}</span>
@@ -531,6 +536,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                         <td className="px-4 py-3 text-sm text-gray-900">{child.Dimension || '-'}</td>
                         <td className="px-4 py-3 text-sm text-gray-900">{child.Grade || '-'}</td>
                         <td className="px-4 py-3 text-sm text-gray-900">{child.Length || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{formatWeight(child.Weight)}</td>
                         <td className="px-4 py-3 text-sm text-gray-900 text-center">
                           <span className="font-medium">{child.Quantity || 0}</span>
                           <span className="text-gray-400">/{child.QuantitySent || 0}/{child.QuantityReceived || 0}</span>
@@ -556,7 +562,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
               {orphanLongShapes.length > 0 && (
                 <>
                   <tr className="bg-yellow-50">
-                    <td colSpan="16" className="px-4 py-2 text-sm font-medium text-yellow-800">
+                    <td colSpan="17" className="px-4 py-2 text-sm font-medium text-yellow-800">
                       Unmatched LongShapes ({orphanLongShapes.length})
                     </td>
                   </tr>
@@ -573,6 +579,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                       <td className="px-4 py-3 text-sm text-gray-900">{item.Dimension || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{item.Grade || '-'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{item.Length || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{formatWeight(item.Weight)}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 text-center">
                         <span className="font-medium">{item.Quantity || 0}</span>
                         <span className="text-gray-400">/{item.QuantitySent || 0}/{item.QuantityReceived || 0}</span>
