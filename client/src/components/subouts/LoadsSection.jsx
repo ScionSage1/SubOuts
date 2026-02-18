@@ -5,7 +5,7 @@ import Button from '../common/Button'
 import LoadForm from './LoadForm'
 import LoadItemAssigner from './LoadItemAssigner'
 import { getLoadStatusColor, loadStatusOptions } from '../../utils/statusColors'
-import { formatDate, formatWeight, formatLoadStatus } from '../../utils/formatters'
+import { formatDate, formatWeight, formatWeightLbs, formatLoadStatus } from '../../utils/formatters'
 
 export default function LoadsSection({
   loads,
@@ -104,7 +104,7 @@ export default function LoadsSection({
                 {load.ItemCount > 0 && `${load.ItemCount} items`}
                 {load.ItemCount > 0 && load.PalletCount > 0 && ', '}
                 {load.PalletCount > 0 && `${load.PalletCount} pallets`}
-                {totalWeight > 0 && ` — ${formatWeight(totalWeight)}`}
+                {totalWeight > 0 && ` — ${formatWeightLbs(totalWeight)}`}
               </span>
             )}
           </div>
@@ -180,7 +180,7 @@ export default function LoadsSection({
                           ? `${item.Shape} ${item.Dimension || ''} ${item.Grade || ''} ${item.Length || ''}`
                           : `${item.PieceMark || item.MainMark || '-'} - ${item.Shape} ${item.Dimension || ''}`
                         }, Qty {item.Quantity}
-                        {weight ? `, ${formatWeight(weight)}` : ''}
+                        {weight ? `, ${formatWeightLbs(weight)}` : ''}
                       </span>
                       {onRemoveItemFromLoad && (
                         <button
