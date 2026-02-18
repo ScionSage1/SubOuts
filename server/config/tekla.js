@@ -4,6 +4,7 @@
  */
 
 const CORTEX_URL = process.env.CORTEX_URL || 'http://localhost:7777';
+const CORTEX_ADMIN_KEY = process.env.CORTEX_ADMIN_KEY || '';
 
 // 5-minute in-memory cache
 let inventoryCache = null;
@@ -15,9 +16,12 @@ async function getInventory() {
     return inventoryCache;
   }
 
+  const headers = { 'Content-Type': 'application/json' };
+  if (CORTEX_ADMIN_KEY) headers['X-Admin-Key'] = CORTEX_ADMIN_KEY;
+
   const res = await fetch(`${CORTEX_URL}/api/admin/tools/tekla_get_inventory/test`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ input: {} })
   });
 
@@ -26,7 +30,8 @@ async function getInventory() {
     throw new Error(`MFCCortex tekla_get_inventory failed: ${data.error}`);
   }
 
-  const items = data.result?.InventoryItem || [];
+  // Response structure: result.GetInventory.InventoryRecord[]
+  const items = data.result?.GetInventory?.InventoryRecord || [];
   inventoryCache = items;
   inventoryCachedAt = Date.now();
   console.log(`[Tekla] Inventory cached via MFCCortex: ${items.length} items`);
@@ -37,13 +42,49 @@ function normalize(val) {
   return String(val || '').trim().toLowerCase();
 }
 
-function makeCompositeKey(shape, dimension, grade, length) {
-  return `${normalize(shape)}|${normalize(dimension)}|${normalize(grade)}|${normalize(length)}`;
+/**
+ * Extract text value from Tekla fields which may be objects like { "#text": value, "@_UOM": "in" }
+ */
+function teklaVal(field) {
+  if (field == null) return '';
+  if (typeof field === 'object' && field['#text'] != null) return field['#text'];
+  return field;
 }
 
 /**
- * Returns a Map of compositeKey → weight from Tekla inventory.
- * Key: "shape|dimension|grade|length" (lowercased/trimmed).
+ * Convert feet-inches string (e.g., "30' 0\"", "25' 6\"") to inches number.
+ * Also handles plain numbers and inch strings.
+ */
+function toInches(val) {
+  if (val == null) return null;
+  const s = String(val).trim();
+  // Already a number
+  const num = parseFloat(s);
+  if (!isNaN(num) && !s.includes("'")) return num;
+  // Feet-inches format: 30' 0", 25' 6", etc.
+  const match = s.match(/(\d+)'\s*(\d+(?:\.\d+)?)?/);
+  if (match) {
+    const feet = parseInt(match[1]) || 0;
+    const inches = parseFloat(match[2]) || 0;
+    return feet * 12 + inches;
+  }
+  return num || null;
+}
+
+/**
+ * Convert Tekla weight from kg to lbs.
+ */
+function kgToLbs(kg) {
+  return kg * 2.20462;
+}
+
+function makeCompositeKey(shape, dimension, grade, lengthInches) {
+  return `${normalize(shape)}|${normalize(dimension)}|${normalize(grade)}|${lengthInches || ''}`;
+}
+
+/**
+ * Returns a Map of compositeKey → weight (lbs) from Tekla inventory.
+ * Key: "shape|dimension|grade|lengthInInches".
  * Returns empty map if MFCCortex/Tekla is unreachable.
  */
 async function getInventoryWeightMap() {
@@ -52,16 +93,18 @@ async function getInventoryWeightMap() {
     const weightMap = new Map();
 
     for (const item of items) {
-      const shape = item.Shape || item.Material || '';
-      const dimension = item.Dimension || item.Size || '';
-      const grade = item.Grade || '';
-      const length = item.Length || '';
-      const weight = parseFloat(item.Weight) || null;
+      const shape = normalize(item.Shape || '');
+      const dimension = normalize(String(teklaVal(item.Dimensions) || ''));
+      const grade = normalize(item.Grade || '');
+      const lengthRaw = teklaVal(item.Length);
+      const lengthInches = parseFloat(lengthRaw) || null;
+      const weightKg = parseFloat(teklaVal(item.Weight)) || null;
 
-      if (weight && (shape || dimension)) {
-        const key = makeCompositeKey(shape, dimension, grade, length);
+      if (weightKg && (shape || dimension)) {
+        const weightLbs = kgToLbs(weightKg);
+        const key = makeCompositeKey(shape, dimension, grade, lengthInches ? Math.round(lengthInches) : '');
         if (!weightMap.has(key)) {
-          weightMap.set(key, weight);
+          weightMap.set(key, Math.round(weightLbs));
         }
       }
     }
@@ -74,7 +117,8 @@ async function getInventoryWeightMap() {
 }
 
 /**
- * Enrich an array of items with TeklaWeight by matching on composite key.
+ * Enrich an array of PullList items with TeklaWeight by matching on composite key.
+ * Handles PullList length format (feet-inches) → inches conversion for matching.
  * Mutates items in place.
  */
 async function enrichItemsWithTeklaWeight(items) {
@@ -84,7 +128,11 @@ async function enrichItemsWithTeklaWeight(items) {
   if (weightMap.size === 0) return;
 
   for (const item of items) {
-    const key = makeCompositeKey(item.Shape, item.Dimension, item.Grade, item.Length);
+    const shape = normalize(item.Shape || '');
+    const dimension = normalize(item.Dimension || '');
+    const grade = normalize(item.Grade || '');
+    const lengthInches = toInches(item.Length);
+    const key = makeCompositeKey(shape, dimension, grade, lengthInches ? Math.round(lengthInches) : '');
     const teklaWeight = weightMap.get(key);
     if (teklaWeight != null) {
       item.TeklaWeight = teklaWeight;
