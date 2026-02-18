@@ -170,7 +170,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
                     )}
                     onClick={() => !onThisLoad && toggleItem(item.SubOutItemID)}
                   >
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected || onThisLoad}
@@ -240,7 +240,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
                   )}
                   onClick={() => !pallet.LoadID && togglePallet(pallet.PalletID)}
                 >
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedPalletIds.includes(pallet.PalletID) || pallet.LoadID === loadId}

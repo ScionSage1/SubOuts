@@ -81,7 +81,7 @@ export default function PalletItemAssigner({ isOpen, onClose, items, palletId, p
                       className={onOtherPallet ? 'bg-gray-50 text-gray-400' : 'hover:bg-blue-50 cursor-pointer'}
                       onClick={() => !onOtherPallet && toggleItem(item.SubOutItemID)}
                     >
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(item.SubOutItemID)}
