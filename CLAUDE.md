@@ -89,8 +89,6 @@ D:\Claude\SubOuts\
 │   ├── tailwind.config.js
 │   └── package.json
 ├── server/                          # Express backend
-│   ├── config/
-│   │   └── database.js              # SQL Server connection pool
 │   ├── controllers/
 │   │   ├── subOutController.js
 │   │   ├── subOutItemController.js
@@ -100,7 +98,11 @@ D:\Claude\SubOuts\
 │   │   ├── jobController.js
 │   │   ├── cutlistController.js     # Cutlist queries + PullList source update
 │   │   ├── configController.js      # Config lookup (pull statuses)
+│   │   ├── teklaController.js      # Debug endpoint for raw Tekla inventory
 │   │   └── dashboardController.js
+│   ├── config/
+│   │   ├── database.js              # SQL Server connection pool
+│   │   └── tekla.js                 # Tekla inventory via MFCCortex (30min cache)
 │   ├── routes/
 │   │   ├── subouts.js
 │   │   ├── items.js
@@ -111,6 +113,7 @@ D:\Claude\SubOuts\
 │   │   ├── cutlists.js              # Includes PUT for PullList source update
 │   │   ├── config.js                # Config lookup routes (/api/config)
 │   │   ├── dashboard.js
+│   │   ├── tekla.js                 # Tekla inventory debug route (/api/tekla)
 │   │   └── communications.js        # Communication log API
 │   ├── middleware/
 │   │   └── errorHandler.js          # Async wrapper & error handling
@@ -157,6 +160,8 @@ DB_PERSIST_SECURITY_INFO=true
 PORT=4001
 NODE_ENV=development
 CORS_ORIGIN=http://localhost:4000
+CORTEX_URL=http://10.0.0.10:7777
+CORTEX_ADMIN_KEY=your_admin_key
 ```
 
 ## Database
@@ -284,6 +289,9 @@ Run these scripts on the FabTracker database:
 - `GET /available/:jobCode` - Get available items with PullStatus & RMNumber for PullList (query: package)
 - `PUT /pulllist/:pullListId` - Update PullStatus/RMNumber on source FabTracker.PullList (body: { pullStatus, rmNumber })
 
+### Tekla (`/api/tekla`)
+- `GET /inventory` - Debug endpoint: raw Tekla inventory items via MFCCortex (13,410+ items, 30min cache)
+
 ### Dashboard (`/api/dashboard`)
 - `GET /stats` - Overall statistics
 - `GET /action-items` - Items needing attention (overdue, missing steel)
@@ -359,6 +367,8 @@ Items can be classified into three send types reflecting real-world scenarios:
 - Status flow: Open → Closed → Loaded → Shipped → Received
 - Assign pallets to outbound loads (cascades to items on the pallet)
 - Expandable pallet cards show assigned items with remove option
+- Pallet headers show computed total weight (from items × qty) and grouped parts summary (e.g. "40 W 14 x 30")
+- Weight computed from TeklaWeight where available, falling back to database Weight
 
 ### Load Tracking
 - Full load entities replacing old simple counters
@@ -366,7 +376,11 @@ Items can be classified into three send types reflecting real-world scenarios:
 - Auto-numbered: OUT-001, OUT-002... and IN-001, IN-002...
 - Load details: scheduled/actual dates, truck company, trailer number, driver, BOL number, weight, piece count
 - Status flow: Planned → Loading → InTransit → Delivered
-- Assign items and pallets to loads
+- Assign items and pallets to loads via tabbed assigner (LongShapes, Parts, PullList/Raw, Pallets)
+- Load card headers show total weight in lbs and remaining capacity (48,000 lb default)
+- Expanded load cards show items with weights and remove (X) buttons
+- Pallets on loads are expandable to show contained items; removable from load
+- PullList items display as shape/size/grade/length (no marks)
 - **Quick Ship** button preserves old "+1 Load" workflow (creates a Delivered load instantly)
 - Progress bars show delivered/total loads per direction
 - Legacy counter fields synced automatically when loads change status
@@ -386,6 +400,27 @@ Items can be classified into three send types reflecting real-world scenarios:
 - RMNumber is editable inline (click to edit, blur/Enter saves, Escape cancels)
 - Changes write back to the source `FabTracker.PullList` table, not to SubOutItems
 - Config lookup cached for 30 minutes (rarely changes)
+
+### Tekla Inventory Weight Enrichment
+- PullList items are enriched with weights from Tekla inventory via MFCCortex
+- Backend calls `tekla_get_inventory` tool on MFCCortex server (CORTEX_URL env var)
+- Matches by composite key: shape|dimension|grade|lengthInInches
+- Weights converted from kg to lbs; displayed in blue text to indicate Tekla source
+- 30-minute in-memory cache (13,410+ inventory records)
+- TeklaWeight property added to items; frontend falls back to database Weight if unavailable
+- `server/config/tekla.js` - Inventory fetch, cache, weight map, enrichment logic
+
+### Load Capacity Tracking
+- Default truck capacity: 48,000 lbs
+- Load card headers show remaining capacity color-coded (green >75%, orange <25%, red overweight)
+- LoadItemAssigner shows live capacity progress bar that updates as items are selected
+- All weight calculations multiply by item quantity
+
+### Multi-Select Bulk Actions
+- **PullList tab**: Checkbox selection with bulk "Set Pull Status" action bar
+- **LongShapes/Parts tabs**: Checkbox selection with bulk "Set Send Type" action bar
+- Select-all header checkbox, clear selection button
+- Selections clear on tab change
 
 ### Database
 - Connection pooling (max 10, timeout 30s)

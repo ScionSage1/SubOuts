@@ -9,6 +9,40 @@ Format: [Date] - Summary of changes
 ## 2026-02-18
 
 ### Added
+- **Tekla inventory weight enrichment** - PullList items now display weights from Tekla inventory
+  - Backend calls MFCCortex `tekla_get_inventory` tool to fetch 13,410+ inventory records
+  - Matches items by shape/dimension/grade/length composite key, converts kg→lbs
+  - 30-minute in-memory cache to avoid repeated API calls
+  - TeklaWeight shown in blue text to distinguish from database weights
+  - `server/config/tekla.js`, `server/controllers/subOutController.js`
+
+- **Total weight in ItemsTable summary bar** - Each tab shows total weight (items × quantity)
+  - `client/src/components/subouts/ItemsTable.jsx`
+
+- **Source-type tabs in LoadItemAssigner** - Replaced flat "Items" tab with LongShapes, Parts, PullList/Raw, and Pallets tabs
+  - Each tab shows source-appropriate columns (marks, shape, size, grade, length)
+  - Selections persist across tabs with badge counts
+  - `client/src/components/subouts/LoadItemAssigner.jsx`, `client/src/components/subouts/LoadsSection.jsx`
+
+- **Load capacity tracking (48,000 lbs)** - Default truck capacity with live remaining display
+  - Load card headers show remaining capacity color-coded (green/orange/red)
+  - LoadItemAssigner shows capacity progress bar that updates as items are selected
+  - `client/src/components/subouts/LoadsSection.jsx`, `client/src/components/subouts/LoadItemAssigner.jsx`
+
+- **Weight and remove on load items** - Load card expanded view shows weight per item in lbs and X button to remove
+  - PullList items show shape/size/grade/length instead of marks
+  - Pallets on loads are expandable to show their items with weights and removable
+  - `client/src/components/subouts/LoadsSection.jsx`, `client/src/pages/SubOutDetailPage.jsx`
+
+- **Multi-select bulk Set Send Type** - LongShapes and Parts tabs now have checkbox selection with bulk "Set Send Type" action bar
+  - `client/src/components/subouts/ItemsTable.jsx`
+
+- **Pallet computed weight and parts summary** - Pallet cards show total weight computed from items (TeklaWeight × qty) and grouped parts summary (e.g. "40 W 14 x 30")
+  - `client/src/components/subouts/PalletsSection.jsx`
+
+- **Loading message** - SubOut detail page shows "Fetching inventory from Tekla..." during load
+  - `client/src/components/common/LoadingSpinner.jsx`, `client/src/pages/SubOutDetailPage.jsx`
+
 - **Weight column on ItemsTable & ItemPicker** - Weight now visible on all item grids
   - Sortable Weight column added to LongShapes, Parts, PullList, and Combined tabs
   - Weight column added to ItemPicker modal (LongShapes, Parts, PullList/Raw tabs)
