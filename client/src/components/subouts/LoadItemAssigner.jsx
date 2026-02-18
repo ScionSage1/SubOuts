@@ -30,7 +30,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
     return {
       LongShapes: base.filter(i => i.SourceTable === 'LongShapes'),
       Parts: base.filter(i => i.SourceTable === 'Parts'),
-      PullList: base.filter(i => i.SourceTable === 'PullList'),
+      PullList: base.filter(i => i.SourceTable === 'PullList' || i.SourceTable === 'TeklaInventory'),
     }
   }, [items, loadId])
 
@@ -130,7 +130,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
     const unassignedCount = currentTabItems.filter(i => !i.LoadID).length
     const showMainMark = activeTab === 'LongShapes' || activeTab === 'Parts'
     const showPieceMark = activeTab === 'LongShapes' || activeTab === 'Parts'
-    const showGrade = activeTab === 'PullList'
+      const showGrade = activeTab === 'PullList'
     const showLength = activeTab === 'LongShapes' || activeTab === 'PullList'
 
     return (
