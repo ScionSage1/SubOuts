@@ -299,6 +299,20 @@ async function assignItemsToLoad(req, res, next) {
       return res.status(400).json({ success: false, error: 'Some items do not belong to this SubOut' });
     }
 
+    // Check for items already on another load
+    const conflictQuery = `
+      SELECT SubOutItemID, LoadID FROM FabTracker.SubOutItems
+      WHERE SubOutItemID IN (${itemIds.map((_, i) => `@id${i}`).join(',')})
+        AND LoadID IS NOT NULL AND LoadID != @loadId
+    `;
+    const conflictParams = { loadId: parseInt(loadId) };
+    itemIds.forEach((id, i) => { conflictParams[`id${i}`] = parseInt(id); });
+
+    const conflictResult = await query(conflictQuery, conflictParams);
+    if (conflictResult.recordset.length > 0) {
+      return res.status(400).json({ success: false, error: `${conflictResult.recordset.length} item(s) already assigned to another load` });
+    }
+
     // Assign items to load
     const updateQuery = `
       UPDATE FabTracker.SubOutItems

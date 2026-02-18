@@ -423,8 +423,11 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {sortedItems.map(item => (
-            <tr key={item.SubOutItemID} className={clsx('hover:bg-gray-50', activeTab === 'PullList' ? selectedPullListIds.has(item.SourceID) && 'bg-blue-50' : selectedItemIds.has(item.SubOutItemID) && 'bg-blue-50')}>
+          {sortedItems.map(item => {
+            const isAssigned = !!(item.PalletID || item.LoadID)
+            const rowStrike = isAssigned ? 'line-through text-gray-400' : ''
+            return (
+            <tr key={item.SubOutItemID} className={clsx('hover:bg-gray-50', isAssigned && 'bg-gray-50/50', activeTab === 'PullList' ? selectedPullListIds.has(item.SourceID) && 'bg-blue-50' : selectedItemIds.has(item.SubOutItemID) && 'bg-blue-50')}>
               <td className="w-10 px-2 py-3">
                 <input
                   type="checkbox"
@@ -442,18 +445,18 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
               )}
               {activeTab !== 'PullList' && (
                 <>
-                  <td className="px-4 py-3 text-sm text-gray-900">{item.MainMark || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{item.PieceMark || '-'}</td>
+                  <td className={clsx('px-4 py-3 text-sm', rowStrike || 'text-gray-900')}>{item.MainMark || '-'}</td>
+                  <td className={clsx('px-4 py-3 text-sm', rowStrike || 'text-gray-900')}>{item.PieceMark || '-'}</td>
                 </>
               )}
-              <td className="px-4 py-3 text-sm text-gray-900">{item.Shape || '-'}</td>
-              <td className="px-4 py-3 text-sm text-gray-900">{item.Dimension || '-'}</td>
-              <td className="px-4 py-3 text-sm text-gray-900">{item.Grade || '-'}</td>
-              <td className="px-4 py-3 text-sm text-gray-900">{item.Length || '-'}</td>
-              <td className="px-4 py-3 text-sm">{renderWeightCell(item)}</td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-center">
+              <td className={clsx('px-4 py-3 text-sm', rowStrike || 'text-gray-900')}>{item.Shape || '-'}</td>
+              <td className={clsx('px-4 py-3 text-sm', rowStrike || 'text-gray-900')}>{item.Dimension || '-'}</td>
+              <td className={clsx('px-4 py-3 text-sm', rowStrike || 'text-gray-900')}>{item.Grade || '-'}</td>
+              <td className={clsx('px-4 py-3 text-sm', rowStrike || 'text-gray-900')}>{item.Length || '-'}</td>
+              <td className={clsx('px-4 py-3 text-sm', isAssigned && 'line-through')}>{renderWeightCell(item)}</td>
+              <td className={clsx('px-4 py-3 text-sm text-center', isAssigned && 'line-through text-gray-400')}>
                 <span className="font-medium">{item.Quantity || 0}</span>
-                <span className="text-gray-400">/{item.QuantitySent || 0}/{item.QuantityReceived || 0}</span>
+                <span className={isAssigned ? 'text-gray-400' : 'text-gray-400'}>/{item.QuantitySent || 0}/{item.QuantityReceived || 0}</span>
               </td>
               {renderAssignmentCells(item)}
               <td className="px-4 py-3">
@@ -481,7 +484,8 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                 </div>
               </td>
             </tr>
-          ))}
+            )
+          })}
         </tbody>
       </table>
     </div>
@@ -537,10 +541,12 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
               {hierarchy.map(pullItem => {
                 const isExpanded = expandedBarcodes.has(pullItem.Barcode)
                 const hasChildren = pullItem.children.length > 0
+                const pullAssigned = !!(pullItem.PalletID || pullItem.LoadID)
+                const pullStrike = pullAssigned ? 'line-through text-gray-400' : ''
 
                 return (
                   <Fragment key={pullItem.SubOutItemID}>
-                    <tr className="bg-blue-50 hover:bg-blue-100">
+                    <tr className={clsx('hover:bg-blue-100', pullAssigned ? 'bg-gray-50/50' : 'bg-blue-50')}>
                       <td className="px-2 py-3">
                         {hasChildren && (
                           <button
@@ -554,20 +560,20 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                       <td className="px-3 py-3">{renderSendTypeCell(pullItem)}</td>
                       <td className="px-3 py-3">{renderPullStatusCell(pullItem)}</td>
                       <td className="px-3 py-3">{renderRMNumberCell(pullItem)}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-blue-800">
+                      <td className={clsx('px-4 py-3 text-sm font-medium', pullAssigned ? 'line-through text-gray-400' : 'text-blue-800')}>
                         {pullItem.Barcode || '-'}
                         {hasChildren && (
-                          <span className="ml-2 text-xs text-blue-600">({pullItem.children.length} shapes)</span>
+                          <span className={clsx('ml-2 text-xs', pullAssigned ? 'text-gray-400' : 'text-blue-600')}>({pullItem.children.length} shapes)</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500">-</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">-</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">{pullItem.Shape || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{pullItem.Dimension || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{pullItem.Grade || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{pullItem.Length || '-'}</td>
-                      <td className="px-4 py-3 text-sm">{renderWeightCell(pullItem)}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-center">
+                      <td className={clsx('px-4 py-3 text-sm', pullStrike || 'text-gray-500')}>-</td>
+                      <td className={clsx('px-4 py-3 text-sm', pullStrike || 'text-gray-500')}>-</td>
+                      <td className={clsx('px-4 py-3 text-sm font-medium', pullStrike || 'text-gray-900')}>{pullItem.Shape || '-'}</td>
+                      <td className={clsx('px-4 py-3 text-sm', pullStrike || 'text-gray-900')}>{pullItem.Dimension || '-'}</td>
+                      <td className={clsx('px-4 py-3 text-sm', pullStrike || 'text-gray-900')}>{pullItem.Grade || '-'}</td>
+                      <td className={clsx('px-4 py-3 text-sm', pullStrike || 'text-gray-900')}>{pullItem.Length || '-'}</td>
+                      <td className={clsx('px-4 py-3 text-sm', pullAssigned && 'line-through')}>{renderWeightCell(pullItem)}</td>
+                      <td className={clsx('px-4 py-3 text-sm text-center', pullAssigned && 'line-through text-gray-400')}>
                         <span className="font-medium">{pullItem.Quantity || 0}</span>
                         <span className="text-gray-400">/{pullItem.QuantitySent || 0}/{pullItem.QuantityReceived || 0}</span>
                       </td>
@@ -582,23 +588,26 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                       </td>
                     </tr>
 
-                    {isExpanded && pullItem.children.map(child => (
-                      <tr key={child.SubOutItemID} className="bg-gray-50 hover:bg-gray-100">
+                    {isExpanded && pullItem.children.map(child => {
+                      const childAssigned = !!(child.PalletID || child.LoadID)
+                      const childStrike = childAssigned ? 'line-through text-gray-400' : ''
+                      return (
+                      <tr key={child.SubOutItemID} className={clsx('hover:bg-gray-100', childAssigned ? 'bg-gray-100/50' : 'bg-gray-50')}>
                         <td className="px-2 py-3"></td>
                         <td className="px-3 py-3">{renderSendTypeCell(child)}</td>
                         <td className="px-3 py-3"></td>
                         <td className="px-3 py-3"></td>
-                        <td className="px-4 py-3 text-sm text-gray-400 pl-8">
+                        <td className={clsx('px-4 py-3 text-sm pl-8', childAssigned ? 'line-through text-gray-400' : 'text-gray-400')}>
                           <span className="text-gray-300">└</span> {child.Barcode || '-'}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{child.MainMark || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{child.PieceMark || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{child.Shape || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{child.Dimension || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{child.Grade || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{child.Length || '-'}</td>
-                        <td className="px-4 py-3 text-sm">{renderWeightCell(child)}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900 text-center">
+                        <td className={clsx('px-4 py-3 text-sm', childStrike || 'text-gray-900')}>{child.MainMark || '-'}</td>
+                        <td className={clsx('px-4 py-3 text-sm', childStrike || 'text-gray-900')}>{child.PieceMark || '-'}</td>
+                        <td className={clsx('px-4 py-3 text-sm', childStrike || 'text-gray-900')}>{child.Shape || '-'}</td>
+                        <td className={clsx('px-4 py-3 text-sm', childStrike || 'text-gray-900')}>{child.Dimension || '-'}</td>
+                        <td className={clsx('px-4 py-3 text-sm', childStrike || 'text-gray-900')}>{child.Grade || '-'}</td>
+                        <td className={clsx('px-4 py-3 text-sm', childStrike || 'text-gray-900')}>{child.Length || '-'}</td>
+                        <td className={clsx('px-4 py-3 text-sm', childAssigned && 'line-through')}>{renderWeightCell(child)}</td>
+                        <td className={clsx('px-4 py-3 text-sm text-center', childAssigned && 'line-through text-gray-400')}>
                           <span className="font-medium">{child.Quantity || 0}</span>
                           <span className="text-gray-400">/{child.QuantitySent || 0}/{child.QuantityReceived || 0}</span>
                         </td>
@@ -615,7 +624,8 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      )
+                    })}
                   </Fragment>
                 )
               })}
@@ -627,21 +637,24 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                       Unmatched LongShapes ({orphanLongShapes.length})
                     </td>
                   </tr>
-                  {orphanLongShapes.map(item => (
-                    <tr key={item.SubOutItemID} className="hover:bg-gray-50">
+                  {orphanLongShapes.map(item => {
+                    const oAssigned = !!(item.PalletID || item.LoadID)
+                    const oStrike = oAssigned ? 'line-through text-gray-400' : ''
+                    return (
+                    <tr key={item.SubOutItemID} className={clsx('hover:bg-gray-50', oAssigned && 'bg-gray-50/50')}>
                       <td className="px-2 py-3"></td>
                       <td className="px-3 py-3">{renderSendTypeCell(item)}</td>
                       <td className="px-3 py-3"></td>
                       <td className="px-3 py-3"></td>
-                      <td className="px-4 py-3 text-sm text-gray-400">{item.Barcode || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{item.MainMark || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{item.PieceMark || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{item.Shape || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{item.Dimension || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{item.Grade || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{item.Length || '-'}</td>
-                      <td className="px-4 py-3 text-sm">{renderWeightCell(item)}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-center">
+                      <td className={clsx('px-4 py-3 text-sm', oStrike || 'text-gray-400')}>{item.Barcode || '-'}</td>
+                      <td className={clsx('px-4 py-3 text-sm', oStrike || 'text-gray-900')}>{item.MainMark || '-'}</td>
+                      <td className={clsx('px-4 py-3 text-sm', oStrike || 'text-gray-900')}>{item.PieceMark || '-'}</td>
+                      <td className={clsx('px-4 py-3 text-sm', oStrike || 'text-gray-900')}>{item.Shape || '-'}</td>
+                      <td className={clsx('px-4 py-3 text-sm', oStrike || 'text-gray-900')}>{item.Dimension || '-'}</td>
+                      <td className={clsx('px-4 py-3 text-sm', oStrike || 'text-gray-900')}>{item.Grade || '-'}</td>
+                      <td className={clsx('px-4 py-3 text-sm', oStrike || 'text-gray-900')}>{item.Length || '-'}</td>
+                      <td className={clsx('px-4 py-3 text-sm', oAssigned && 'line-through')}>{renderWeightCell(item)}</td>
+                      <td className={clsx('px-4 py-3 text-sm text-center', oAssigned && 'line-through text-gray-400')}>
                         <span className="font-medium">{item.Quantity || 0}</span>
                         <span className="text-gray-400">/{item.QuantitySent || 0}/{item.QuantityReceived || 0}</span>
                       </td>
@@ -658,7 +671,8 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </>
               )}
             </tbody>
