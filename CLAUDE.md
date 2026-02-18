@@ -37,8 +37,8 @@ D:\Claude\SubOuts\
 │   │   │   │   ├── useAiChat.js      # Chat hook with SSE streaming
 │   │   │   │   └── cortex-config.js  # MFCCortex server config
 │   │   │   ├── subouts/             # SubOut-specific components
-│   │   │   │   ├── ItemPicker.jsx    # Cutlist item selector with send type defaults
-│   │   │   │   ├── ItemsTable.jsx    # Items table with sortable columns, search filter, SendType, PullStatus, RMNumber
+│   │   │   │   ├── ItemPicker.jsx    # Cutlist item selector with send type defaults, weight column
+│   │   │   │   ├── ItemsTable.jsx    # Items table with sortable columns, search filter, SendType, Weight, PullStatus, RMNumber
 │   │   │   │   ├── JobGroup.jsx
 │   │   │   │   ├── LoadForm.jsx      # Load create/edit modal
 │   │   │   │   ├── LoadItemAssigner.jsx  # Assign items/pallets to a load
@@ -348,7 +348,7 @@ Items can be classified into three send types reflecting real-world scenarios:
 ### Sortable & Filterable Grids
 - All ItemsTable column headers are clickable to sort (ascending → descending → clear)
 - Sort indicators (▲/▼) appear on hover and highlight blue when active
-- Search input filters across all text fields (Shape, MainMark, PieceMark, Grade, Barcode, RMNumber, PalletNumber, LoadNumber, Status, SendType, Length)
+- Search input filters across all text fields (Shape, MainMark, PieceMark, Grade, Barcode, RMNumber, PalletNumber, LoadNumber, Status, SendType, Length, Weight)
 - Sort resets on tab change; search filter persists across tabs
 - Combined tab sorts parent PullList rows, orphan LongShapes, and children independently
 - Summary bar shows active sort column with quick "clear" link
@@ -523,6 +523,7 @@ Click on any sub out card or table row to open its detail page. The detail page 
    - **Sortable columns** - Click any column header to sort ascending/descending; click again to clear
    - **Search filter** - Text input searches across all fields (shape, marks, grade, barcode, etc.)
    - **SendType column** with inline dropdown to change type (Raw / Cut to Length / Parts on Pallets)
+   - **Weight column** - Displays item weight (lbs or tons), sortable and searchable
    - **Pull Status column** (PullList tab + Combined parent rows) - Inline dropdown to update status on source FabTracker.PullList
    - **RM# column** (PullList tab + Combined parent rows) - Click-to-edit text field, writes back to source FabTracker.PullList
    - **Multi-select** (PullList tab) - Checkbox column with select-all; bulk action bar to set PullStatus on multiple items
