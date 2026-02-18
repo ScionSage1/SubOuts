@@ -3,7 +3,9 @@ import clsx from 'clsx'
 import Modal from '../common/Modal'
 import Button from '../common/Button'
 import SendTypeBadge from './SendTypeBadge'
-import { formatWeight } from '../../utils/formatters'
+import { formatWeight, formatWeightLbs } from '../../utils/formatters'
+
+const LOAD_CAPACITY = 48000
 
 const itemTabs = [
   { key: 'LongShapes', label: 'LongShapes' },
@@ -30,6 +32,13 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
       Parts: base.filter(i => i.SourceTable === 'Parts'),
       PullList: base.filter(i => i.SourceTable === 'PullList'),
     }
+  }, [items, loadId])
+
+  // Weight already on this load (items currently assigned, not being newly selected)
+  const currentLoadWeight = useMemo(() => {
+    return (items || [])
+      .filter(i => i.LoadID === loadId)
+      .reduce((sum, i) => sum + (parseFloat(getItemWeight(i)) || 0), 0)
   }, [items, loadId])
 
   // Available pallets: not on any load, or already on this load
@@ -290,17 +299,33 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
 
       {activeTab === 'pallets' ? renderPalletsTable() : renderItemTable()}
 
-      {/* Selection summary */}
-      {hasSelection && (
-        <div className="mt-3 p-3 bg-gray-50 rounded-md text-sm text-gray-600 flex items-center gap-4">
-          {itemsSummary.count > 0 && (
-            <span>{itemsSummary.count} items ({formatWeight(itemsSummary.weight)})</span>
-          )}
-          {palletsSummary.count > 0 && (
-            <span>{palletsSummary.count} pallets ({palletsSummary.items} items, {formatWeight(palletsSummary.weight)})</span>
-          )}
-        </div>
-      )}
+      {/* Capacity bar */}
+      {(() => {
+        const addingWeight = itemsSummary.weight + palletsSummary.weight
+        const projectedTotal = currentLoadWeight + addingWeight
+        const remaining = LOAD_CAPACITY - projectedTotal
+        const fillPct = Math.min((projectedTotal / LOAD_CAPACITY) * 100, 100)
+        const barColor = remaining < 0 ? 'bg-red-500' : remaining < LOAD_CAPACITY * 0.25 ? 'bg-orange-400' : 'bg-green-500'
+        const textColor = remaining < 0 ? 'text-red-600' : remaining < LOAD_CAPACITY * 0.25 ? 'text-orange-600' : 'text-green-600'
+
+        return (
+          <div className="mt-3 p-3 bg-gray-50 rounded-md text-sm">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-gray-600">
+                Load: {formatWeightLbs(currentLoadWeight)}
+                {addingWeight > 0 && <> + <span className="font-medium text-blue-600">{formatWeightLbs(addingWeight)}</span></>}
+                {' '}/ {formatWeightLbs(LOAD_CAPACITY)}
+              </span>
+              <span className={clsx('font-medium', textColor)}>
+                {remaining < 0 ? `${formatWeightLbs(Math.abs(remaining))} over` : `${formatWeightLbs(remaining)} avail`}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className={clsx(barColor, 'h-2 rounded-full transition-all')} style={{ width: `${fillPct}%` }} />
+            </div>
+          </div>
+        )
+      })()}
 
       <Modal.Footer>
         <Button variant="secondary" onClick={handleClose}>Cancel</Button>

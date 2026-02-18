@@ -7,6 +7,8 @@ import LoadItemAssigner from './LoadItemAssigner'
 import { getLoadStatusColor, loadStatusOptions } from '../../utils/statusColors'
 import { formatDate, formatWeight, formatWeightLbs, formatLoadStatus } from '../../utils/formatters'
 
+const LOAD_CAPACITY = 48000
+
 export default function LoadsSection({
   loads,
   items,
@@ -86,6 +88,7 @@ export default function LoadsSection({
     // Total weight: all items on this load (direct + via pallets)
     const allLoadItems = (items || []).filter(i => i.LoadID === load.LoadID)
     const totalWeight = allLoadItems.reduce((sum, i) => sum + ((i.TeklaWeight != null ? i.TeklaWeight : i.Weight) || 0), 0)
+    const remaining = LOAD_CAPACITY - totalWeight
 
     return (
       <div key={load.LoadID} className="border rounded-lg overflow-hidden">
@@ -105,6 +108,11 @@ export default function LoadsSection({
                 {load.ItemCount > 0 && load.PalletCount > 0 && ', '}
                 {load.PalletCount > 0 && `${load.PalletCount} pallets`}
                 {totalWeight > 0 && ` — ${formatWeightLbs(totalWeight)}`}
+              </span>
+            )}
+            {totalWeight > 0 && (
+              <span className={clsx('text-xs font-medium', remaining < 0 ? 'text-red-600' : remaining < LOAD_CAPACITY * 0.25 ? 'text-orange-500' : 'text-green-600')}>
+                ({remaining < 0 ? `${formatWeightLbs(Math.abs(remaining))} over` : `${formatWeightLbs(remaining)} avail`})
               </span>
             )}
           </div>
