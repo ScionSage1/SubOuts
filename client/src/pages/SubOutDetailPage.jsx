@@ -6,7 +6,7 @@ import { useDeleteItem, useBulkAddItems, useUpdateItem } from '../hooks/useSubOu
 import { useUpdatePullListSource, useBulkUpdatePullListStatus } from '../hooks/useCutlists'
 import { usePullStatuses } from '../hooks/useConfig'
 import { usePallets, useCreatePallet, useUpdatePallet, useDeletePallet, useUpdatePalletStatus, useAssignItemsToPallet, useRemoveItemFromPallet, useAssignPalletToLoad } from '../hooks/usePallets'
-import { useLoads, useCreateLoad, useUpdateLoad, useDeleteLoad, useUpdateLoadStatus, useAssignItemsToLoad, useAssignPalletsToLoad } from '../hooks/useLoads'
+import { useLoads, useCreateLoad, useUpdateLoad, useDeleteLoad, useUpdateLoadStatus, useAssignItemsToLoad, useAssignPalletsToLoad, useRemoveItemFromLoad } from '../hooks/useLoads'
 import SubOutDetail from '../components/subouts/SubOutDetail'
 import LoadsSection from '../components/subouts/LoadsSection'
 import PalletsSection from '../components/subouts/PalletsSection'
@@ -62,6 +62,7 @@ export default function SubOutDetailPage() {
   const updateLoadStatusMutation = useUpdateLoadStatus()
   const assignItemsToLoadMutation = useAssignItemsToLoad()
   const assignPalletsToLoadMutation = useAssignPalletsToLoad()
+  const removeItemFromLoadMutation = useRemoveItemFromLoad()
 
   const subOut = data?.data
   const pallets = palletsData?.data || []
@@ -181,6 +182,7 @@ export default function SubOutDetailPage() {
           onUpdateLoadStatus={updateLoadStatusMutation.mutate}
           onAssignItemsToLoad={assignItemsToLoadMutation.mutate}
           onAssignPalletsToLoad={assignPalletsToLoadMutation.mutate}
+          onRemoveItemFromLoad={removeItemFromLoadMutation.mutate}
           onQuickShipOut={handleQuickShipOut}
           onQuickShipIn={handleQuickShipIn}
           isCreating={createLoadMutation.isPending}

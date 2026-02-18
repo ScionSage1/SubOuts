@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Edit2, Trash2, Truck, ChevronDown, ChevronRight, Zap, Package } from 'lucide-react'
+import { Plus, Edit2, Trash2, Truck, ChevronDown, ChevronRight, Zap, Package, X } from 'lucide-react'
 import Card from '../common/Card'
 import Button from '../common/Button'
 import LoadForm from './LoadForm'
@@ -20,6 +20,7 @@ export default function LoadsSection({
   onUpdateLoadStatus,
   onAssignItemsToLoad,
   onAssignPalletsToLoad,
+  onRemoveItemFromLoad,
   onQuickShipOut,
   onQuickShipIn,
   isCreating,
@@ -166,11 +167,29 @@ export default function LoadsSection({
             {loadItems.length > 0 && (
               <div className="px-3 py-2">
                 <div className="text-xs font-medium text-gray-700 mb-1">Direct Items</div>
-                {loadItems.map(item => (
-                  <div key={item.SubOutItemID} className="text-xs text-gray-600 ml-4">
-                    {item.PieceMark || item.MainMark || '-'} - {item.Shape} {item.Dimension}, Qty {item.Quantity}
-                  </div>
-                ))}
+                {loadItems.map(item => {
+                  const weight = item.TeklaWeight != null ? item.TeklaWeight : item.Weight
+                  return (
+                    <div key={item.SubOutItemID} className="text-xs text-gray-600 ml-4 flex items-center justify-between group">
+                      <span>
+                        {item.SourceTable === 'PullList'
+                          ? `${item.Shape} ${item.Dimension || ''} ${item.Grade || ''} ${item.Length || ''}`
+                          : `${item.PieceMark || item.MainMark || '-'} - ${item.Shape} ${item.Dimension || ''}`
+                        }, Qty {item.Quantity}
+                        {weight ? `, ${formatWeight(weight)}` : ''}
+                      </span>
+                      {onRemoveItemFromLoad && (
+                        <button
+                          onClick={() => onRemoveItemFromLoad({ subOutId, loadId: load.LoadID, itemId: item.SubOutItemID })}
+                          className="p-0.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Remove from load"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
             {loadPallets.length === 0 && loadItems.length === 0 && (
