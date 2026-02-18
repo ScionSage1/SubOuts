@@ -9,7 +9,7 @@ const CORTEX_ADMIN_KEY = process.env.CORTEX_ADMIN_KEY || '';
 // 5-minute in-memory cache
 let inventoryCache = null;
 let inventoryCachedAt = null;
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 30 * 60 * 1000;
 
 async function getInventory() {
   if (inventoryCache && inventoryCachedAt && Date.now() - inventoryCachedAt < CACHE_TTL) {
