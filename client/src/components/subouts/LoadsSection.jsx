@@ -103,7 +103,7 @@ export default function LoadsSection({
     const loadPallets = getPalletsForLoad(load.LoadID)
     // Total weight: all items on this load (direct + via pallets)
     const allLoadItems = (items || []).filter(i => i.LoadID === load.LoadID)
-    const totalWeight = allLoadItems.reduce((sum, i) => sum + ((i.TeklaWeight != null ? i.TeklaWeight : i.Weight) || 0), 0)
+    const totalWeight = allLoadItems.reduce((sum, i) => sum + ((i.TeklaWeight != null ? i.TeklaWeight : i.Weight) || 0) * (i.Quantity || 1), 0)
     const remaining = LOAD_CAPACITY - totalWeight
 
     return (

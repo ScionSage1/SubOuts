@@ -38,7 +38,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
   const currentLoadWeight = useMemo(() => {
     return (items || [])
       .filter(i => i.LoadID === loadId)
-      .reduce((sum, i) => sum + (parseFloat(getItemWeight(i)) || 0), 0)
+      .reduce((sum, i) => sum + ((parseFloat(getItemWeight(i)) || 0) * (i.Quantity || 1)), 0)
   }, [items, loadId])
 
   // Available pallets: not on any load, or already on this load
@@ -97,7 +97,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
     const selected = allAvailable.filter(i => selectedItemIds.includes(i.SubOutItemID))
     return {
       count: selected.length,
-      weight: selected.reduce((sum, i) => sum + (parseFloat(getItemWeight(i)) || 0), 0)
+      weight: selected.reduce((sum, i) => sum + ((parseFloat(getItemWeight(i)) || 0) * (i.Quantity || 1)), 0)
     }
   }, [selectedItemIds, availableItemsBySource])
 
