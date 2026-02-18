@@ -164,6 +164,9 @@ export default function RawMaterialMatcher({ isOpen, onClose, items, subOutId, o
     let totalSticks = 0
     let totalWeight = 0
     const itemsToAdd = []
+    // Use timestamp modded to fit INT range + counter for uniqueness
+    const baseId = Date.now() % 2000000000
+    let counter = 0
 
     for (const [key, qty] of Object.entries(selectedSticks)) {
       const [gi, si] = key.split('-').map(Number)
@@ -177,9 +180,9 @@ export default function RawMaterialMatcher({ isOpen, onClose, items, subOutId, o
       for (let i = 0; i < qty; i++) {
         itemsToAdd.push({
           sourceTable: 'TeklaInventory',
-          sourceId: Date.now() + Math.random() * 10000, // unique pseudo-ID
+          sourceId: baseId + (++counter),
           shape: group.shape,
-          dimension: group.sticks[si]?.dimension || matchedGroups[gi]?.pieces?.[0]?.dimension || '',
+          dimension: stick.dimension || group.pieces?.[0]?.dimension || '',
           grade: group.grade,
           length: stick.lengthDisplay,
           quantity: 1,
