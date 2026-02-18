@@ -96,8 +96,14 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
     return result
   }, [items, sendTypeFilter, searchFilter])
 
+  const matchesTab = (item, tab) => {
+    if (tab === 'PullList') return item.SourceTable === 'PullList' || item.SourceTable === 'TeklaInventory'
+    if (tab === 'Combined') return item.SourceTable === 'PullList' || item.SourceTable === 'LongShapes'
+    return item.SourceTable === tab
+  }
+
   const sortedItems = useMemo(() => {
-    const tabItems = allFilteredItems.filter(item => item.SourceTable === activeTab)
+    const tabItems = allFilteredItems.filter(item => matchesTab(item, activeTab))
     if (!sortConfig.key) return tabItems
     return [...tabItems].sort(sortComparator)
   }, [allFilteredItems, activeTab, sortConfig])
@@ -108,7 +114,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
       const longShapesItems = allFilteredItems.filter(item => item.SourceTable === 'LongShapes')
       return pullListItems.length + longShapesItems.length
     }
-    return allFilteredItems.filter(item => item.SourceTable === sourceTable).length
+    return allFilteredItems.filter(item => matchesTab(item, sourceTable)).length
   }
 
   // Build combined hierarchy: PullList -> LongShapes by Barcode
