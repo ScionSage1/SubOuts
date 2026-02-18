@@ -13,6 +13,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
   const [sendTypeFilter, setSendTypeFilter] = useState('')
   const [editingRMNumber, setEditingRMNumber] = useState({})
   const [selectedPullListIds, setSelectedPullListIds] = useState(new Set())
+  const [selectedItemIds, setSelectedItemIds] = useState(new Set())
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
   const [searchFilter, setSearchFilter] = useState('')
 
@@ -328,22 +329,74 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
     )
   }
 
+  // --- Multi-select helpers for LongShapes/Parts tabs ---
+  const currentTabFilteredItems = sortedItems
+  const allTabItemsSelected = currentTabFilteredItems.length > 0 && currentTabFilteredItems.every(item => selectedItemIds.has(item.SubOutItemID))
+
+  const toggleItemSelect = (itemId) => {
+    setSelectedItemIds(prev => {
+      const next = new Set(prev)
+      if (next.has(itemId)) next.delete(itemId)
+      else next.add(itemId)
+      return next
+    })
+  }
+
+  const toggleSelectAllItems = () => {
+    if (allTabItemsSelected) {
+      setSelectedItemIds(new Set())
+    } else {
+      setSelectedItemIds(new Set(currentTabFilteredItems.map(item => item.SubOutItemID)))
+    }
+  }
+
+  const handleBulkSendTypeChange = (sendType) => {
+    if (selectedItemIds.size === 0 || !onUpdateSendType) return
+    selectedItemIds.forEach(id => onUpdateSendType(id, sendType))
+    setSelectedItemIds(new Set())
+  }
+
+  const renderBulkSendTypeBar = () => {
+    if (selectedItemIds.size === 0 || !onUpdateSendType) return null
+    return (
+      <div className="flex items-center gap-3 mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+        <span className="text-sm font-medium text-blue-800">{selectedItemIds.size} selected</span>
+        <span className="text-gray-300">|</span>
+        <label className="text-sm text-gray-600">Set Send Type:</label>
+        <select
+          onChange={(e) => handleBulkSendTypeChange(e.target.value)}
+          defaultValue=""
+          className="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="" disabled>Choose...</option>
+          {sendTypeOptions.map(opt => (
+            <option key={opt} value={opt}>{formatSendType(opt)}</option>
+          ))}
+        </select>
+        <button
+          onClick={() => setSelectedItemIds(new Set())}
+          className="text-sm text-gray-500 hover:text-gray-700 ml-auto"
+        >
+          Clear selection
+        </button>
+      </div>
+    )
+  }
+
   // --- Table renderers ---
   const renderStandardTable = () => (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            {activeTab === 'PullList' && (
-              <th className="w-10 px-2 py-3">
-                <input
-                  type="checkbox"
-                  checked={allPullListSelected}
-                  onChange={toggleSelectAllPullList}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-              </th>
-            )}
+            <th className="w-10 px-2 py-3">
+              <input
+                type="checkbox"
+                checked={activeTab === 'PullList' ? allPullListSelected : allTabItemsSelected}
+                onChange={activeTab === 'PullList' ? toggleSelectAllPullList : toggleSelectAllItems}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+            </th>
             {renderSortHeader('Type', 'SendType', { px: 'px-3' })}
             {activeTab === 'PullList' && (
               <>
@@ -371,17 +424,15 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {sortedItems.map(item => (
-            <tr key={item.SubOutItemID} className={clsx('hover:bg-gray-50', activeTab === 'PullList' && selectedPullListIds.has(item.SourceID) && 'bg-blue-50')}>
-              {activeTab === 'PullList' && (
-                <td className="w-10 px-2 py-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedPullListIds.has(item.SourceID)}
-                    onChange={() => togglePullListSelect(item.SourceID)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                </td>
-              )}
+            <tr key={item.SubOutItemID} className={clsx('hover:bg-gray-50', activeTab === 'PullList' ? selectedPullListIds.has(item.SourceID) && 'bg-blue-50' : selectedItemIds.has(item.SubOutItemID) && 'bg-blue-50')}>
+              <td className="w-10 px-2 py-3">
+                <input
+                  type="checkbox"
+                  checked={activeTab === 'PullList' ? selectedPullListIds.has(item.SourceID) : selectedItemIds.has(item.SubOutItemID)}
+                  onChange={() => activeTab === 'PullList' ? togglePullListSelect(item.SourceID) : toggleItemSelect(item.SubOutItemID)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+              </td>
               <td className="px-3 py-3">{renderSendTypeCell(item)}</td>
               {activeTab === 'PullList' && (
                 <>
@@ -620,6 +671,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
   const handleTabChange = (tabKey) => {
     setActiveTab(tabKey)
     setSelectedPullListIds(new Set())
+    setSelectedItemIds(new Set())
     setSortConfig({ key: null, direction: 'asc' })
   }
 
@@ -676,8 +728,9 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
         </div>
       </div>
 
-      {/* Bulk action bar for PullList multi-select */}
+      {/* Bulk action bars */}
       {activeTab === 'PullList' && renderBulkActionBar()}
+      {(activeTab === 'LongShapes' || activeTab === 'Parts') && renderBulkSendTypeBar()}
 
       {/* Table Content */}
       {activeTab === 'Combined' ? (
