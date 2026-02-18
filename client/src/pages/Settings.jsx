@@ -602,23 +602,11 @@ export default function Settings() {
                 </div>
               </div>
 
-              {/* Two workflows */}
+              {/* Load workflow */}
               <div>
                 <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                  Quick Ship (Simple)
-                </h4>
-                <p className="text-sm text-gray-600 mb-2">
-                  For fast recording without details, click the
-                  <span className="inline-flex items-center mx-1 px-2 py-0.5 rounded bg-white border border-gray-300 text-gray-700 text-xs font-semibold">Quick</span>
-                  button. This creates a Delivered load instantly — same as the old "+1 Load" workflow.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                  Detailed Load (Full Tracking)
+                  Creating a Load
                 </h4>
                 <div className="space-y-2">
                   <Step number="1">
