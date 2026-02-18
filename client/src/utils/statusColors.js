@@ -19,6 +19,16 @@ export const actionColors = {
   default:         'border-l-4 border-l-gray-300'
 }
 
+export const actionBarColors = {
+  overdueSend:     'bg-red-500',
+  overdueReceive:  'bg-orange-500',
+  missingSteel:    'bg-pink-500',
+  readyToShip:     'bg-blue-500',
+  inProgress:      'bg-yellow-400',
+  complete:        'bg-green-500',
+  default:         'bg-gray-300'
+}
+
 export const rowColors = {
   missingSteel: 'bg-pink-50',
   complete: 'bg-green-50',
@@ -71,6 +81,25 @@ export function getActionColor(subOut) {
   }
 
   return actionColors.default
+}
+
+export function getActionBarColor(subOut) {
+  const now = new Date()
+  const dateToLeave = subOut.DateToLeaveMFC ? new Date(subOut.DateToLeaveMFC) : null
+  const dateToShip = subOut.DateToShipFromSub ? new Date(subOut.DateToShipFromSub) : null
+
+  const outShipped = subOut.OutboundDeliveredCount ?? subOut.LoadsShippedFromMFC
+  const outTotal = subOut.OutboundLoadCount ?? subOut.LoadsToShipFromMFC
+  const inShipped = subOut.InboundDeliveredCount ?? subOut.LoadsShippedFromSub
+  const inTotal = subOut.InboundLoadCount ?? subOut.LoadsToShipFromSub
+
+  if (dateToLeave && dateToLeave < now && outShipped < outTotal) return actionBarColors.overdueSend
+  if (dateToShip && dateToShip < now && inShipped < inTotal) return actionBarColors.overdueReceive
+  if (subOut.MissingSteel) return actionBarColors.missingSteel
+  if (subOut.Status === 'Complete') return actionBarColors.complete
+  if (['Sent', 'InProcess', 'Shipped'].includes(subOut.Status)) return actionBarColors.inProgress
+  if (subOut.Status === 'Ready') return actionBarColors.readyToShip
+  return actionBarColors.default
 }
 
 export function getRowColor(subOut) {

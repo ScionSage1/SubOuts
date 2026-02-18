@@ -1,98 +1,149 @@
 import { useNavigate } from 'react-router-dom'
-import { Check, AlertCircle } from 'lucide-react'
+import { Check, AlertCircle, Building2, Calendar, Weight, Package, FileText } from 'lucide-react'
 import clsx from 'clsx'
-import Card from '../common/Card'
 import StatusBadge from '../common/StatusBadge'
-import { getActionColor } from '../../utils/statusColors'
+import { getActionBarColor } from '../../utils/statusColors'
 import { formatDate, formatWeight, formatLoadsProgress, isLoadsComplete, truncate } from '../../utils/formatters'
 
 export default function SubOutCard({ subOut }) {
   const navigate = useNavigate()
-  const actionColor = getActionColor(subOut)
+  const barColor = getActionBarColor(subOut)
 
   const handleClick = () => {
     navigate(`/subouts/${subOut.SubOutID}`)
   }
 
+  const now = new Date()
+  const dateToLeave = subOut.DateToLeaveMFC ? new Date(subOut.DateToLeaveMFC) : null
+  const dateToShip = subOut.DateToShipFromSub ? new Date(subOut.DateToShipFromSub) : null
+
+  const outShipped = subOut.OutboundDeliveredCount ?? subOut.LoadsShippedFromMFC ?? 0
+  const outTotal = subOut.OutboundLoadCount ?? subOut.LoadsToShipFromMFC ?? 0
+  const inShipped = subOut.InboundDeliveredCount ?? subOut.LoadsShippedFromSub ?? 0
+  const inTotal = subOut.InboundLoadCount ?? subOut.LoadsToShipFromSub ?? 0
+
+  const outOverdue = dateToLeave && dateToLeave < now && outShipped < outTotal
+  const inOverdue = dateToShip && dateToShip < now && inShipped < inTotal
+
+  const outPct = outTotal > 0 ? Math.round((outShipped / outTotal) * 100) : 0
+  const inPct = inTotal > 0 ? Math.round((inShipped / inTotal) * 100) : 0
+
   return (
-    <Card
-      className={clsx('overflow-hidden', actionColor)}
+    <div
+      className="rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer overflow-hidden border border-gray-200"
       onClick={handleClick}
     >
-      <Card.Body className="p-4">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-2">
-          <div>
-            <h3 className="font-semibold text-gray-900">{subOut.Lot}</h3>
-            <p className="text-sm text-gray-600">{subOut.Description || 'No description'}</p>
-          </div>
+      {/* Top accent bar */}
+      <div className={clsx('h-1', barColor)} />
+
+      <div className="p-4">
+        {/* Header: Lot + Status */}
+        <div className="flex items-start justify-between mb-1">
+          <h3 className="font-bold text-gray-900 text-base leading-tight">{subOut.Lot}</h3>
           <StatusBadge status={subOut.Status} />
         </div>
 
-        {/* Vendor */}
-        <p className="text-sm text-gray-500 mb-3">
-          {subOut.SubFabricator || 'No vendor assigned'}
+        {/* Description */}
+        <p className="text-sm text-gray-500 mb-3 leading-snug">
+          {subOut.Description || 'No description'}
         </p>
 
-        {/* Loads Progress */}
-        <div className="grid grid-cols-2 gap-4 mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Out:</span>
-            <span className="text-sm font-medium">
-              {formatLoadsProgress(
-                subOut.OutboundDeliveredCount ?? subOut.LoadsShippedFromMFC,
-                subOut.OutboundLoadCount ?? subOut.LoadsToShipFromMFC
-              )}
+        {/* Vendor + Zone */}
+        <div className="flex items-center gap-2 mb-3">
+          <Building2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+          <span className="text-sm text-gray-700 truncate">{subOut.SubFabricator || 'No vendor'}</span>
+          {subOut.Zone && (
+            <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium">
+              Z{subOut.Zone}
             </span>
-            {isLoadsComplete(
-              subOut.OutboundDeliveredCount ?? subOut.LoadsShippedFromMFC,
-              subOut.OutboundLoadCount ?? subOut.LoadsToShipFromMFC
-            ) && (
-              <Check className="w-4 h-4 text-green-500" />
-            )}
+          )}
+        </div>
+
+        {/* Dates */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-0.5">Leave MFC</div>
+            <div className={clsx('text-sm font-medium flex items-center gap-1', outOverdue ? 'text-red-600' : 'text-gray-700')}>
+              {outOverdue && <AlertCircle className="w-3 h-3" />}
+              {formatDate(subOut.DateToLeaveMFC)}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">In:</span>
-            <span className="text-sm font-medium">
-              {formatLoadsProgress(
-                subOut.InboundDeliveredCount ?? subOut.LoadsShippedFromSub,
-                subOut.InboundLoadCount ?? subOut.LoadsToShipFromSub
-              )}
-            </span>
-            {isLoadsComplete(
-              subOut.InboundDeliveredCount ?? subOut.LoadsShippedFromSub,
-              subOut.InboundLoadCount ?? subOut.LoadsToShipFromSub
-            ) && (
-              <Check className="w-4 h-4 text-green-500" />
-            )}
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-0.5">Due Back</div>
+            <div className={clsx('text-sm font-medium flex items-center gap-1', inOverdue ? 'text-orange-600' : 'text-gray-700')}>
+              {inOverdue && <AlertCircle className="w-3 h-3" />}
+              {formatDate(subOut.DateToShipFromSub)}
+            </div>
           </div>
         </div>
 
-        {/* Date & Stats */}
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">
-            Ship: {formatDate(subOut.DateToShipFromSub)}
+        {/* Load progress bars */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] uppercase tracking-wider text-gray-400">Out</span>
+              <span className="text-xs text-gray-600 flex items-center gap-1">
+                {formatLoadsProgress(outShipped, outTotal)}
+                {isLoadsComplete(outShipped, outTotal) && <Check className="w-3 h-3 text-green-500" />}
+              </span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-1.5">
+              <div
+                className={clsx('h-1.5 rounded-full transition-all', outPct >= 100 ? 'bg-green-500' : outOverdue ? 'bg-red-400' : 'bg-blue-400')}
+                style={{ width: `${Math.min(outPct, 100)}%` }}
+              />
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] uppercase tracking-wider text-gray-400">In</span>
+              <span className="text-xs text-gray-600 flex items-center gap-1">
+                {formatLoadsProgress(inShipped, inTotal)}
+                {isLoadsComplete(inShipped, inTotal) && <Check className="w-3 h-3 text-green-500" />}
+              </span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-1.5">
+              <div
+                className={clsx('h-1.5 rounded-full transition-all', inPct >= 100 ? 'bg-green-500' : inOverdue ? 'bg-orange-400' : 'bg-blue-400')}
+                style={{ width: `${Math.min(inPct, 100)}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats footer */}
+        <div className="flex items-center gap-3 pt-2 border-t border-gray-100 text-xs text-gray-500">
+          <span className="flex items-center gap-1">
+            <Weight className="w-3 h-3" />
+            {formatWeight(subOut.Weight)}
           </span>
-          <span className="text-gray-600">
-            {subOut.MajorPieces || '-'} pcs | {formatWeight(subOut.Weight)}
+          <span className="flex items-center gap-1">
+            <Package className="w-3 h-3" />
+            {subOut.MajorPieces || 0} pcs
           </span>
+          {subOut.PONumber && (
+            <span className="flex items-center gap-1 ml-auto">
+              <FileText className="w-3 h-3" />
+              {subOut.PONumber}
+            </span>
+          )}
         </div>
 
         {/* Missing Steel Warning */}
         {subOut.MissingSteel && (
-          <div className="mt-3 flex items-center gap-2 text-pink-600 bg-pink-50 px-2 py-1 rounded text-xs">
-            <AlertCircle className="w-4 h-4" />
-            <span>Missing: {truncate(subOut.MissingSteel, 30)}</span>
+          <div className="mt-3 flex items-center gap-2 text-pink-700 bg-pink-50 px-2.5 py-1.5 rounded-md text-xs font-medium">
+            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Missing: {truncate(subOut.MissingSteel, 40)}</span>
           </div>
         )}
 
         {/* Notes Preview */}
         {subOut.Notes && !subOut.MissingSteel && (
-          <p className="mt-3 text-xs text-gray-500 italic">
+          <p className="mt-2 text-xs text-gray-400 italic leading-snug">
             {truncate(subOut.Notes, 50)}
           </p>
         )}
-      </Card.Body>
-    </Card>
+      </div>
+    </div>
   )
 }
