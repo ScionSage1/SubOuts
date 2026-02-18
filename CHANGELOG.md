@@ -9,6 +9,39 @@ Format: [Date] - Summary of changes
 ## 2026-02-18
 
 ### Added
+- **Raw Material from Tekla Inventory** - Add raw material (plates, angles, etc.) from Tekla inventory
+  - "Add Raw Material" button on SubOut detail page opens matcher modal
+  - Shape and Grade dropdowns populated from distinct Tekla inventory values
+  - Matching inventory displayed with dimension, stock length, weight, in-stock count
+  - Quantity picker to select how many sticks to add
+  - Items added with SourceTable='TeklaInventory', SendType='Raw'
+  - New API: `GET /api/tekla/inventory/filters` returns distinct shapes/grades
+  - New API: `GET /api/tekla/inventory/match` returns inventory matching shape+grade pairs
+  - `server/controllers/teklaController.js`, `server/routes/tekla.js`
+  - `client/src/components/subouts/RawMaterialMatcher.jsx` (new), `client/src/hooks/useTekla.js` (new)
+  - `client/src/services/api.js`, `client/src/pages/SubOutDetailPage.jsx`
+
+- **TeklaInventory items in PullList/Raw tab** - Items from Tekla inventory now appear on the PullList/Raw tab
+  - ItemsTable filters include TeklaInventory source alongside PullList
+  - LoadItemAssigner PullList/Raw tab includes TeklaInventory items for load assignment
+  - `client/src/components/subouts/ItemsTable.jsx`, `client/src/components/subouts/LoadItemAssigner.jsx`
+
+- **SubOutCard redesign** - Richer card design with more info and visual polish
+  - Top colored accent bar replacing left border (same color logic)
+  - Hover shadow lift effect
+  - Both dates shown: Leave MFC + Due Back with overdue highlighting
+  - Mini progress bars for outbound/inbound loads (active loads shown at 50% fill)
+  - Icons, zone badge, PO number displayed
+  - `client/src/components/subouts/SubOutCard.jsx`, `client/src/utils/statusColors.js`
+
+- **Strikethrough for assigned items** - Items on a pallet or load show with strikethrough in ItemsTable
+  - Applied across all tabs (LongShapes, Parts, PullList, Combined)
+  - `client/src/components/subouts/ItemsTable.jsx`
+
+- **Double-load prevention** - Backend guard prevents assigning items already on another load
+  - Returns 400 error listing conflicting items
+  - `server/controllers/loadController.js`
+
 - **Tekla inventory weight enrichment** - PullList items now display weights from Tekla inventory
   - Backend calls MFCCortex `tekla_get_inventory` tool to fetch 13,410+ inventory records
   - Matches items by shape/dimension/grade/length composite key, converts kg→lbs
@@ -49,6 +82,14 @@ Format: [Date] - Summary of changes
   - Uses `formatWeight` formatter (lbs or tons)
   - Weight included in search filter
   - `client/src/components/subouts/ItemsTable.jsx`, `client/src/components/subouts/ItemPicker.jsx`
+
+### Removed
+- **Quick Ship buttons** - Removed "Quick" buttons from Loads section (redundant with full load tracking)
+  - `client/src/components/subouts/LoadsSection.jsx`, `client/src/pages/SubOutDetailPage.jsx`
+
+### Fixed
+- **Checkbox click in assigners** - Fixed event bubbling causing double-toggle when clicking directly on checkboxes
+  - `client/src/components/subouts/PalletItemAssigner.jsx`, `client/src/components/subouts/LoadItemAssigner.jsx`
 
 ---
 

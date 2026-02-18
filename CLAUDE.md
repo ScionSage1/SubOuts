@@ -46,6 +46,7 @@ D:\Claude\SubOuts\
 │   │   │   │   ├── PalletForm.jsx    # Pallet create/edit modal
 │   │   │   │   ├── PalletItemAssigner.jsx  # Assign parts to a pallet
 │   │   │   │   ├── PalletsSection.jsx  # Expandable pallet cards with items
+│   │   │   │   ├── RawMaterialMatcher.jsx  # Add raw material from Tekla inventory
 │   │   │   │   ├── SendTypeBadge.jsx # Color-coded send type indicator
 │   │   │   │   ├── SubOutCard.jsx
 │   │   │   │   ├── SubOutDetail.jsx  # Detail view (children slot for sections)
@@ -66,6 +67,7 @@ D:\Claude\SubOuts\
 │   │   │   ├── useJobs.js
 │   │   │   ├── useCutlists.js       # Cutlist queries + PullList source update mutation
 │   │   │   ├── useConfig.js         # Config lookup hooks (pull statuses)
+│   │   │   ├── useTekla.js          # Tekla inventory hooks (filters, matching)
 │   │   │   ├── useDashboard.js
 │   │   │   └── useCommunications.js  # Communication log hooks
 │   │   ├── pages/
@@ -98,7 +100,7 @@ D:\Claude\SubOuts\
 │   │   ├── jobController.js
 │   │   ├── cutlistController.js     # Cutlist queries + PullList source update
 │   │   ├── configController.js      # Config lookup (pull statuses)
-│   │   ├── teklaController.js      # Debug endpoint for raw Tekla inventory
+│   │   ├── teklaController.js      # Tekla inventory: filters, matching, raw debug
 │   │   └── dashboardController.js
 │   ├── config/
 │   │   ├── database.js              # SQL Server connection pool
@@ -113,7 +115,7 @@ D:\Claude\SubOuts\
 │   │   ├── cutlists.js              # Includes PUT for PullList source update
 │   │   ├── config.js                # Config lookup routes (/api/config)
 │   │   ├── dashboard.js
-│   │   ├── tekla.js                 # Tekla inventory debug route (/api/tekla)
+│   │   ├── tekla.js                 # Tekla inventory routes (/api/tekla)
 │   │   └── communications.js        # Communication log API
 │   ├── middleware/
 │   │   └── errorHandler.js          # Async wrapper & error handling
@@ -291,6 +293,8 @@ Run these scripts on the FabTracker database:
 
 ### Tekla (`/api/tekla`)
 - `GET /inventory` - Debug endpoint: raw Tekla inventory items via MFCCortex (13,410+ items, 30min cache)
+- `GET /inventory/filters` - Distinct shapes and grades for dropdown selection
+- `GET /inventory/match` - Find inventory matching shape+grade pairs (query: shapes JSON array of `{shape, grade}`)
 
 ### Dashboard (`/api/dashboard`)
 - `GET /stats` - Overall statistics
@@ -381,16 +385,28 @@ Items can be classified into three send types reflecting real-world scenarios:
 - Expanded load cards show items with weights and remove (X) buttons
 - Pallets on loads are expandable to show contained items; removable from load
 - PullList items display as shape/size/grade/length (no marks)
-- **Quick Ship** button preserves old "+1 Load" workflow (creates a Delivered load instantly)
-- Progress bars show delivered/total loads per direction
+- Progress bars show delivered/total loads per direction (active loads shown at 50% fill)
 - Legacy counter fields synced automatically when loads change status
 
 ### Item Tracking
-- Source tracking (SourceTable, SourceID) for LongShapes, Parts, PullList
+- Source tracking (SourceTable, SourceID) for LongShapes, Parts, PullList, TeklaInventory
 - Material tracking: HeatNumber, CertNumber, Barcode
 - Send type tracking: Raw, CutToLength, PartsOnPallets
 - Pallet and Load assignment tracking
+- Items on a pallet or load display with strikethrough in the items table
+- Items cannot be assigned to multiple loads (backend guard)
 - Lot number generation: SUB#001, SUB#002, etc.
+
+### Raw Material from Tekla Inventory
+- Add raw material (plates, angles, etc.) directly from Tekla inventory
+- **"Add Raw Material"** button on SubOut detail page opens the Raw Material Matcher modal
+- Shape dropdown populated from all distinct shapes in Tekla inventory
+- Grade dropdown filters to grades available for the selected shape
+- Matching inventory displayed as a table: dimension, stock length, weight, in-stock count
+- Quantity picker (+/-) to select how many of each stick to add
+- Items added with `SourceTable: 'TeklaInventory'`, `SendType: 'Raw'`
+- TeklaInventory items appear on the **PullList/Raw** tab in ItemsTable and LoadItemAssigner
+- `client/src/components/subouts/RawMaterialMatcher.jsx`, `client/src/hooks/useTekla.js`
 
 ### Pull Status & RM Number Tracking
 - PullStatus and RMNumber are fetched live from `FabTracker.PullList` source table when a SubOut is opened
@@ -478,7 +494,7 @@ The Dashboard is the primary working screen. It displays:
 
 #### Reading Card Colors
 
-Cards have a colored left border indicating their current condition:
+Cards have a colored top accent bar indicating their current condition:
 - **Red** - Overdue: past the "Date to Leave MFC" and loads have not all shipped out
 - **Orange** - Overdue receive: past the "Date to Ship from Sub" and loads have not all come back
 - **Pink** - Missing steel: the sub out has missing steel noted
@@ -541,7 +557,7 @@ Click on any sub out card or table row to open its detail page. The detail page 
 3. **Loads Section** - Two-column layout tracking all shipments:
    - **Outbound (MFC → Sub)** - Loads going to the sub-fabricator with progress bar
    - **Inbound (Sub → MFC)** - Loads returning with progress bar
-   - Each column has: **"+ Load"** (create with details), **"Quick"** (instant Delivered load)
+   - Each column has: **"+ Load"** button to create loads with full details
    - Load cards show: number, status badge, scheduled date, item/pallet counts
    - Expand loads to see truck info, assigned pallets, and direct items
    - Inline status dropdown to advance: Planned → Loading → InTransit → Delivered
@@ -565,6 +581,7 @@ Click on any sub out card or table row to open its detail page. The detail page 
    - **Pallet** and **Load** columns showing assignments
    - **Send type filter** dropdown above the tabs
    - Use **"+ Add Items"** to add from the job's cutlist
+   - Use **"Add Raw Material"** to add raw inventory from Tekla (plates, angles, etc.)
 
 6. **Missing Steel Card** - Displays missing steel notes in pink (only shown if present).
 
@@ -594,10 +611,7 @@ Click on any sub out card or table row to open its detail page. The detail page 
 
 Loads are tracked on the sub out detail page in the **Loads Section**. Two columns show Outbound (MFC → Sub) and Inbound (Sub → MFC) loads.
 
-**Quick Ship (simple workflow):**
-- Click the **"Quick"** button in either column to instantly create a Delivered load. This is the fastest way to record a shipment and replaces the old "+1 Load" buttons.
-
-**Detailed Load (full tracking):**
+**Creating a load:**
 1. Click **"+ Load"** in the appropriate column (Outbound or Inbound).
 2. Fill in the load form: direction, scheduled date, truck company, trailer number, driver name, BOL number, weight, piece count, notes.
 3. Click **"Create Load"**. The load appears as a card in the column.
@@ -684,6 +698,25 @@ Pull list items display their **Pull Status** and **RM Number** from the source 
    - Items already assigned to another sub out are grayed out and show which lot they belong to.
    - The **selection summary** at the bottom shows total count, pieces, weight, and the **send type selector** to override the default.
 4. Click **"Add Selected Items"** to add them to the sub out with the chosen send type.
+
+---
+
+### Adding Raw Material from Tekla Inventory
+
+Raw material (plates, angles, channels, etc.) can be added directly from Tekla inventory:
+
+1. Open a sub out's detail page.
+2. Click **"Add Raw Material"** (layers icon) above the items table, next to "Add Items".
+3. The **Raw Material Matcher** modal opens:
+   - **Select a Shape** from the dropdown (e.g., PL, L, C, W). Shapes are populated from all available Tekla inventory.
+   - **Select a Grade** from the dropdown (e.g., A36, 50). Grades are filtered to those available for the selected shape.
+   - A table appears showing matching inventory: dimension, stock length, weight per piece, and in-stock count.
+   - Click a row or its checkbox to select it. A **quantity picker** (+/-) appears to choose how many sticks to add.
+   - The **selection summary** shows total sticks selected and combined weight.
+4. Click **"Add X Sticks as Raw Material"** to add them to the sub out.
+5. Added items appear on the **PullList/Raw** tab with `SendType: Raw` and `SourceTable: TeklaInventory`.
+
+**Note:** These items are also selectable in the Load Item Assigner under the PullList/Raw tab.
 
 ---
 
