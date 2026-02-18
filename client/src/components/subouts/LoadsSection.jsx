@@ -83,6 +83,9 @@ export default function LoadsSection({
     const statusColor = getLoadStatusColor(load.Status)
     const loadItems = getItemsForLoad(load.LoadID)
     const loadPallets = getPalletsForLoad(load.LoadID)
+    // Total weight: all items on this load (direct + via pallets)
+    const allLoadItems = (items || []).filter(i => i.LoadID === load.LoadID)
+    const totalWeight = allLoadItems.reduce((sum, i) => sum + ((i.TeklaWeight != null ? i.TeklaWeight : i.Weight) || 0), 0)
 
     return (
       <div key={load.LoadID} className="border rounded-lg overflow-hidden">
@@ -101,6 +104,7 @@ export default function LoadsSection({
                 {load.ItemCount > 0 && `${load.ItemCount} items`}
                 {load.ItemCount > 0 && load.PalletCount > 0 && ', '}
                 {load.PalletCount > 0 && `${load.PalletCount} pallets`}
+                {totalWeight > 0 && ` — ${formatWeight(totalWeight)}`}
               </span>
             )}
           </div>
@@ -180,11 +184,11 @@ export default function LoadsSection({
                       </span>
                       {onRemoveItemFromLoad && (
                         <button
-                          onClick={() => onRemoveItemFromLoad({ subOutId, loadId: load.LoadID, itemId: item.SubOutItemID })}
-                          className="p-0.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => { e.stopPropagation(); onRemoveItemFromLoad({ subOutId, loadId: load.LoadID, itemId: item.SubOutItemID }) }}
+                          className="p-0.5 text-gray-400 hover:text-red-500 flex-shrink-0"
                           title="Remove from load"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
