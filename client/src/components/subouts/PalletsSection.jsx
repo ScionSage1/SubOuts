@@ -5,7 +5,7 @@ import Button from '../common/Button'
 import PalletForm from './PalletForm'
 import PalletItemAssigner from './PalletItemAssigner'
 import { getPalletStatusColor, palletStatusOptions } from '../../utils/statusColors'
-import { formatDimensions, formatWeight } from '../../utils/formatters'
+import { formatDimensions, formatWeight, formatWeightLbs } from '../../utils/formatters'
 
 export default function PalletsSection({
   pallets,
@@ -82,6 +82,14 @@ export default function PalletsSection({
               const isExpanded = expandedPallets.has(pallet.PalletID)
               const palletItems = getItemsForPallet(pallet.PalletID)
               const statusColor = getPalletStatusColor(pallet.Status)
+              const computedWeight = palletItems.reduce((sum, i) => sum + ((i.TeklaWeight != null ? i.TeklaWeight : i.Weight) || 0) * (i.Quantity || 1), 0)
+              // Build parts summary: group by Shape+Dimension, sum quantities
+              const partGroups = {}
+              palletItems.forEach(i => {
+                const key = `${i.Shape || ''}${i.Dimension ? ' ' + i.Dimension : ''}`
+                partGroups[key] = (partGroups[key] || 0) + (i.Quantity || 1)
+              })
+              const partsSummary = Object.entries(partGroups).map(([k, qty]) => `${qty} ${k}`).join(', ')
 
               return (
                 <div key={pallet.PalletID} className="border rounded-lg overflow-hidden">
@@ -94,10 +102,10 @@ export default function PalletsSection({
                         {pallet.Status}
                       </span>
                       <span className="text-sm text-gray-500">
-                        {pallet.ItemCount || 0} items
+                        {pallet.ItemCount || 0} items{computedWeight > 0 && ` — ${formatWeightLbs(computedWeight)}`}
                       </span>
-                      {pallet.Weight && (
-                        <span className="text-sm text-gray-500">{formatWeight(pallet.Weight)}</span>
+                      {partsSummary && (
+                        <span className="text-xs text-gray-400 truncate max-w-xs" title={partsSummary}>{partsSummary}</span>
                       )}
                       {(pallet.Length || pallet.Width || pallet.Height) && (
                         <span className="text-xs text-gray-400">{formatDimensions(pallet.Length, pallet.Width, pallet.Height)}</span>
@@ -188,7 +196,11 @@ export default function PalletsSection({
                                 <td className="px-4 py-2 text-sm">{item.Shape || '-'}</td>
                                 <td className="px-4 py-2 text-sm">{item.Dimension || '-'}</td>
                                 <td className="px-4 py-2 text-sm text-center">{item.Quantity || 0}</td>
-                                <td className="px-4 py-2 text-sm text-right">{formatWeight(item.Weight)}</td>
+                                <td className="px-4 py-2 text-sm text-right">
+                                  <span className={item.TeklaWeight != null ? 'text-blue-600' : ''}>
+                                    {formatWeightLbs(item.TeklaWeight != null ? item.TeklaWeight : item.Weight)}
+                                  </span>
+                                </td>
                                 <td className="px-4 py-2 text-right">
                                   <button
                                     onClick={() => onRemoveItem({ subOutId, palletId: pallet.PalletID, itemId: item.SubOutItemID })}
