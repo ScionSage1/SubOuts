@@ -682,7 +682,7 @@ export default function HowToGuide() {
                 <div><strong>SubOut Info:</strong> Job, Lot, Description, Vendor</div>
                 <div><strong>Load Details:</strong> Load Number, Direction, Status, Scheduled/Actual Dates</div>
                 <div><strong>Truck Info:</strong> Company, Trailer #, Driver, BOL # (if entered)</div>
-                <div><strong>Items Table:</strong> Shape, Main Mark, Piece Mark, Grade, Length, Qty, Weight</div>
+                <div><strong>Items Table:</strong> Shape, Mark, Pc Mark, Grade, Length, RM#, Qty, Weight</div>
                 <div><strong>Pallets Table:</strong> Pallet #, Item Count, Dimensions, Weight</div>
                 <div><strong>Totals:</strong> Total Weight, Total Pieces, Pallet Count</div>
                 <div><strong>Signature Lines:</strong> Loaded By, Driver Signature, Received By</div>
@@ -1229,6 +1229,32 @@ export default function HowToGuide() {
         {/* Recent Changes */}
         <GuideSection icon={History} title="Recent Changes" color="indigo">
           <div className="bg-white rounded-lg p-4 space-y-6">
+            {/* Feb 19 Part 5 */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-mono">2026-02-19</span>
+                <span className="text-xs text-gray-400">Part 5</span>
+              </h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Auto-Status Toggle</strong> — SubOut auto-switches between In-Process and Ready based on loaded percentage (100% → Ready, below 100% → In-Process)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-500 font-bold flex-shrink-0">~</span>
+                  <span><strong>Decimal Percent Loaded</strong> — cards now show 1-decimal percentage (e.g., "99.6% loaded")</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-500 font-bold flex-shrink-0">~</span>
+                  <span><strong>Load Edit Pre-Population</strong> — editing a load pre-fills Weight (formatted with commas) and Piece Count from assigned items</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>RM# on Bill of Lading</strong> — print BOL items table now includes RM Number column</span>
+                </div>
+              </div>
+            </div>
+
             {/* Feb 19 Part 3 */}
             <div>
               <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">

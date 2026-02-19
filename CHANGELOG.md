@@ -6,6 +6,30 @@ Format: [Date] - Summary of changes
 
 ---
 
+## 2026-02-19 (Part 5)
+
+### Enhanced
+- **Auto-Status Toggle** — SubOut status automatically toggles between In-Process and Ready based on loaded percentage
+  - 100% loaded + In-Process → auto-switches to Ready
+  - Below 100% loaded + Ready → auto-reverts to In-Process (e.g., when items removed from loads or new items added)
+  - Triggers on all load/pallet/item operations: assign, remove, delete, bulk add
+  - Activity log records auto-status changes with percentage
+  - `server/helpers/activityLog.js`, `server/controllers/loadController.js`, `server/controllers/palletController.js`, `server/controllers/subOutItemController.js`
+
+- **Decimal Percent Loaded** — Dashboard cards show 1-decimal percentage (e.g., "99.6% loaded") instead of rounded integers
+  - `client/src/components/subouts/SubOutCard.jsx`
+
+- **Load Edit Form Pre-Population** — Editing a load now pre-fills Weight and Piece Count from assigned items
+  - Weight shown as rounded integer with thousand separators (e.g., "9,342")
+  - Piece Count summed from item quantities
+  - `client/src/components/subouts/LoadsSection.jsx`, `client/src/components/subouts/LoadForm.jsx`
+
+- **RM# on Bill of Lading** — Print BOL items table now includes RM Number column
+  - Narrower Mark/Pc Mark columns, wider RM# column (fits 15-20 characters)
+  - `client/src/components/subouts/LoadPrintView.jsx`
+
+---
+
 ## 2026-02-19 (Part 4)
 
 ### Changed

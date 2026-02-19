@@ -331,6 +331,13 @@ Run these scripts on the FabTracker database:
 Submitted → In-Process → Ready → Sent → Shipped → Received → QCd → Complete → OnSite
 ```
 
+### Auto-Status Toggle
+- When 100% of items are loaded (assigned to loads), SubOut auto-switches from In-Process → Ready
+- When loaded percentage drops below 100% (items removed from loads or new items added), auto-reverts from Ready → In-Process
+- Triggered by: load item/pallet assign/remove, load delete, item bulk add, item delete
+- Activity log records auto-status changes with loaded percentage
+- Uses barcode-linked counting (LongShapes count as loaded if their PullList barcode-match is on a load)
+
 ## Color Coding
 
 - **Red border**: Overdue send
@@ -393,6 +400,7 @@ Items can be classified into three send types reflecting real-world scenarios:
 - Two-column layout: Outbound (MFC → Sub) and Inbound (Sub → MFC)
 - Auto-numbered: OUT-001, OUT-002... and IN-001, IN-002...
 - Load details: scheduled/actual dates, truck company, trailer number, driver, BOL number, weight, piece count
+- Edit form pre-populates weight (rounded, comma-formatted) and piece count from assigned items
 - Status flow: Planned → Loading → Loaded → InTransit → Delivered
 - Assign items and pallets to loads via tabbed assigner (LongShapes, Parts, PullList/Raw, Pallets)
 - Load card headers show total weight in lbs and remaining capacity (48,000 lb default)
@@ -461,6 +469,7 @@ Items can be classified into three send types reflecting real-world scenarios:
 ### Formatting Utilities
 - Date: short (m/d/yy) and long (Month Day, Year)
 - Weight: Tons (T) if >= 2000 lbs, otherwise lbs
+- Percent loaded: 1-decimal (e.g., "99.6% loaded") on SubOut cards
 - Loads progress: "shipped of total" format
 - Dimensions: L x W x H in inches
 - Send type labels: Raw, Cut to Length, Parts on Pallets
