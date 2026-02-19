@@ -29,7 +29,7 @@ export default function LoadForm({ isOpen, onClose, onSubmit, initialData, defau
         trailerNumber: initialData.TrailerNumber || '',
         driverName: initialData.DriverName || '',
         bolNumber: initialData.BOLNumber || '',
-        weight: initialData.Weight ?? '',
+        weight: initialData.Weight != null ? Math.round(initialData.Weight).toLocaleString() : '',
         pieceCount: initialData.PieceCount ?? '',
         notes: initialData.Notes || ''
       })
@@ -56,7 +56,7 @@ export default function LoadForm({ isOpen, onClose, onSubmit, initialData, defau
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit(formData)
+    onSubmit({ ...formData, weight: String(formData.weight).replace(/,/g, '') })
   }
 
   return (
@@ -127,7 +127,6 @@ export default function LoadForm({ isOpen, onClose, onSubmit, initialData, defau
             <Input
               label="Weight (lbs)"
               name="weight"
-              type="number"
               value={formData.weight}
               onChange={handleChange}
             />
