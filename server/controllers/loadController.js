@@ -1,5 +1,5 @@
 const { query, sql } = require('../config/database');
-const { logActivity } = require('../helpers/activityLog');
+const { logActivity, autoReadyIfFullyLoaded } = require('../helpers/activityLog');
 
 // Helper: Sync legacy load counters on SubOuts from SubOutLoads
 async function syncLegacyCounters(subOutId) {
@@ -357,6 +357,7 @@ async function assignItemsToLoad(req, res, next) {
 
     const user = req.headers['x-user'] || null;
     await logActivity(subOutId, 'ItemsAssignedToLoad', `${itemIds.length} item(s) assigned to load ${loadNum}`, { loadNumber: loadNum, itemCount: itemIds.length }, user);
+    await autoReadyIfFullyLoaded(subOutId, user);
 
     const getQuery = `SELECT * FROM FabTracker.vwSubOutLoadsDetail WHERE LoadID = @id`;
     const getResult = await query(getQuery, { id: parseInt(loadId) });
@@ -431,6 +432,7 @@ async function assignPalletsToLoad(req, res, next) {
 
     const user = req.headers['x-user'] || null;
     await logActivity(subOutId, 'PalletsAssignedToLoad', `${palletIds.length} pallet(s) assigned to load ${loadNum}`, { loadNumber: loadNum, palletCount: palletIds.length }, user);
+    await autoReadyIfFullyLoaded(subOutId, user);
 
     const getQuery = `SELECT * FROM FabTracker.vwSubOutLoadsDetail WHERE LoadID = @id`;
     const getResult = await query(getQuery, { id: parseInt(loadId) });

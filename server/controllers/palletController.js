@@ -1,5 +1,5 @@
 const { query, sql } = require('../config/database');
-const { logActivity } = require('../helpers/activityLog');
+const { logActivity, autoReadyIfFullyLoaded } = require('../helpers/activityLog');
 
 // Get all pallets for a sub out
 async function getPallets(req, res, next) {
@@ -373,6 +373,7 @@ async function assignPalletToLoad(req, res, next) {
 
       const user = req.headers['x-user'] || null;
       await logActivity(subOutId, 'PalletAssignedToLoad', `Pallet ${palletNum} assigned to load ${loadNum}`, { palletNumber: palletNum, loadNumber: loadNum }, user);
+      await autoReadyIfFullyLoaded(subOutId, user);
     } else {
       const user = req.headers['x-user'] || null;
       await logActivity(subOutId, 'PalletUnassignedFromLoad', `Pallet ${palletNum} unassigned from load`, { palletNumber: palletNum }, user);

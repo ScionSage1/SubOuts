@@ -21,4 +21,30 @@ async function logActivity(subOutId, eventType, description, eventData = null, c
   }
 }
 
-module.exports = { logActivity };
+/**
+ * Auto-advance SubOut to Ready when 100% items are loaded and status is In-Process.
+ */
+async function autoReadyIfFullyLoaded(subOutId, user) {
+  try {
+    const countResult = await query(`
+      SELECT
+        COUNT(*) AS TotalItems,
+        SUM(CASE WHEN LoadID IS NOT NULL THEN 1 ELSE 0 END) AS LoadedItems
+      FROM FabTracker.SubOutItems
+      WHERE SubOutID = @id
+    `, { id: parseInt(subOutId) });
+    const { TotalItems, LoadedItems } = countResult.recordset[0];
+    if (TotalItems > 0 && LoadedItems >= TotalItems) {
+      const statusResult = await query('SELECT Status FROM FabTracker.SubOuts WHERE SubOutID = @id', { id: parseInt(subOutId) });
+      const currentStatus = statusResult.recordset[0]?.Status;
+      if (currentStatus === 'In-Process') {
+        await query("UPDATE FabTracker.SubOuts SET Status = 'Ready', UpdatedAt = GETDATE() WHERE SubOutID = @id", { id: parseInt(subOutId) });
+        await logActivity(subOutId, 'StatusChange', 'Status auto-changed from In-Process to Ready (100% loaded)', { from: 'In-Process', to: 'Ready', auto: true }, user);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to auto-ready:', err.message);
+  }
+}
+
+module.exports = { logActivity, autoReadyIfFullyLoaded };
