@@ -31,7 +31,7 @@ export default function SubOutCard({ subOut }) {
 
   // Heat map: urgency based on days until leave date vs percent loaded
   const getHeatGradient = () => {
-    if (subOut.Status === 'Complete') return null
+    if (subOut.Status === 'Complete' || subOut.Status === 'OnSite') return null
     if (!dateToLeave || totalItems === 0) return null
     if (pctLoaded >= 100) return 'rgba(34,197,94,0.08)' // subtle green
     const daysLeft = Math.ceil((dateToLeave - now) / (1000 * 60 * 60 * 24))

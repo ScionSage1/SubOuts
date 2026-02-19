@@ -74,7 +74,7 @@ export default function SubOutDetail({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {subOut.Status === 'Complete' && onReopen && (
+          {(subOut.Status === 'Complete' || subOut.Status === 'OnSite') && onReopen && (
             <Button variant="secondary" size="sm" onClick={onReopen}>
               <RotateCcw className="w-4 h-4 mr-1" />
               Reopen

@@ -1080,13 +1080,14 @@ export default function HowToGuide() {
             <div className="flex flex-wrap items-center justify-center gap-1 py-2">
               {[
                 { label: 'Pending', bg: 'bg-gray-100', text: 'text-gray-800', desc: 'Awaiting action' },
+                { label: 'InProcess', bg: 'bg-orange-100', text: 'text-orange-800', desc: 'Being fabricated' },
                 { label: 'Ready', bg: 'bg-blue-100', text: 'text-blue-800', desc: 'Ready to ship from MFC' },
                 { label: 'Sent', bg: 'bg-yellow-100', text: 'text-yellow-800', desc: 'Shipped to sub' },
-                { label: 'InProcess', bg: 'bg-orange-100', text: 'text-orange-800', desc: 'Being fabricated' },
                 { label: 'Shipped', bg: 'bg-purple-100', text: 'text-purple-800', desc: 'Shipped back to MFC' },
                 { label: 'Received', bg: 'bg-teal-100', text: 'text-teal-800', desc: 'Received at MFC' },
                 { label: 'QCd', bg: 'bg-green-100', text: 'text-green-800', desc: 'Quality checked' },
                 { label: 'Complete', bg: 'bg-green-200', text: 'text-green-900', desc: 'Done' },
+                { label: 'OnSite', bg: 'bg-emerald-200', text: 'text-emerald-900', desc: 'Delivered to site' },
               ].map((s, i) => (
                 <div key={i} className="flex items-center gap-1">
                   <div className="text-center">
@@ -1095,7 +1096,7 @@ export default function HowToGuide() {
                     </span>
                     <div className="text-[10px] text-gray-400 mt-0.5">{s.desc}</div>
                   </div>
-                  {i < 7 && <ArrowRight className="w-4 h-4 text-gray-300 flex-shrink-0" />}
+                  {i < 8 && <ArrowRight className="w-4 h-4 text-gray-300 flex-shrink-0" />}
                 </div>
               ))}
             </div>

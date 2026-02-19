@@ -328,7 +328,7 @@ Run these scripts on the FabTracker database:
 ## Status Flow
 
 ```
-Pending → Ready → Sent → InProcess → Shipped → Received → QCd → Complete
+Pending → InProcess → Ready → Sent → Shipped → Received → QCd → Complete → OnSite
 ```
 
 ## Color Coding
@@ -779,15 +779,16 @@ Sub outs progress through these statuses in order:
 | Status | Meaning |
 |--------|---------|
 | **Pending** | Initial state, awaiting action |
+| **InProcess** | Sub-fabricator is actively fabricating |
 | **Ready** | Steel is ready to ship from MFC |
 | **Sent** | Steel has been shipped from MFC to the sub-fabricator |
-| **InProcess** | Sub-fabricator is actively fabricating |
 | **Shipped** | Fabricated steel shipped from sub back to MFC |
 | **Received** | Steel received at MFC |
 | **QCd** | Quality check completed |
 | **Complete** | Fully complete, no further action needed |
+| **OnSite** | Steel delivered to the job site |
 
-Status is updated manually via the Edit page. The status is used for filtering and color coding throughout the app.
+Status is updated via the clickable stepper bar on the detail page or the Edit page. Both Complete and OnSite are treated as archived (hidden from active views by default).
 
 ---
 

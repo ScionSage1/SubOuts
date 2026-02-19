@@ -6,6 +6,18 @@ Format: [Date] - Summary of changes
 
 ---
 
+## 2026-02-19 (Part 4)
+
+### Changed
+- **Status Flow Reordered** — New order: Pending → InProcess → Ready → Sent → Shipped → Received → QCd → Complete → OnSite
+  - InProcess moved before Ready (was after Sent)
+  - New **OnSite** status added after Complete for steel delivered to the job site
+  - Both Complete and OnSite treated as archived (hidden from active views by default)
+  - Updated: statusColors.js, SubOutDetail.jsx, SubOutCard.jsx, Dashboard SQL queries, archive filters
+  - Updated: HowToGuide status stepper, CLAUDE.md status flow documentation
+
+---
+
 ## 2026-02-19 (Part 3)
 
 ### Enhanced

@@ -5,15 +5,15 @@ async function getStats(req, res, next) {
   try {
     const sqlQuery = `
       SELECT
-        (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status <> 'Complete') AS TotalActive,
+        (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status NOT IN ('Complete', 'OnSite')) AS TotalActive,
         (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status IN ('Pending', 'Ready')) AS PendingShipment,
         (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status IN ('Sent', 'InProcess')) AS InProgress,
-        (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status <> 'Complete' AND (
+        (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status NOT IN ('Complete', 'OnSite') AND (
           (DateToLeaveMFC < GETDATE() AND LoadsShippedFromMFC < LoadsToShipFromMFC)
           OR (DateToShipFromSub < GETDATE() AND LoadsShippedFromSub < LoadsToShipFromSub)
           OR (MissingSteel IS NOT NULL AND MissingSteel <> '')
         )) AS ActionRequired,
-        (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status = 'Complete') AS Archived
+        (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status IN ('Complete', 'OnSite')) AS Archived
     `;
 
     const result = await query(sqlQuery);
@@ -36,7 +36,7 @@ async function getActionItems(req, res, next) {
           ELSE 'Other'
         END AS ActionType
       FROM FabTracker.vwSubOutsList s
-      WHERE s.Status <> 'Complete'
+      WHERE s.Status NOT IN ('Complete', 'OnSite')
         AND (
           (DateToLeaveMFC < GETDATE() AND LoadsShippedFromMFC < LoadsToShipFromMFC)
           OR (DateToShipFromSub < GETDATE() AND LoadsShippedFromSub < LoadsToShipFromSub)
@@ -68,8 +68,8 @@ async function getByVendor(req, res, next) {
         COUNT(s.SubOutID) AS TotalSubOuts,
         SUM(CASE WHEN s.Status IN ('Pending', 'Ready') THEN 1 ELSE 0 END) AS Pending,
         SUM(CASE WHEN s.Status IN ('Sent', 'InProcess', 'Shipped') THEN 1 ELSE 0 END) AS InProgress,
-        SUM(CASE WHEN s.Status IN ('Received', 'QCd', 'Complete') THEN 1 ELSE 0 END) AS Complete,
-        SUM(CASE WHEN s.Status <> 'Complete' AND (
+        SUM(CASE WHEN s.Status IN ('Received', 'QCd', 'Complete', 'OnSite') THEN 1 ELSE 0 END) AS Complete,
+        SUM(CASE WHEN s.Status NOT IN ('Complete', 'OnSite') AND (
           (s.DateToLeaveMFC < GETDATE() AND s.LoadsShippedFromMFC < s.LoadsToShipFromMFC)
           OR (s.DateToShipFromSub < GETDATE() AND s.LoadsShippedFromSub < s.LoadsToShipFromSub)
         ) THEN 1 ELSE 0 END) AS OverdueCount,
@@ -97,7 +97,7 @@ async function getRecent(req, res, next) {
     const sqlQuery = `
       SELECT TOP (@limit) *
       FROM FabTracker.vwSubOutsList
-      WHERE Status <> 'Complete'
+      WHERE Status NOT IN ('Complete', 'OnSite')
       ORDER BY
         CASE WHEN UpdatedAt IS NOT NULL THEN UpdatedAt ELSE CreatedAt END DESC
     `;

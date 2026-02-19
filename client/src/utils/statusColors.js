@@ -1,12 +1,13 @@
 export const statusColors = {
   'Pending':    { bg: 'bg-gray-100',    text: 'text-gray-800',    border: 'border-gray-300' },
+  'InProcess':  { bg: 'bg-orange-100',  text: 'text-orange-800',  border: 'border-orange-300' },
   'Ready':      { bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-300' },
   'Sent':       { bg: 'bg-yellow-100',  text: 'text-yellow-800',  border: 'border-yellow-300' },
-  'InProcess':  { bg: 'bg-orange-100',  text: 'text-orange-800',  border: 'border-orange-300' },
   'Shipped':    { bg: 'bg-purple-100',  text: 'text-purple-800',  border: 'border-purple-300' },
   'Received':   { bg: 'bg-teal-100',    text: 'text-teal-800',    border: 'border-teal-300' },
   'QCd':        { bg: 'bg-green-100',   text: 'text-green-800',   border: 'border-green-300' },
-  'Complete':   { bg: 'bg-green-200',   text: 'text-green-900',   border: 'border-green-400' }
+  'Complete':   { bg: 'bg-green-200',   text: 'text-green-900',   border: 'border-green-400' },
+  'OnSite':     { bg: 'bg-emerald-200', text: 'text-emerald-900', border: 'border-emerald-400' }
 }
 
 export const actionColors = {
@@ -66,7 +67,7 @@ export function getActionColor(subOut) {
   }
 
   // Check complete
-  if (subOut.Status === 'Complete') {
+  if (subOut.Status === 'Complete' || subOut.Status === 'OnSite') {
     return actionColors.complete
   }
 
@@ -96,7 +97,7 @@ export function getActionBarColor(subOut) {
   if (dateToLeave && dateToLeave < now && outShipped < outTotal) return actionBarColors.overdueSend
   if (dateToShip && dateToShip < now && inShipped < inTotal) return actionBarColors.overdueReceive
   if (subOut.MissingSteel) return actionBarColors.missingSteel
-  if (subOut.Status === 'Complete') return actionBarColors.complete
+  if (subOut.Status === 'Complete' || subOut.Status === 'OnSite') return actionBarColors.complete
   if (['Sent', 'InProcess', 'Shipped'].includes(subOut.Status)) return actionBarColors.inProgress
   if (subOut.Status === 'Ready') return actionBarColors.readyToShip
   return actionBarColors.default
@@ -112,8 +113,8 @@ export function getRowColor(subOut) {
   const rInTotal = subOut.InboundLoadCount ?? subOut.LoadsToShipFromSub
   const rOutShipped = subOut.OutboundDeliveredCount ?? subOut.LoadsShippedFromMFC
 
-  // Complete - green
-  if (subOut.Status === 'Complete' ||
+  // Complete / OnSite - green
+  if (subOut.Status === 'Complete' || subOut.Status === 'OnSite' ||
       (rInShipped >= rInTotal && rInTotal > 0)) {
     return rowColors.complete
   }
@@ -128,13 +129,14 @@ export function getRowColor(subOut) {
 
 export const statusOptions = [
   'Pending',
+  'InProcess',
   'Ready',
   'Sent',
-  'InProcess',
   'Shipped',
   'Received',
   'QCd',
-  'Complete'
+  'Complete',
+  'OnSite'
 ]
 
 // Pallet status colors

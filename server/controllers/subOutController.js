@@ -23,11 +23,11 @@ async function getAllSubOuts(req, res, next) {
       params.status = status;
     }
 
-    // Archive filtering: exclude Complete by default
+    // Archive filtering: exclude Complete/OnSite by default
     if (archivedOnly === 'true') {
-      sqlQuery += ` AND Status = 'Complete'`;
+      sqlQuery += ` AND Status IN ('Complete', 'OnSite')`;
     } else if (includeArchived !== 'true' && !status) {
-      sqlQuery += ` AND Status <> 'Complete'`;
+      sqlQuery += ` AND Status NOT IN ('Complete', 'OnSite')`;
     }
 
     sqlQuery += ` ORDER BY JobCode DESC, Lot`;
@@ -43,7 +43,7 @@ async function getAllSubOuts(req, res, next) {
 async function getGroupedSubOuts(req, res, next) {
   try {
     const { includeArchived } = req.query;
-    const archiveFilter = includeArchived === 'true' ? '' : ` AND Status <> 'Complete'`;
+    const archiveFilter = includeArchived === 'true' ? '' : ` AND Status NOT IN ('Complete', 'OnSite')`;
 
     const sqlQuery = `
       SELECT DISTINCT JobCode, JobDescription, ProjectManager
