@@ -34,6 +34,24 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
     }
   }, [items, loadId])
 
+  // Barcodes where any item is on a load (not this load) — these are effectively unavailable
+  const loadedBarcodes = useMemo(() => {
+    const barcodes = new Set()
+    for (const item of (items || [])) {
+      if (item.Barcode && item.LoadID && item.LoadID !== loadId) {
+        barcodes.add(item.Barcode)
+      }
+    }
+    return barcodes
+  }, [items, loadId])
+
+  // Check if an item is effectively unavailable (on another load or barcode-linked to one)
+  const isItemUnavailable = (item) => {
+    if (item.LoadID && item.LoadID !== loadId) return true
+    if (item.Barcode && loadedBarcodes.has(item.Barcode) && !item.LoadID) return true
+    return false
+  }
+
   // Weight already on this load (items currently assigned, not being newly selected)
   const currentLoadWeight = useMemo(() => {
     return (items || [])
@@ -100,7 +118,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
   }
 
   const selectAllTabItems = () => {
-    const unassigned = currentTabItems.filter(i => !i.LoadID).map(i => i.SubOutItemID)
+    const unassigned = currentTabItems.filter(i => !isItemUnavailable(i)).map(i => i.SubOutItemID)
     setSelectedItemIds(prev => {
       const existing = new Set(prev)
       unassigned.forEach(id => existing.add(id))
@@ -166,7 +184,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
       )
     }
 
-    const unassignedCount = currentTabItems.filter(i => !i.LoadID).length
+    const unassignedCount = currentTabItems.filter(i => !isItemUnavailable(i)).length
     const showMainMark = activeTab === 'LongShapes' || activeTab === 'Parts'
     const showPieceMark = activeTab === 'LongShapes' || activeTab === 'Parts'
     const showGrade = activeTab === 'PullList'
@@ -200,23 +218,23 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
             <tbody className="divide-y divide-gray-200">
               {currentTabItems.map(item => {
                 const onThisLoad = item.LoadID === loadId
+                const unavailable = isItemUnavailable(item)
                 const isSelected = selectedItemIds.includes(item.SubOutItemID)
                 return (
                   <tr
                     key={item.SubOutItemID}
                     className={clsx(
-                      'cursor-pointer',
-                      onThisLoad ? 'bg-green-50' : 'hover:bg-blue-50',
-                      isSelected && 'bg-blue-100'
+                      onThisLoad ? 'bg-green-50' : unavailable ? 'bg-gray-50 text-gray-400' : 'cursor-pointer hover:bg-blue-50',
+                      isSelected && !unavailable && 'bg-blue-100'
                     )}
-                    onClick={() => !onThisLoad && toggleItem(item.SubOutItemID)}
+                    onClick={() => !onThisLoad && !unavailable && toggleItem(item.SubOutItemID)}
                   >
                     <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected || onThisLoad}
                         onChange={() => toggleItem(item.SubOutItemID)}
-                        disabled={onThisLoad}
+                        disabled={onThisLoad || unavailable}
                         className="rounded border-gray-300"
                       />
                     </td>
@@ -310,7 +328,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
       <div className="border-b border-gray-200 mb-4">
         <nav className="flex gap-2">
           {itemTabs.map(tab => {
-            const count = (availableItemsBySource[tab.key] || []).filter(i => !i.LoadID).length
+            const count = (availableItemsBySource[tab.key] || []).filter(i => !isItemUnavailable(i)).length
             const selCount = selectedCountForTab(tab.key)
             return (
               <button
