@@ -34,6 +34,8 @@ export function openPrintView({ subOut, load, loadItems, loadPallets, allPalletI
   th { background: #f5f5f5; font-weight: bold; font-size: 11px; text-transform: uppercase; }
   td { font-size: 11px; }
   .right { text-align: right; }
+  .col-mark { width: 60px; white-space: nowrap; }
+  .col-rm { min-width: 130px; }
   .bold { font-weight: bold; }
   .totals-row td { border-top: 2px solid #333; font-weight: bold; background: #f9f9f9; }
   .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; margin-top: 40px; padding-top: 8px; }
@@ -83,11 +85,11 @@ export function openPrintView({ subOut, load, loadItems, loadPallets, allPalletI
       <tr>
         <th>#</th>
         <th>Shape</th>
-        <th>Main Mark</th>
-        <th>Piece Mark</th>
+        <th class="col-mark">Mark</th>
+        <th class="col-mark">Pc Mark</th>
         <th>Grade</th>
         <th>Length</th>
-        <th>RM#</th>
+        <th class="col-rm">RM#</th>
         <th class="right">Qty</th>
         <th class="right">Weight</th>
       </tr>
