@@ -135,7 +135,7 @@ export default function SubOutCard({ subOut }) {
           {totalItems > 0 && (
             <span className={clsx('flex items-center gap-1 font-medium', pctLoaded >= 100 ? 'text-green-600' : pctLoaded > 0 ? 'text-blue-600' : 'text-gray-400')}>
               <Truck className="w-3 h-3" />
-              {pctLoaded}%
+              {pctLoaded}% loaded
             </span>
           )}
           {subOut.PONumber && (
