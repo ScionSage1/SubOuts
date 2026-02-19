@@ -38,6 +38,7 @@ export function useUpdateLoad() {
     onSuccess: (_, { subOutId }) => {
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId, 'loads'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId] })
+      queryClient.invalidateQueries({ queryKey: ['subouts', 'grouped'] })
     }
   })
 }
@@ -79,6 +80,7 @@ export function useAssignItemsToLoad() {
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId, 'loads'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId, 'items'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId] })
+      queryClient.invalidateQueries({ queryKey: ['subouts', 'grouped'] })
     }
   })
 }
@@ -92,6 +94,7 @@ export function useRemoveItemFromLoad() {
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId, 'loads'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId, 'items'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId] })
+      queryClient.invalidateQueries({ queryKey: ['subouts', 'grouped'] })
     }
   })
 }
@@ -106,6 +109,7 @@ export function useAssignPalletsToLoad() {
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId, 'pallets'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId, 'items'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId] })
+      queryClient.invalidateQueries({ queryKey: ['subouts', 'grouped'] })
     }
   })
 }
@@ -119,6 +123,7 @@ export function useRemovePalletFromLoad() {
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId, 'loads'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId, 'pallets'] })
       queryClient.invalidateQueries({ queryKey: ['subouts', subOutId] })
+      queryClient.invalidateQueries({ queryKey: ['subouts', 'grouped'] })
     }
   })
 }
