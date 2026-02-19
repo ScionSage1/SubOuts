@@ -301,6 +301,9 @@ async function updateSubOut(req, res, next) {
       return res.status(404).json({ success: false, error: 'SubOut not found' });
     }
 
+    const user = req.headers['x-user'] || null;
+    await logActivity(id, 'SubOutEdited', 'SubOut details updated', null, user);
+
     res.json({ success: true, data: getResult.recordset[0] });
   } catch (err) {
     next(err);

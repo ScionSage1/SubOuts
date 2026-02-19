@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Plus, Layers, Clock, RefreshCw, Package, Truck, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, Plus, Layers, Clock, RefreshCw, Package, Truck, AlertCircle, ChevronDown, ChevronUp, Edit3, Trash2, Link as LinkIcon } from 'lucide-react'
 import { useSubOut, useDeleteSubOut, useUpdateStatus } from '../hooks/useSubOuts'
 import { useDeleteItem, useBulkAddItems, useUpdateItem } from '../hooks/useSubOutItems'
 import { useUpdatePullListSource, useBulkUpdatePullListStatus } from '../hooks/useCutlists'
@@ -268,20 +268,48 @@ export default function SubOutDetailPage() {
                     {activityLog.map(entry => {
                       const eventIcon = {
                         StatusChange: <RefreshCw className="w-3.5 h-3.5" />,
+                        SubOutEdited: <Edit3 className="w-3.5 h-3.5" />,
                         ItemsAdded: <Plus className="w-3.5 h-3.5" />,
                         ItemRemoved: <AlertCircle className="w-3.5 h-3.5" />,
                         LoadCreated: <Truck className="w-3.5 h-3.5" />,
+                        LoadEdited: <Edit3 className="w-3.5 h-3.5" />,
+                        LoadDeleted: <Trash2 className="w-3.5 h-3.5" />,
                         LoadStatusChange: <Truck className="w-3.5 h-3.5" />,
+                        ItemsAssignedToLoad: <LinkIcon className="w-3.5 h-3.5" />,
+                        ItemRemovedFromLoad: <AlertCircle className="w-3.5 h-3.5" />,
+                        PalletsAssignedToLoad: <LinkIcon className="w-3.5 h-3.5" />,
+                        PalletRemovedFromLoad: <AlertCircle className="w-3.5 h-3.5" />,
                         PalletCreated: <Package className="w-3.5 h-3.5" />,
+                        PalletEdited: <Edit3 className="w-3.5 h-3.5" />,
+                        PalletDeleted: <Trash2 className="w-3.5 h-3.5" />,
+                        PalletStatusChange: <Package className="w-3.5 h-3.5" />,
+                        ItemsAssignedToPallet: <LinkIcon className="w-3.5 h-3.5" />,
+                        ItemRemovedFromPallet: <AlertCircle className="w-3.5 h-3.5" />,
+                        PalletAssignedToLoad: <LinkIcon className="w-3.5 h-3.5" />,
+                        PalletUnassignedFromLoad: <AlertCircle className="w-3.5 h-3.5" />,
                       }[entry.EventType] || <Clock className="w-3.5 h-3.5" />
 
                       const eventColor = {
                         StatusChange: 'bg-blue-100 text-blue-600',
+                        SubOutEdited: 'bg-blue-100 text-blue-600',
                         ItemsAdded: 'bg-green-100 text-green-600',
                         ItemRemoved: 'bg-red-100 text-red-600',
                         LoadCreated: 'bg-purple-100 text-purple-600',
+                        LoadEdited: 'bg-purple-100 text-purple-600',
+                        LoadDeleted: 'bg-red-100 text-red-600',
                         LoadStatusChange: 'bg-indigo-100 text-indigo-600',
+                        ItemsAssignedToLoad: 'bg-purple-100 text-purple-600',
+                        ItemRemovedFromLoad: 'bg-red-100 text-red-600',
+                        PalletsAssignedToLoad: 'bg-purple-100 text-purple-600',
+                        PalletRemovedFromLoad: 'bg-red-100 text-red-600',
                         PalletCreated: 'bg-amber-100 text-amber-600',
+                        PalletEdited: 'bg-amber-100 text-amber-600',
+                        PalletDeleted: 'bg-red-100 text-red-600',
+                        PalletStatusChange: 'bg-amber-100 text-amber-600',
+                        ItemsAssignedToPallet: 'bg-amber-100 text-amber-600',
+                        ItemRemovedFromPallet: 'bg-red-100 text-red-600',
+                        PalletAssignedToLoad: 'bg-indigo-100 text-indigo-600',
+                        PalletUnassignedFromLoad: 'bg-red-100 text-red-600',
                       }[entry.EventType] || 'bg-gray-100 text-gray-600'
 
                       const timeAgo = (date) => {

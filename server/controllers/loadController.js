@@ -158,8 +158,12 @@ async function createLoad(req, res, next) {
 // Update load details
 async function updateLoad(req, res, next) {
   try {
-    const { loadId } = req.params;
+    const { subOutId, loadId } = req.params;
     const { scheduledDate, actualDate, truckCompany, trailerNumber, driverName, bolNumber, weight, pieceCount, notes } = req.body;
+
+    // Get load number for logging
+    const currentLoad = await query('SELECT LoadNumber FROM FabTracker.SubOutLoads WHERE LoadID = @loadId', { loadId: parseInt(loadId) });
+    const loadNum = currentLoad.recordset[0]?.LoadNumber;
 
     const sqlQuery = `
       UPDATE FabTracker.SubOutLoads
@@ -194,6 +198,9 @@ async function updateLoad(req, res, next) {
       return res.status(404).json({ success: false, error: 'Load not found' });
     }
 
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'LoadEdited', `Load ${loadNum} details updated`, { loadNumber: loadNum }, user);
+
     const getQuery = `SELECT * FROM FabTracker.vwSubOutLoadsDetail WHERE LoadID = @id`;
     const getResult = await query(getQuery, { id: parseInt(loadId) });
 
@@ -207,6 +214,11 @@ async function updateLoad(req, res, next) {
 async function deleteLoad(req, res, next) {
   try {
     const { subOutId, loadId } = req.params;
+
+    // Get load info for logging before delete
+    const currentLoad = await query('SELECT LoadNumber, Direction FROM FabTracker.SubOutLoads WHERE LoadID = @loadId', { loadId: parseInt(loadId) });
+    const loadNum = currentLoad.recordset[0]?.LoadNumber;
+    const direction = currentLoad.recordset[0]?.Direction;
 
     // Unassign items from this load
     await query(
@@ -232,6 +244,9 @@ async function deleteLoad(req, res, next) {
 
     // Sync legacy counters
     await syncLegacyCounters(subOutId);
+
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'LoadDeleted', `Load ${loadNum} deleted (${direction})`, { loadNumber: loadNum, direction }, user);
 
     res.json({ success: true, message: 'Load deleted successfully' });
   } catch (err) {
@@ -336,6 +351,13 @@ async function assignItemsToLoad(req, res, next) {
 
     await query(updateQuery, updateParams);
 
+    // Get load number for logging
+    const loadInfo = await query('SELECT LoadNumber FROM FabTracker.SubOutLoads WHERE LoadID = @loadId', { loadId: parseInt(loadId) });
+    const loadNum = loadInfo.recordset[0]?.LoadNumber;
+
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'ItemsAssignedToLoad', `${itemIds.length} item(s) assigned to load ${loadNum}`, { loadNumber: loadNum, itemCount: itemIds.length }, user);
+
     const getQuery = `SELECT * FROM FabTracker.vwSubOutLoadsDetail WHERE LoadID = @id`;
     const getResult = await query(getQuery, { id: parseInt(loadId) });
 
@@ -348,7 +370,7 @@ async function assignItemsToLoad(req, res, next) {
 // Remove item from load
 async function removeItemFromLoad(req, res, next) {
   try {
-    const { loadId, itemId } = req.params;
+    const { subOutId, loadId, itemId } = req.params;
 
     const result = await query(
       `UPDATE FabTracker.SubOutItems SET LoadID = NULL WHERE SubOutItemID = @itemId AND LoadID = @loadId`,
@@ -358,6 +380,12 @@ async function removeItemFromLoad(req, res, next) {
     if (result.rowsAffected[0] === 0) {
       return res.status(404).json({ success: false, error: 'Item not found on this load' });
     }
+
+    const loadInfo = await query('SELECT LoadNumber FROM FabTracker.SubOutLoads WHERE LoadID = @loadId', { loadId: parseInt(loadId) });
+    const loadNum = loadInfo.recordset[0]?.LoadNumber;
+
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'ItemRemovedFromLoad', `Item removed from load ${loadNum}`, { loadNumber: loadNum }, user);
 
     res.json({ success: true, message: 'Item removed from load' });
   } catch (err) {
@@ -397,6 +425,13 @@ async function assignPalletsToLoad(req, res, next) {
 
     await query(updateItemsQuery, itemParams);
 
+    // Get load number for logging
+    const loadInfo = await query('SELECT LoadNumber FROM FabTracker.SubOutLoads WHERE LoadID = @loadId', { loadId: parseInt(loadId) });
+    const loadNum = loadInfo.recordset[0]?.LoadNumber;
+
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'PalletsAssignedToLoad', `${palletIds.length} pallet(s) assigned to load ${loadNum}`, { loadNumber: loadNum, palletCount: palletIds.length }, user);
+
     const getQuery = `SELECT * FROM FabTracker.vwSubOutLoadsDetail WHERE LoadID = @id`;
     const getResult = await query(getQuery, { id: parseInt(loadId) });
 
@@ -409,7 +444,15 @@ async function assignPalletsToLoad(req, res, next) {
 // Remove pallet from load
 async function removePalletFromLoad(req, res, next) {
   try {
-    const { loadId, palletId } = req.params;
+    const { subOutId, loadId, palletId } = req.params;
+
+    // Get load and pallet info for logging
+    const [loadInfo, palletInfo] = await Promise.all([
+      query('SELECT LoadNumber FROM FabTracker.SubOutLoads WHERE LoadID = @loadId', { loadId: parseInt(loadId) }),
+      query('SELECT PalletNumber FROM FabTracker.SubOutPallets WHERE PalletID = @palletId', { palletId: parseInt(palletId) })
+    ]);
+    const loadNum = loadInfo.recordset[0]?.LoadNumber;
+    const palletNum = palletInfo.recordset[0]?.PalletNumber;
 
     // Unassign pallet from load
     const result = await query(
@@ -426,6 +469,9 @@ async function removePalletFromLoad(req, res, next) {
       `UPDATE FabTracker.SubOutItems SET LoadID = NULL WHERE PalletID = @palletId AND LoadID = @loadId`,
       { palletId: parseInt(palletId), loadId: parseInt(loadId) }
     );
+
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'PalletRemovedFromLoad', `Pallet ${palletNum} removed from load ${loadNum}`, { loadNumber: loadNum, palletNumber: palletNum }, user);
 
     res.json({ success: true, message: 'Pallet removed from load' });
   } catch (err) {

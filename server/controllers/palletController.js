@@ -115,8 +115,12 @@ async function createPallet(req, res, next) {
 // Update pallet details
 async function updatePallet(req, res, next) {
   try {
-    const { palletId } = req.params;
+    const { subOutId, palletId } = req.params;
     const { palletNumber, weight, length, width, height, photoURL, notes } = req.body;
+
+    // Get current pallet number for logging
+    const currentPallet = await query('SELECT PalletNumber FROM FabTracker.SubOutPallets WHERE PalletID = @palletId', { palletId: parseInt(palletId) });
+    const palletNum = currentPallet.recordset[0]?.PalletNumber;
 
     const sqlQuery = `
       UPDATE FabTracker.SubOutPallets
@@ -147,6 +151,9 @@ async function updatePallet(req, res, next) {
       return res.status(404).json({ success: false, error: 'Pallet not found' });
     }
 
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'PalletEdited', `Pallet ${palletNum} details updated`, { palletNumber: palletNum }, user);
+
     // Fetch updated pallet
     const getQuery = `SELECT * FROM FabTracker.vwSubOutPalletsDetail WHERE PalletID = @id`;
     const getResult = await query(getQuery, { id: parseInt(palletId) });
@@ -163,7 +170,11 @@ async function updatePallet(req, res, next) {
 // Delete pallet (unassigns items first)
 async function deletePallet(req, res, next) {
   try {
-    const { palletId } = req.params;
+    const { subOutId, palletId } = req.params;
+
+    // Get pallet info for logging before delete
+    const currentPallet = await query('SELECT PalletNumber FROM FabTracker.SubOutPallets WHERE PalletID = @palletId', { palletId: parseInt(palletId) });
+    const palletNum = currentPallet.recordset[0]?.PalletNumber;
 
     // Unassign items from this pallet
     await query(
@@ -181,6 +192,9 @@ async function deletePallet(req, res, next) {
       return res.status(404).json({ success: false, error: 'Pallet not found' });
     }
 
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'PalletDeleted', `Pallet ${palletNum} deleted`, { palletNumber: palletNum }, user);
+
     res.json({ success: true, message: 'Pallet deleted successfully' });
   } catch (err) {
     next(err);
@@ -190,12 +204,17 @@ async function deletePallet(req, res, next) {
 // Update pallet status
 async function updatePalletStatus(req, res, next) {
   try {
-    const { palletId } = req.params;
+    const { subOutId, palletId } = req.params;
     const { status } = req.body;
 
     if (!status) {
       return res.status(400).json({ success: false, error: 'Status is required' });
     }
+
+    // Get current pallet info for logging
+    const currentPallet = await query('SELECT PalletNumber, Status FROM FabTracker.SubOutPallets WHERE PalletID = @palletId', { palletId: parseInt(palletId) });
+    const palletNum = currentPallet.recordset[0]?.PalletNumber;
+    const oldStatus = currentPallet.recordset[0]?.Status;
 
     const sqlQuery = `
       UPDATE FabTracker.SubOutPallets
@@ -211,6 +230,9 @@ async function updatePalletStatus(req, res, next) {
     if (result.rowsAffected[0] === 0) {
       return res.status(404).json({ success: false, error: 'Pallet not found' });
     }
+
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'PalletStatusChange', `Pallet ${palletNum} status changed from ${oldStatus} to ${status}`, { palletNumber: palletNum, from: oldStatus, to: status }, user);
 
     const getQuery = `SELECT * FROM FabTracker.vwSubOutPalletsDetail WHERE PalletID = @id`;
     const getResult = await query(getQuery, { id: parseInt(palletId) });
@@ -263,6 +285,13 @@ async function assignItemsToPallet(req, res, next) {
       WHERE PalletID = @palletId
     `, { palletId: parseInt(palletId) });
 
+    // Get pallet number for logging
+    const palletInfo = await query('SELECT PalletNumber FROM FabTracker.SubOutPallets WHERE PalletID = @palletId', { palletId: parseInt(palletId) });
+    const palletNum = palletInfo.recordset[0]?.PalletNumber;
+
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'ItemsAssignedToPallet', `${itemIds.length} item(s) assigned to pallet ${palletNum}`, { palletNumber: palletNum, itemCount: itemIds.length }, user);
+
     // Return updated pallet
     const getQuery = `SELECT * FROM FabTracker.vwSubOutPalletsDetail WHERE PalletID = @id`;
     const getResult = await query(getQuery, { id: parseInt(palletId) });
@@ -276,7 +305,7 @@ async function assignItemsToPallet(req, res, next) {
 // Remove item from pallet
 async function removeItemFromPallet(req, res, next) {
   try {
-    const { palletId, itemId } = req.params;
+    const { subOutId, palletId, itemId } = req.params;
 
     const result = await query(
       `UPDATE FabTracker.SubOutItems SET PalletID = NULL WHERE SubOutItemID = @itemId AND PalletID = @palletId`,
@@ -295,6 +324,12 @@ async function removeItemFromPallet(req, res, next) {
       WHERE PalletID = @palletId
     `, { palletId: parseInt(palletId) });
 
+    const palletInfo = await query('SELECT PalletNumber FROM FabTracker.SubOutPallets WHERE PalletID = @palletId', { palletId: parseInt(palletId) });
+    const palletNum = palletInfo.recordset[0]?.PalletNumber;
+
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'ItemRemovedFromPallet', `Item removed from pallet ${palletNum}`, { palletNumber: palletNum }, user);
+
     res.json({ success: true, message: 'Item removed from pallet' });
   } catch (err) {
     next(err);
@@ -304,8 +339,12 @@ async function removeItemFromPallet(req, res, next) {
 // Assign pallet to a load
 async function assignPalletToLoad(req, res, next) {
   try {
-    const { palletId } = req.params;
+    const { subOutId, palletId } = req.params;
     const { loadId } = req.body;
+
+    // Get pallet number for logging
+    const palletInfo = await query('SELECT PalletNumber FROM FabTracker.SubOutPallets WHERE PalletID = @palletId', { palletId: parseInt(palletId) });
+    const palletNum = palletInfo.recordset[0]?.PalletNumber;
 
     const sqlQuery = `
       UPDATE FabTracker.SubOutPallets
@@ -328,6 +367,15 @@ async function assignPalletToLoad(req, res, next) {
         `UPDATE FabTracker.SubOutItems SET LoadID = @loadId WHERE PalletID = @palletId`,
         { loadId: parseInt(loadId), palletId: parseInt(palletId) }
       );
+
+      const loadInfo = await query('SELECT LoadNumber FROM FabTracker.SubOutLoads WHERE LoadID = @loadId', { loadId: parseInt(loadId) });
+      const loadNum = loadInfo.recordset[0]?.LoadNumber;
+
+      const user = req.headers['x-user'] || null;
+      await logActivity(subOutId, 'PalletAssignedToLoad', `Pallet ${palletNum} assigned to load ${loadNum}`, { palletNumber: palletNum, loadNumber: loadNum }, user);
+    } else {
+      const user = req.headers['x-user'] || null;
+      await logActivity(subOutId, 'PalletUnassignedFromLoad', `Pallet ${palletNum} unassigned from load`, { palletNumber: palletNum }, user);
     }
 
     const getQuery = `SELECT * FROM FabTracker.vwSubOutPalletsDetail WHERE PalletID = @id`;
