@@ -302,6 +302,9 @@ SELECT
     (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Outbound' AND Status = 'Delivered') AS OutboundDeliveredCount,
     (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Inbound') AS InboundLoadCount,
     (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Inbound' AND Status = 'Delivered') AS InboundDeliveredCount,
+    -- Item counts for percent-loaded calculation
+    (SELECT COUNT(*) FROM FabTracker.SubOutItems WHERE SubOutID = s.SubOutID) AS TotalItemCount,
+    (SELECT COUNT(*) FROM FabTracker.SubOutItems WHERE SubOutID = s.SubOutID AND LoadID IS NOT NULL) AS LoadedItemCount,
     s.Zone,
     s.Weight,
     s.MajorPieces,

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Check, AlertCircle, Building2, Calendar, Weight, Package, FileText } from 'lucide-react'
+import { Check, AlertCircle, Building2, Calendar, Weight, Package, FileText, Truck } from 'lucide-react'
 import clsx from 'clsx'
 import StatusBadge from '../common/StatusBadge'
 import { getActionBarColor } from '../../utils/statusColors'
@@ -21,6 +21,10 @@ export default function SubOutCard({ subOut }) {
   const outTotal = subOut.OutboundLoadCount ?? subOut.LoadsToShipFromMFC ?? 0
   const inShipped = subOut.InboundDeliveredCount ?? subOut.LoadsShippedFromSub ?? 0
   const inTotal = subOut.InboundLoadCount ?? subOut.LoadsToShipFromSub ?? 0
+
+  const totalItems = subOut.TotalItemCount || 0
+  const loadedItems = subOut.LoadedItemCount || 0
+  const pctLoaded = totalItems > 0 ? Math.round((loadedItems / totalItems) * 100) : 0
 
   const outOverdue = dateToLeave && dateToLeave < now && outShipped < outTotal
   const inOverdue = dateToShip && dateToShip < now && inShipped < inTotal
@@ -128,6 +132,12 @@ export default function SubOutCard({ subOut }) {
             <Package className="w-3 h-3" />
             {subOut.MajorPieces || 0} pcs
           </span>
+          {totalItems > 0 && (
+            <span className={clsx('flex items-center gap-1 font-medium', pctLoaded >= 100 ? 'text-green-600' : pctLoaded > 0 ? 'text-blue-600' : 'text-gray-400')}>
+              <Truck className="w-3 h-3" />
+              {pctLoaded}%
+            </span>
+          )}
           {subOut.PONumber && (
             <span className="flex items-center gap-1 ml-auto">
               <FileText className="w-3 h-3" />
