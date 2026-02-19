@@ -206,8 +206,8 @@ CORTEX_ADMIN_KEY=your_admin_key
   - RMNumber (NVARCHAR) - Requisition material number
   - These fields are fetched live and displayed on SubOut items; edits write back to this table
 - **SubOutActivityLog** - Audit trail for SubOut changes
-  - LogID (PK), SubOutID (FK cascade), EventType (StatusChange, ItemsAdded, ItemRemoved, LoadCreated, LoadStatusChange, PalletCreated)
-  - Description, EventData (JSON), CreatedBy, CreatedAt
+  - LogID (PK), SubOutID (FK cascade), EventType, Description, EventData (JSON), CreatedBy, CreatedAt
+  - Event types: StatusChange, SubOutEdited, ItemsAdded, ItemRemoved, LoadCreated, LoadEdited, LoadDeleted, LoadStatusChange, ItemsAssignedToLoad, ItemRemovedFromLoad, PalletsAssignedToLoad, PalletRemovedFromLoad, PalletCreated, PalletEdited, PalletDeleted, PalletStatusChange, ItemsAssignedToPallet, ItemRemovedFromPallet, PalletAssignedToLoad, PalletUnassignedFromLoad
 - **SubFabricatorCommunicationLog** - Communication history with vendors
   - Fields: ContactDate, ContactType, ContactPerson, MFCEmployee, Summary, Details
   - Follow-up tracking: FollowUpRequired, FollowUpDate, FollowUpType, FollowUpNotes, FollowUpCompleted

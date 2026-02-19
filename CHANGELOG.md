@@ -6,6 +6,19 @@ Format: [Date] - Summary of changes
 
 ---
 
+## 2026-02-19 (Part 3)
+
+### Enhanced
+- **Comprehensive Activity Logging** — All load and pallet operations now logged to activity timeline
+  - Load operations: edit, delete, assign items, remove items, assign pallets, remove pallets
+  - Pallet operations: edit, delete, status change, assign items, remove items, assign/unassign from load
+  - SubOut edit operations also now tracked
+  - Activity timeline UI updated with icons and colors for all 20 event types (Edit3, Trash2, LinkIcon icons)
+  - `server/controllers/loadController.js`, `server/controllers/palletController.js`, `server/controllers/subOutController.js`
+  - `client/src/pages/SubOutDetailPage.jsx`
+
+---
+
 ## 2026-02-19 (Part 2)
 
 ### Added

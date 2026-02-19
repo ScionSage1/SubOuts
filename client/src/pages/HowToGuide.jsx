@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, ChevronRight, ChevronDown, LayoutDashboard, Package, Building2, Plus, Edit2, Trash2, Truck, ClipboardList, Filter, Eye, MousePointer, ArrowRight, CheckCircle2, AlertTriangle, Info, Layers, Settings as SettingsIcon, History, Clock, Printer, BarChart3, RefreshCw } from 'lucide-react'
+import { BookOpen, ChevronRight, ChevronDown, LayoutDashboard, Package, Building2, Plus, Edit2, Trash2, Truck, ClipboardList, Filter, Eye, MousePointer, ArrowRight, CheckCircle2, AlertTriangle, Info, Layers, Settings as SettingsIcon, History, Clock, Printer, BarChart3, RefreshCw, Link2 } from 'lucide-react'
 import clsx from 'clsx'
 
 function GuideSection({ icon: Icon, title, color, children, defaultOpen = false }) {
@@ -921,10 +921,17 @@ export default function HowToGuide() {
                 <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
                 Tracked Events
               </h4>
-              <div className="space-y-2">
+              <p className="text-sm text-gray-600 mb-3">All actions on a SubOut are logged automatically. Events are grouped by category:</p>
+
+              <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">SubOut & Items</h5>
+              <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-3 bg-blue-50 rounded-lg px-3 py-2 border border-blue-200">
                   <RefreshCw className="w-4 h-4 text-blue-600 flex-shrink-0" />
                   <span className="text-sm"><strong className="text-blue-800">Status Change</strong> <span className="text-gray-600">- "Status changed from Ready to Sent"</span></span>
+                </div>
+                <div className="flex items-center gap-3 bg-blue-50 rounded-lg px-3 py-2 border border-blue-200">
+                  <Edit2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-blue-800">SubOut Edited</strong> <span className="text-gray-600">- "SubOut details updated"</span></span>
                 </div>
                 <div className="flex items-center gap-3 bg-green-50 rounded-lg px-3 py-2 border border-green-200">
                   <Plus className="w-4 h-4 text-green-600 flex-shrink-0" />
@@ -934,17 +941,45 @@ export default function HowToGuide() {
                   <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
                   <span className="text-sm"><strong className="text-red-800">Item Removed</strong> <span className="text-gray-600">- "Item W14x30 removed"</span></span>
                 </div>
+              </div>
+
+              <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Load Operations</h5>
+              <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-3 bg-purple-50 rounded-lg px-3 py-2 border border-purple-200">
                   <Truck className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                  <span className="text-sm"><strong className="text-purple-800">Load Created</strong> <span className="text-gray-600">- "Load OUT-001 created (Outbound)"</span></span>
+                  <span className="text-sm"><strong className="text-purple-800">Load Created / Edited / Deleted</strong> <span className="text-gray-600">- "Load OUT-001 created (Outbound)"</span></span>
                 </div>
                 <div className="flex items-center gap-3 bg-indigo-50 rounded-lg px-3 py-2 border border-indigo-200">
                   <Truck className="w-4 h-4 text-indigo-600 flex-shrink-0" />
                   <span className="text-sm"><strong className="text-indigo-800">Load Status Change</strong> <span className="text-gray-600">- "Load OUT-001 status changed to Delivered"</span></span>
                 </div>
+                <div className="flex items-center gap-3 bg-purple-50 rounded-lg px-3 py-2 border border-purple-200">
+                  <Link2 className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-purple-800">Items/Pallets Assigned to Load</strong> <span className="text-gray-600">- "3 item(s) assigned to load OUT-001"</span></span>
+                </div>
+                <div className="flex items-center gap-3 bg-red-50 rounded-lg px-3 py-2 border border-red-200">
+                  <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-red-800">Items/Pallets Removed from Load</strong> <span className="text-gray-600">- "Pallet P-001 removed from load OUT-001"</span></span>
+                </div>
+              </div>
+
+              <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Pallet Operations</h5>
+              <div className="space-y-2">
                 <div className="flex items-center gap-3 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
                   <Package className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                  <span className="text-sm"><strong className="text-amber-800">Pallet Created</strong> <span className="text-gray-600">- "Pallet P-001 created"</span></span>
+                  <span className="text-sm"><strong className="text-amber-800">Pallet Created / Edited / Status Change</strong> <span className="text-gray-600">- "Pallet P-001 status changed from Open to Closed"</span></span>
+                </div>
+                <div className="flex items-center gap-3 bg-red-50 rounded-lg px-3 py-2 border border-red-200">
+                  <Trash2 className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-red-800">Pallet Deleted</strong> <span className="text-gray-600">- "Pallet P-001 deleted"</span></span>
+                </div>
+                <div className="flex items-center gap-3 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+                  <Link2 className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-amber-800">Items Assigned to Pallet</strong> <span className="text-gray-600">- "3 item(s) assigned to pallet P-001"</span></span>
+                </div>
+                <div className="flex items-center gap-3 bg-red-50 rounded-lg px-3 py-2 border border-red-200">
+                  <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-red-800">Item Removed from Pallet</strong> <span className="text-gray-600">- "Item removed from pallet P-001"</span></span>
                 </div>
               </div>
             </div>
@@ -1193,6 +1228,20 @@ export default function HowToGuide() {
         {/* Recent Changes */}
         <GuideSection icon={History} title="Recent Changes" color="indigo">
           <div className="bg-white rounded-lg p-4 space-y-6">
+            {/* Feb 19 Part 3 */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-mono">2026-02-19</span>
+                <span className="text-xs text-gray-400">Part 3</span>
+              </h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-500 font-bold flex-shrink-0">~</span>
+                  <span><strong>Comprehensive Activity Logging</strong> — all load and pallet operations now tracked (edit, delete, assign/remove items, assign/remove pallets, status changes). 20 event types total with dedicated icons and colors.</span>
+                </div>
+              </div>
+            </div>
+
             {/* Feb 19 Part 2 */}
             <div>
               <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
