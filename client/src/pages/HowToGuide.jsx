@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, ChevronRight, ChevronDown, LayoutDashboard, Package, Building2, Plus, Edit2, Trash2, Truck, ClipboardList, Filter, Eye, MousePointer, ArrowRight, CheckCircle2, AlertTriangle, Info, Layers, Settings as SettingsIcon } from 'lucide-react'
+import { BookOpen, ChevronRight, ChevronDown, LayoutDashboard, Package, Building2, Plus, Edit2, Trash2, Truck, ClipboardList, Filter, Eye, MousePointer, ArrowRight, CheckCircle2, AlertTriangle, Info, Layers, Settings as SettingsIcon, History } from 'lucide-react'
 import clsx from 'clsx'
 
 function GuideSection({ icon: Icon, title, color, children, defaultOpen = false }) {
@@ -120,7 +120,7 @@ export default function HowToGuide() {
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-2">
               <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
                 <LayoutDashboard className="w-6 h-6 text-blue-600 mx-auto mb-1" />
                 <div className="text-xs font-semibold text-blue-900">Dashboard</div>
@@ -135,6 +135,11 @@ export default function HowToGuide() {
                 <Building2 className="w-6 h-6 text-orange-600 mx-auto mb-1" />
                 <div className="text-xs font-semibold text-orange-900">Vendors</div>
                 <div className="text-xs text-orange-600">Manage contacts</div>
+              </div>
+              <div className="bg-indigo-50 rounded-lg p-3 text-center border border-indigo-200">
+                <BookOpen className="w-6 h-6 text-indigo-600 mx-auto mb-1" />
+                <div className="text-xs font-semibold text-indigo-900">How-To Guide</div>
+                <div className="text-xs text-indigo-600">This guide</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-3 text-center border border-gray-200">
                 <SettingsIcon className="w-6 h-6 text-gray-600 mx-auto mb-1" />
@@ -210,6 +215,50 @@ export default function HowToGuide() {
               </ul>
             </div>
 
+            {/* Card Layout */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                What's on a Card
+              </h4>
+              <p className="text-sm text-gray-600 mb-2">Each sub out card shows at a glance:</p>
+              <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <span className="font-semibold text-gray-800 w-32 flex-shrink-0">Top bar</span>
+                  <span>Color-coded accent bar (see Colors section)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-semibold text-gray-800 w-32 flex-shrink-0">Header</span>
+                  <span>Lot number + status badge</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-semibold text-gray-800 w-32 flex-shrink-0">Vendor + Zone</span>
+                  <span>Sub-fabricator name and optional zone badge</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-semibold text-gray-800 w-32 flex-shrink-0">Dates</span>
+                  <span>"Leave MFC" and "Due to Site" with overdue highlighting (red/orange)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-semibold text-gray-800 w-32 flex-shrink-0">Load progress</span>
+                  <span>Out and In progress bars showing delivered/total loads</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-semibold text-gray-800 w-32 flex-shrink-0">Load badges</span>
+                  <span>Per-status breakdown below each progress bar: <span className="px-1 py-0.5 rounded bg-blue-100 text-blue-700 text-xs">loading</span> <span className="px-1 py-0.5 rounded bg-indigo-100 text-indigo-700 text-xs">loaded</span> <span className="px-1 py-0.5 rounded bg-yellow-100 text-yellow-700 text-xs">in transit</span></span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-semibold text-gray-800 w-32 flex-shrink-0">Stats footer</span>
+                  <span>Weight (lbs), major pieces, percent loaded, PO number</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-semibold text-gray-800 w-32 flex-shrink-0">Background</span>
+                  <span>Heat map gradient based on urgency (see Colors section)</span>
+                </div>
+              </div>
+              <Tip>The "% loaded" tracks how many items are assigned to loads. Barcode-linked items (e.g., a LongShape tied to a PullList item) count as loaded when either is on a load.</Tip>
+            </div>
+
             {/* View Modes */}
             <div>
               <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
@@ -244,37 +293,64 @@ export default function HowToGuide() {
               Cards and table rows use color coding so you can spot issues at a glance.
             </p>
 
-            {/* Card Border Colors */}
+            {/* Card Top Bar Colors */}
             <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Card Left Border Colors</h4>
+              <h4 className="font-semibold text-gray-900 mb-3">Card Top Bar Colors</h4>
+              <p className="text-sm text-gray-600 mb-3">Each card has a colored accent bar along the top indicating its condition:</p>
               <div className="space-y-2">
-                <div className="flex items-center gap-3 border-l-4 border-l-red-500 bg-red-50 rounded-r-lg px-3 py-2">
+                <div className="flex items-center gap-3 border-t-4 border-t-red-500 bg-red-50 rounded-b-lg px-3 py-2">
                   <span className="text-sm font-semibold text-red-800 w-36">Red - Overdue Send</span>
                   <span className="text-sm text-red-700">Past the "Leave MFC" date and not all loads shipped out yet</span>
                 </div>
-                <div className="flex items-center gap-3 border-l-4 border-l-orange-500 bg-orange-50 rounded-r-lg px-3 py-2">
+                <div className="flex items-center gap-3 border-t-4 border-t-orange-500 bg-orange-50 rounded-b-lg px-3 py-2">
                   <span className="text-sm font-semibold text-orange-800 w-36">Orange - Overdue Return</span>
-                  <span className="text-sm text-orange-700">Past the "Ship from Sub" date and not all loads returned</span>
+                  <span className="text-sm text-orange-700">Past the "Due to Site" date and not all loads returned</span>
                 </div>
-                <div className="flex items-center gap-3 border-l-4 border-l-pink-500 bg-pink-50 rounded-r-lg px-3 py-2">
+                <div className="flex items-center gap-3 border-t-4 border-t-pink-500 bg-pink-50 rounded-b-lg px-3 py-2">
                   <span className="text-sm font-semibold text-pink-800 w-36">Pink - Missing Steel</span>
                   <span className="text-sm text-pink-700">Steel is noted as missing for this sub out</span>
                 </div>
-                <div className="flex items-center gap-3 border-l-4 border-l-blue-500 bg-blue-50 rounded-r-lg px-3 py-2">
+                <div className="flex items-center gap-3 border-t-4 border-t-blue-500 bg-blue-50 rounded-b-lg px-3 py-2">
                   <span className="text-sm font-semibold text-blue-800 w-36">Blue - Ready</span>
                   <span className="text-sm text-blue-700">Status is "Ready" - prepared to ship from MFC</span>
                 </div>
-                <div className="flex items-center gap-3 border-l-4 border-l-yellow-500 bg-yellow-50 rounded-r-lg px-3 py-2">
+                <div className="flex items-center gap-3 border-t-4 border-t-yellow-500 bg-yellow-50 rounded-b-lg px-3 py-2">
                   <span className="text-sm font-semibold text-yellow-800 w-36">Yellow - In Progress</span>
                   <span className="text-sm text-yellow-700">Status is Sent, InProcess, or Shipped</span>
                 </div>
-                <div className="flex items-center gap-3 border-l-4 border-l-green-500 bg-green-50 rounded-r-lg px-3 py-2">
+                <div className="flex items-center gap-3 border-t-4 border-t-green-500 bg-green-50 rounded-b-lg px-3 py-2">
                   <span className="text-sm font-semibold text-green-800 w-36">Green - Complete</span>
                   <span className="text-sm text-green-700">Sub out is fully complete</span>
                 </div>
-                <div className="flex items-center gap-3 border-l-4 border-l-gray-300 bg-gray-50 rounded-r-lg px-3 py-2">
+                <div className="flex items-center gap-3 border-t-4 border-t-gray-300 bg-gray-50 rounded-b-lg px-3 py-2">
                   <span className="text-sm font-semibold text-gray-700 w-36">Gray - Pending</span>
                   <span className="text-sm text-gray-600">Default state, no special condition</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Heat Map Gradient */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">Card Heat Map Background</h4>
+              <p className="text-sm text-gray-600 mb-3">
+                Cards display a subtle background gradient based on urgency — how close the Leave MFC date is versus how much material is loaded:
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 rounded-lg px-3 py-2 border border-gray-200" style={{ background: 'linear-gradient(135deg, rgba(239,200,100,0.10) 0%, white 100%)' }}>
+                  <span className="text-sm font-semibold text-yellow-800 w-36">Yellow tint</span>
+                  <span className="text-sm text-gray-600">Low urgency — leave date is approaching but material is mostly loaded</span>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg px-3 py-2 border border-gray-200" style={{ background: 'linear-gradient(135deg, rgba(230,120,80,0.18) 0%, white 100%)' }}>
+                  <span className="text-sm font-semibold text-red-800 w-36">Red tint</span>
+                  <span className="text-sm text-gray-600">High urgency — leave date is imminent/overdue and little material loaded</span>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg px-3 py-2 border border-gray-200" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.08) 0%, white 100%)' }}>
+                  <span className="text-sm font-semibold text-green-800 w-36">Green tint</span>
+                  <span className="text-sm text-gray-600">100% of items loaded onto trucks — ready to go</span>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg px-3 py-2 border border-gray-200 bg-white">
+                  <span className="text-sm font-semibold text-gray-700 w-36">No tint (white)</span>
+                  <span className="text-sm text-gray-600">Complete status, no leave date set, or 14+ days until leave date</span>
                 </div>
               </div>
             </div>
@@ -498,7 +574,29 @@ export default function HowToGuide() {
               </div>
             </div>
 
-            <Tip>Each load card has buttons to: assign items/pallets (+), edit, and delete. Expand a load to see its truck info, pallets, and direct items.</Tip>
+            {/* Mutual Exclusion */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                Raw vs. Cut to Length (Mutual Exclusion)
+              </h4>
+              <p className="text-sm text-gray-600 mb-2">
+                When assigning items to a load, PullList/Raw items and LongShapes items that share the same barcode are <strong>mutually exclusive</strong>:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div className="text-sm font-semibold text-gray-800 mb-1">Sending Raw</div>
+                  <p className="text-xs text-gray-600">If you select PullList/Raw items, the matching LongShapes become unavailable. You're sending raw inventory as-is.</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="text-sm font-semibold text-blue-800 mb-1">Sending Cut to Length</div>
+                  <p className="text-xs text-blue-600">If you select LongShapes, the matching PullList/Raw items become unavailable. You're cutting marks first then sending.</p>
+                </div>
+              </div>
+              <Tip>This prevents accidentally loading both the raw material AND its cut pieces onto the same truck. A load should contain one or the other for each barcode.</Tip>
+            </div>
+
+            <Tip>Each load card has buttons to: assign items/pallets (+), edit, and delete. Expand a load to see its truck info, pallets, and direct items. Load cards also show remaining truck capacity (default 48,000 lbs) color-coded green/orange/red.</Tip>
           </div>
         </GuideSection>
 
@@ -903,6 +1001,131 @@ export default function HowToGuide() {
                     <span>Click any card to open the sub out detail</span>
                   </li>
                 </ul>
+              </div>
+            </div>
+          </div>
+        </GuideSection>
+
+        {/* Recent Changes */}
+        <GuideSection icon={History} title="Recent Changes" color="indigo">
+          <div className="bg-white rounded-lg p-4 space-y-6">
+            {/* Feb 19 */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-mono">2026-02-19</span>
+              </h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Heat map gradient</strong> on dashboard cards — urgency-based background color from yellow to red</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Per-status load badges</strong> on cards — shows loading, loaded, in transit counts below progress bars</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Percent loaded</strong> on cards — truck icon with "X% loaded" in stats footer</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>"Loaded" load status</strong> — new status between Loading and In Transit</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Mutual exclusion in load assigner</strong> — Raw and Cut-to-Length items with shared barcodes block each other</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>How-To Guide</strong> moved to its own sidebar menu item</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-500 font-bold flex-shrink-0">~</span>
+                  <span>Card label changed from "Due Back" to <strong>"Due to Site"</strong></span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-500 font-bold flex-shrink-0">~</span>
+                  <span>Card weight now shows as rounded integer with commas (e.g., "48,000 lbs")</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Feb 18 */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-mono">2026-02-18</span>
+              </h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Raw Material from Tekla Inventory</strong> — add plates, angles, etc. from inventory</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>SubOut card redesign</strong> — top accent bar, progress bars, dates, load info</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Source-type tabs in load assigner</strong> — LongShapes, Parts, PullList/Raw, Pallets</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Load capacity tracking</strong> — 48,000 lb default with live remaining display</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Multi-select bulk Set Send Type</strong> on LongShapes and Parts tabs</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Weight column</strong> on ItemsTable and ItemPicker grids</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Tekla inventory weight enrichment</strong> for PullList items</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Feb 17 */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-mono">2026-02-17</span>
+              </h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Sortable columns & search filter</strong> on all ItemsTable grids</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>PullStatus & RMNumber columns</strong> — live from source FabTracker.PullList</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Multi-select bulk PullStatus update</strong></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Feb 16 */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-mono">2026-02-16</span>
+              </h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Send Types</strong> — Raw, Cut to Length, Parts on Pallets</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Pallet tracking</strong> — group parts, auto-numbered P-001, P-002</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Load tracking</strong> — full load entities with truck/BOL/status (OUT-001, IN-001)</span>
+                </div>
               </div>
             </div>
           </div>

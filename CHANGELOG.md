@@ -6,6 +6,55 @@ Format: [Date] - Summary of changes
 
 ---
 
+## 2026-02-19
+
+### Added
+- **Heat map gradient on SubOut cards** - Cards show urgency-based background gradient
+  - Color ranges from subtle yellow (low urgency) to red (critical) based on days until Leave MFC date × percent unloaded
+  - Complete status or 100% loaded shows subtle green tint
+  - No gradient for cards with no leave date or no items
+  - `client/src/components/subouts/SubOutCard.jsx`
+
+- **Per-status load badges on cards** - Load progress bars now show status breakdown
+  - Blue badge: "X loading", Indigo badge: "X loaded", Yellow badge: "X in transit"
+  - Shown below each direction's progress bar when loads exist and aren't all delivered
+  - Database view updated with OutboundLoadingCount, OutboundLoadedCount, OutboundInTransitCount (and inbound equivalents)
+  - `client/src/components/subouts/SubOutCard.jsx`, `database/add_percent_loaded.sql`, `database/add_send_types_pallets_loads.sql`
+
+- **Percent loaded on SubOut cards** - Cards show "X% loaded" with truck icon in stats footer
+  - Green text when 100% loaded, blue when partially loaded, gray when 0%
+  - Calculation uses barcode-linked items (LongShape loaded if its PullList barcode-match is on a load)
+  - `client/src/components/subouts/SubOutCard.jsx`, `database/add_percent_loaded.sql`
+
+- **"Loaded" load status** - New status between Loading and InTransit in load status flow
+  - Indigo color scheme (bg-indigo-100, text-indigo-800)
+  - `client/src/utils/statusColors.js`, `client/src/utils/formatters.js`, `client/src/pages/HowToGuide.jsx`
+
+- **How-To Guide as separate menu item** - Moved from Settings tab to its own sidebar entry with BookOpen icon
+  - `client/src/pages/HowToGuide.jsx` (new file), `client/src/pages/Settings.jsx`, `client/src/App.jsx`, `client/src/components/layout/Sidebar.jsx`
+
+- **Mutual exclusion in load assigner** - PullList/Raw and LongShapes items with shared barcodes block each other
+  - If Raw items are selected, matching LongShapes become unavailable (and vice versa)
+  - Ensures loads contain either raw material OR cut-to-length, never both for the same barcode
+  - `client/src/components/subouts/LoadItemAssigner.jsx`
+
+### Changed
+- **SubOut card "Due Back" → "Due to Site"** - Label updated on card date section
+- **SubOut card weight display** - Now shows rounded integer with comma separators (e.g., "48,000 lbs") instead of tons format
+- **SubOut card percent label** - Shows "X% loaded" instead of just "X%"
+
+### Fixed
+- **Dashboard not refreshing after load changes** - Added `['subouts', 'grouped']` query invalidation to useAssignItemsToLoad, useRemoveItemFromLoad, useAssignPalletsToLoad, useRemovePalletFromLoad, useUpdateLoad
+  - `client/src/hooks/useLoads.js`
+
+- **Percent loaded miscounting barcode-linked items** - SQL view now counts LongShapes as loaded when their barcode-linked PullList item is on a load
+  - `database/add_percent_loaded.sql`, `database/add_send_types_pallets_loads.sql`
+
+- **Load assigner PullList tab count** - Excluded items already on the current load from the available count
+  - `client/src/components/subouts/LoadItemAssigner.jsx`
+
+---
+
 ## 2026-02-18
 
 ### Added
