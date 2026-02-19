@@ -215,7 +215,7 @@ async function createSubOut(req, res, next) {
       weight: weight || null,
       majorPieces: majorPieces || null,
       missingSteel: missingSteel || null,
-      status: status || 'Pending',
+      status: status || 'Submitted',
       poNumber: poNumber || null,
       estimatedCost: estimatedCost || null,
       notes: notes || null
@@ -286,7 +286,7 @@ async function updateSubOut(req, res, next) {
       weight: weight || null,
       majorPieces: majorPieces || null,
       missingSteel: missingSteel || null,
-      status: status || 'Pending',
+      status: status || 'Submitted',
       poNumber: poNumber || null,
       estimatedCost: estimatedCost || null,
       actualCost: actualCost || null,

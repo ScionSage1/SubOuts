@@ -328,7 +328,7 @@ Run these scripts on the FabTracker database:
 ## Status Flow
 
 ```
-Pending → In-Process → Ready → Sent → Shipped → Received → QCd → Complete → OnSite
+Submitted → In-Process → Ready → Sent → Shipped → Received → QCd → Complete → OnSite
 ```
 
 ## Color Coding
@@ -497,7 +497,7 @@ The Dashboard is the primary working screen. It displays:
 2. **Filter Bar** - Filter the dashboard by:
    - **Job** - Select a specific job from the dropdown
    - **Vendor** - Filter by sub-fabricator
-   - **Status** - Filter by current status (Pending, Ready, Sent, etc.)
+   - **Status** - Filter by current status (Submitted, Ready, Sent, etc.)
    - **Action Items Only** - Checkbox to show only items that are overdue or have missing steel
 
 3. **View Toggle** - Switch between:
@@ -536,7 +536,7 @@ Table row background colors follow a similar scheme:
 
    **Vendor & Status:**
    - **Vendor** - Select the sub-fabricator from the vendor list.
-   - **Status** - Defaults to "Pending". Set to the appropriate status.
+   - **Status** - Defaults to "Submitted". Set to the appropriate status.
    - **Zone** - Optional zone identifier for the job (e.g., "2", "3").
 
    **Shipping:**
@@ -778,7 +778,7 @@ Sub outs progress through these statuses in order:
 
 | Status | Meaning |
 |--------|---------|
-| **Pending** | Initial state, awaiting action |
+| **Submitted** | Submitted, awaiting action |
 | **In-Process** | Sub-fabricator is actively fabricating |
 | **Ready** | Steel is ready to ship from MFC |
 | **Sent** | Steel has been shipped from MFC to the sub-fabricator |

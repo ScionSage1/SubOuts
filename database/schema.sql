@@ -54,7 +54,7 @@ BEGIN
         MissingSteel NVARCHAR(MAX),
 
         -- Status
-        Status NVARCHAR(50) DEFAULT 'Pending',
+        Status NVARCHAR(50) DEFAULT 'Submitted',
 
         -- Costs
         PONumber NVARCHAR(50),
@@ -100,7 +100,7 @@ BEGIN
         Weight DECIMAL(18,2),
 
         -- Status
-        Status NVARCHAR(50) DEFAULT 'Pending',
+        Status NVARCHAR(50) DEFAULT 'Submitted',
 
         -- Material tracking
         HeatNumber NVARCHAR(50),

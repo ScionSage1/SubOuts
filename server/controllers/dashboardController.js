@@ -6,7 +6,7 @@ async function getStats(req, res, next) {
     const sqlQuery = `
       SELECT
         (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status NOT IN ('Complete', 'OnSite')) AS TotalActive,
-        (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status IN ('Pending', 'Ready')) AS PendingShipment,
+        (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status IN ('Submitted', 'Ready')) AS PendingShipment,
         (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status IN ('Sent', 'In-Process')) AS InProgress,
         (SELECT COUNT(*) FROM FabTracker.SubOuts WHERE Status NOT IN ('Complete', 'OnSite') AND (
           (DateToLeaveMFC < GETDATE() AND LoadsShippedFromMFC < LoadsToShipFromMFC)
@@ -66,7 +66,7 @@ async function getByVendor(req, res, next) {
         v.VendorID,
         v.VendorName,
         COUNT(s.SubOutID) AS TotalSubOuts,
-        SUM(CASE WHEN s.Status IN ('Pending', 'Ready') THEN 1 ELSE 0 END) AS Pending,
+        SUM(CASE WHEN s.Status IN ('Submitted', 'Ready') THEN 1 ELSE 0 END) AS Submitted,
         SUM(CASE WHEN s.Status IN ('Sent', 'In-Process', 'Shipped') THEN 1 ELSE 0 END) AS InProgress,
         SUM(CASE WHEN s.Status IN ('Received', 'QCd', 'Complete', 'OnSite') THEN 1 ELSE 0 END) AS Complete,
         SUM(CASE WHEN s.Status NOT IN ('Complete', 'OnSite') AND (

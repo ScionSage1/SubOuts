@@ -14,7 +14,7 @@ function StatusStepper({ currentStatus, onStatusChange }) {
       {statusOptions.map((status, i) => {
         const isPast = i < currentIndex
         const isCurrent = i === currentIndex
-        const colors = statusColors[status] || statusColors.Pending
+        const colors = statusColors[status] || statusColors.Submitted
 
         return (
           <div key={status} className="flex items-center">

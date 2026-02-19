@@ -108,7 +108,7 @@ async function updateItem(req, res, next) {
       itemId: parseInt(itemId),
       quantitySent: quantitySent || 0,
       quantityReceived: quantityReceived || 0,
-      status: status || 'Pending',
+      status: status || 'Submitted',
       notes: notes || null,
       sendType: sendType || 'Raw',
       palletId: palletId ? parseInt(palletId) : null,

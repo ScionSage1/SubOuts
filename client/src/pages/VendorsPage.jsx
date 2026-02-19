@@ -364,7 +364,7 @@ export default function VendorsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {vendorSummary.map(v => {
                   const total = v.TotalSubOuts || 1
-                  const pendingPct = (v.Pending / total) * 100
+                  const submittedPct = (v.Submitted / total) * 100
                   const inProgressPct = (v.InProgress / total) * 100
                   const completePct = (v.Complete / total) * 100
                   return (
@@ -389,12 +389,12 @@ export default function VendorsPage() {
                         {inProgressPct > 0 && (
                           <div className="bg-yellow-400 h-full" style={{ width: `${inProgressPct}%` }} title={`${v.InProgress} in progress`} />
                         )}
-                        {pendingPct > 0 && (
-                          <div className="bg-blue-400 h-full" style={{ width: `${pendingPct}%` }} title={`${v.Pending} pending`} />
+                        {submittedPct > 0 && (
+                          <div className="bg-blue-400 h-full" style={{ width: `${submittedPct}%` }} title={`${v.Submitted} submitted`} />
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
-                        {v.Pending > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400" />{v.Pending} pending</span>}
+                        {v.Submitted > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400" />{v.Submitted} submitted</span>}
                         {v.InProgress > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400" />{v.InProgress} active</span>}
                         {v.Complete > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" />{v.Complete} done</span>}
                       </div>

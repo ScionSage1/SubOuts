@@ -45,8 +45,8 @@ export default function Settings() {
           <Card.Body>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-3">
-                <span className="w-24 px-2 py-1 text-center rounded bg-gray-100 text-gray-800">Pending</span>
-                <span className="text-gray-600">Initial state, awaiting action</span>
+                <span className="w-24 px-2 py-1 text-center rounded bg-gray-100 text-gray-800">Submitted</span>
+                <span className="text-gray-600">Submitted, awaiting action</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="w-24 px-2 py-1 text-center rounded bg-blue-100 text-blue-800">Ready</span>

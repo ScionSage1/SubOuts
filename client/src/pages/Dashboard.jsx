@@ -295,7 +295,7 @@ export default function Dashboard() {
                     <tr className="text-xs text-gray-500 uppercase tracking-wider">
                       <th className="text-left py-1.5 pr-4">Vendor</th>
                       <th className="text-center py-1.5 px-2">Active</th>
-                      <th className="text-center py-1.5 px-2">Pending</th>
+                      <th className="text-center py-1.5 px-2">Submitted</th>
                       <th className="text-center py-1.5 px-2">In Progress</th>
                       <th className="text-center py-1.5 px-2">Complete</th>
                       <th className="text-right py-1.5 pl-2">Weight</th>
@@ -307,8 +307,8 @@ export default function Dashboard() {
                         <td className="py-1.5 pr-4 font-medium text-gray-900">{v.VendorName}</td>
                         <td className="text-center py-1.5 px-2 font-semibold text-gray-800">{v.TotalSubOuts}</td>
                         <td className="text-center py-1.5 px-2">
-                          {v.Pending > 0 && <span className="text-blue-600 font-medium">{v.Pending}</span>}
-                          {!v.Pending && <span className="text-gray-300">-</span>}
+                          {v.Submitted > 0 && <span className="text-blue-600 font-medium">{v.Submitted}</span>}
+                          {!v.Submitted && <span className="text-gray-300">-</span>}
                         </td>
                         <td className="text-center py-1.5 px-2">
                           {v.InProgress > 0 && <span className="text-yellow-600 font-medium">{v.InProgress}</span>}

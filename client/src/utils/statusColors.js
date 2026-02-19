@@ -1,5 +1,5 @@
 export const statusColors = {
-  'Pending':    { bg: 'bg-gray-100',    text: 'text-gray-800',    border: 'border-gray-300' },
+  'Submitted':  { bg: 'bg-gray-100',    text: 'text-gray-800',    border: 'border-gray-300' },
   'In-Process':  { bg: 'bg-orange-100',  text: 'text-orange-800',  border: 'border-orange-300' },
   'Ready':      { bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-300' },
   'Sent':       { bg: 'bg-yellow-100',  text: 'text-yellow-800',  border: 'border-yellow-300' },
@@ -38,7 +38,7 @@ export const rowColors = {
 }
 
 export function getStatusColor(status) {
-  return statusColors[status] || statusColors['Pending']
+  return statusColors[status] || statusColors['Submitted']
 }
 
 export function getActionColor(subOut) {
@@ -128,7 +128,7 @@ export function getRowColor(subOut) {
 }
 
 export const statusOptions = [
-  'Pending',
+  'Submitted',
   'In-Process',
   'Ready',
   'Sent',

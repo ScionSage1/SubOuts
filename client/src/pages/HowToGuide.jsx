@@ -376,7 +376,7 @@ export default function HowToGuide() {
                   <span className="text-sm text-green-700">Sub out is fully complete</span>
                 </div>
                 <div className="flex items-center gap-3 border-t-4 border-t-gray-300 bg-gray-50 rounded-b-lg px-3 py-2">
-                  <span className="text-sm font-semibold text-gray-700 w-36">Gray - Pending</span>
+                  <span className="text-sm font-semibold text-gray-700 w-36">Gray - Submitted</span>
                   <span className="text-sm text-gray-600">Default state, no special condition</span>
                 </div>
               </div>
@@ -474,7 +474,7 @@ export default function HowToGuide() {
                   </div>
                   <div className="flex items-start gap-2">
                     <FieldLabel>Status</FieldLabel>
-                    <span className="text-gray-500">- Defaults to "Pending".</span>
+                    <span className="text-gray-500">- Defaults to "Submitted".</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <FieldLabel>Zone</FieldLabel>
@@ -1079,7 +1079,7 @@ export default function HowToGuide() {
 
             <div className="flex flex-wrap items-center justify-center gap-1 py-2">
               {[
-                { label: 'Pending', bg: 'bg-gray-100', text: 'text-gray-800', desc: 'Awaiting action' },
+                { label: 'Submitted', bg: 'bg-gray-100', text: 'text-gray-800', desc: 'Submitted' },
                 { label: 'In-Process', bg: 'bg-orange-100', text: 'text-orange-800', desc: 'Being fabricated' },
                 { label: 'Ready', bg: 'bg-blue-100', text: 'text-blue-800', desc: 'Ready to ship from MFC' },
                 { label: 'Sent', bg: 'bg-yellow-100', text: 'text-yellow-800', desc: 'Shipped to sub' },
@@ -1105,7 +1105,7 @@ export default function HowToGuide() {
               <h4 className="font-semibold text-gray-900 mb-3">Status Details</h4>
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <span className="w-24 px-2 py-1 text-center rounded bg-gray-100 text-gray-800 text-xs font-semibold">Pending</span>
+                  <span className="w-24 px-2 py-1 text-center rounded bg-gray-100 text-gray-800 text-xs font-semibold">Submitted</span>
                   <span className="text-sm text-gray-600">Initial state when a sub out is first created. No action has been taken.</span>
                 </div>
                 <div className="flex items-center gap-3">
