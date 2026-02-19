@@ -29,6 +29,26 @@ export default function SubOutCard({ subOut }) {
   const outOverdue = dateToLeave && dateToLeave < now && outShipped < outTotal
   const inOverdue = dateToShip && dateToShip < now && inShipped < inTotal
 
+  // Heat map: urgency based on days until leave date vs percent loaded
+  const getHeatGradient = () => {
+    if (subOut.Status === 'Complete') return null
+    if (!dateToLeave || totalItems === 0) return null
+    if (pctLoaded >= 100) return 'rgba(34,197,94,0.08)' // subtle green
+    const daysLeft = Math.ceil((dateToLeave - now) / (1000 * 60 * 60 * 24))
+    const unloaded = 1 - (pctLoaded / 100) // 0 = fully loaded, 1 = nothing loaded
+    // Time pressure: 1.0 = overdue, scales down to 0 at 14+ days
+    const timePressure = daysLeft <= 0 ? 1.0 : daysLeft >= 14 ? 0 : 1 - (daysLeft / 14)
+    const urgency = timePressure * unloaded // 0 = fine, 1 = critical
+    if (urgency < 0.05) return null
+    // Interpolate: low urgency = yellow tint, high urgency = red tint
+    const r = Math.round(239 + (220 - 239) * (1 - urgency)) // 220-239
+    const g = Math.round(68 + (200 - 68) * (1 - urgency))   // 68 (red) to 200 (yellow)
+    const b = Math.round(68 + (100 - 68) * (1 - urgency))   // stays low
+    const alpha = 0.08 + urgency * 0.14 // 0.08 to 0.22
+    return `rgba(${r},${g},${b},${alpha})`
+  }
+  const heatColor = getHeatGradient()
+
   // Progress: delivered loads fill fully, in-progress loads fill partially
   const outActive = outTotal - outShipped
   const inActive = inTotal - inShipped
@@ -39,7 +59,8 @@ export default function SubOutCard({ subOut }) {
 
   return (
     <div
-      className="rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer overflow-hidden border border-gray-200"
+      className="rounded-lg shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer overflow-hidden border border-gray-200"
+      style={{ background: heatColor ? `linear-gradient(135deg, ${heatColor} 0%, white 100%)` : 'white' }}
       onClick={handleClick}
     >
       {/* Top accent bar */}
@@ -93,7 +114,6 @@ export default function SubOutCard({ subOut }) {
               <span className="text-[10px] uppercase tracking-wider text-gray-400">Out</span>
               <span className="text-xs text-gray-600 flex items-center gap-1">
                 {outTotal > 0 ? `${outShipped}/${outTotal}` : 'none'}
-                {outActive > 0 && !outDone && <span className="text-blue-500">({outActive} active)</span>}
                 {outDone && <Check className="w-3 h-3 text-green-500" />}
               </span>
             </div>
@@ -103,13 +123,19 @@ export default function SubOutCard({ subOut }) {
                 style={{ width: `${Math.min(outPct, 100)}%` }}
               />
             </div>
+            {outTotal > 0 && !outDone && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {(subOut.OutboundLoadingCount || 0) > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{subOut.OutboundLoadingCount} loading</span>}
+                {(subOut.OutboundLoadedCount || 0) > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">{subOut.OutboundLoadedCount} loaded</span>}
+                {(subOut.OutboundInTransitCount || 0) > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700">{subOut.OutboundInTransitCount} in transit</span>}
+              </div>
+            )}
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] uppercase tracking-wider text-gray-400">In</span>
               <span className="text-xs text-gray-600 flex items-center gap-1">
                 {inTotal > 0 ? `${inShipped}/${inTotal}` : 'none'}
-                {inActive > 0 && !inDone && <span className="text-blue-500">({inActive} active)</span>}
                 {inDone && <Check className="w-3 h-3 text-green-500" />}
               </span>
             </div>
@@ -119,6 +145,13 @@ export default function SubOutCard({ subOut }) {
                 style={{ width: `${Math.min(inPct, 100)}%` }}
               />
             </div>
+            {inTotal > 0 && !inDone && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {(subOut.InboundLoadingCount || 0) > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{subOut.InboundLoadingCount} loading</span>}
+                {(subOut.InboundLoadedCount || 0) > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">{subOut.InboundLoadedCount} loaded</span>}
+                {(subOut.InboundInTransitCount || 0) > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700">{subOut.InboundInTransitCount} in transit</span>}
+              </div>
+            )}
           </div>
         </div>
 

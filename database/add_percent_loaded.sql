@@ -1,5 +1,4 @@
--- Add TotalItemCount and LoadedItemCount to vwSubOutsList for percent-loaded display
--- LoadedItemCount includes items directly on a load OR barcode-linked to a loaded item
+-- vwSubOutsList with percent-loaded and per-status load counts
 -- Run on MFC_NTLIVE database
 
 IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID(N'FabTracker.vwSubOutsList'))
@@ -30,10 +29,15 @@ SELECT
     -- Computed load counts from SubOutLoads
     (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Outbound') AS OutboundLoadCount,
     (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Outbound' AND Status = 'Delivered') AS OutboundDeliveredCount,
+    (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Outbound' AND Status = 'Loading') AS OutboundLoadingCount,
+    (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Outbound' AND Status = 'Loaded') AS OutboundLoadedCount,
+    (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Outbound' AND Status = 'InTransit') AS OutboundInTransitCount,
     (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Inbound') AS InboundLoadCount,
     (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Inbound' AND Status = 'Delivered') AS InboundDeliveredCount,
-    -- Item counts for percent-loaded calculation
-    -- An item counts as "loaded" if it has a LoadID OR its barcode is linked to another item on a load
+    (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Inbound' AND Status = 'Loading') AS InboundLoadingCount,
+    (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Inbound' AND Status = 'Loaded') AS InboundLoadedCount,
+    (SELECT COUNT(*) FROM FabTracker.SubOutLoads WHERE SubOutID = s.SubOutID AND Direction = 'Inbound' AND Status = 'InTransit') AS InboundInTransitCount,
+    -- Item counts for percent-loaded calculation (barcode-linked items count as loaded)
     (SELECT COUNT(*) FROM FabTracker.SubOutItems WHERE SubOutID = s.SubOutID) AS TotalItemCount,
     (SELECT COUNT(*) FROM FabTracker.SubOutItems i WHERE i.SubOutID = s.SubOutID AND (
         i.LoadID IS NOT NULL
@@ -58,5 +62,5 @@ LEFT JOIN FabTracker.SubOutVendors v ON s.VendorID = v.VendorID
 LEFT JOIN ScheduleShare.SSData ss ON s.JobCode = ss.JobCode;
 GO
 
-PRINT 'Updated vwSubOutsList with barcode-aware LoadedItemCount';
+PRINT 'Updated vwSubOutsList with per-status load counts';
 GO
