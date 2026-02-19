@@ -163,7 +163,12 @@ export default function LoadsSection({
               <Printer className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); setEditingLoad(load) }}
+              onClick={(e) => {
+                e.stopPropagation()
+                const currentWeight = totalWeight || load.Weight || ''
+                const currentCount = allLoadItems.reduce((sum, i) => sum + (i.Quantity || 1), 0) || load.PieceCount || ''
+                setEditingLoad({ ...load, Weight: currentWeight, PieceCount: currentCount })
+              }}
               className="p-1 text-gray-400 hover:text-blue-600"
               title="Edit"
             >
