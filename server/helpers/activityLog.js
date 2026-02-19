@@ -29,7 +29,13 @@ async function autoReadyIfFullyLoaded(subOutId, user) {
     const countResult = await query(`
       SELECT
         COUNT(*) AS TotalItems,
-        SUM(CASE WHEN LoadID IS NOT NULL THEN 1 ELSE 0 END) AS LoadedItems
+        (SELECT COUNT(*) FROM FabTracker.SubOutItems i WHERE i.SubOutID = @id AND (
+          i.LoadID IS NOT NULL
+          OR (i.Barcode IS NOT NULL AND EXISTS (
+            SELECT 1 FROM FabTracker.SubOutItems i2
+            WHERE i2.SubOutID = @id AND i2.Barcode = i.Barcode AND i2.LoadID IS NOT NULL AND i2.SubOutItemID <> i.SubOutItemID
+          ))
+        )) AS LoadedItems
       FROM FabTracker.SubOutItems
       WHERE SubOutID = @id
     `, { id: parseInt(subOutId) });
