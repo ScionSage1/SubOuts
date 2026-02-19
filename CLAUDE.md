@@ -328,7 +328,7 @@ Run these scripts on the FabTracker database:
 ## Status Flow
 
 ```
-Pending → InProcess → Ready → Sent → Shipped → Received → QCd → Complete → OnSite
+Pending → In-Process → Ready → Sent → Shipped → Received → QCd → Complete → OnSite
 ```
 
 ## Color Coding
@@ -513,7 +513,7 @@ Cards have a colored top accent bar indicating their current condition:
 - **Orange** - Overdue receive: past the "Date to Ship from Sub" and loads have not all come back
 - **Pink** - Missing steel: the sub out has missing steel noted
 - **Blue** - Ready to ship from MFC
-- **Yellow** - In progress (status is Sent, InProcess, or Shipped)
+- **Yellow** - In progress (status is Sent, In-Process, or Shipped)
 - **Green** - Complete
 - **Gray** - Default/pending
 
@@ -779,7 +779,7 @@ Sub outs progress through these statuses in order:
 | Status | Meaning |
 |--------|---------|
 | **Pending** | Initial state, awaiting action |
-| **InProcess** | Sub-fabricator is actively fabricating |
+| **In-Process** | Sub-fabricator is actively fabricating |
 | **Ready** | Steel is ready to ship from MFC |
 | **Sent** | Steel has been shipped from MFC to the sub-fabricator |
 | **Shipped** | Fabricated steel shipped from sub back to MFC |

@@ -369,7 +369,7 @@ export default function HowToGuide() {
                 </div>
                 <div className="flex items-center gap-3 border-t-4 border-t-yellow-500 bg-yellow-50 rounded-b-lg px-3 py-2">
                   <span className="text-sm font-semibold text-yellow-800 w-36">Yellow - In Progress</span>
-                  <span className="text-sm text-yellow-700">Status is Sent, InProcess, or Shipped</span>
+                  <span className="text-sm text-yellow-700">Status is Sent, In-Process, or Shipped</span>
                 </div>
                 <div className="flex items-center gap-3 border-t-4 border-t-green-500 bg-green-50 rounded-b-lg px-3 py-2">
                   <span className="text-sm font-semibold text-green-800 w-36">Green - Complete</span>
@@ -1080,7 +1080,7 @@ export default function HowToGuide() {
             <div className="flex flex-wrap items-center justify-center gap-1 py-2">
               {[
                 { label: 'Pending', bg: 'bg-gray-100', text: 'text-gray-800', desc: 'Awaiting action' },
-                { label: 'InProcess', bg: 'bg-orange-100', text: 'text-orange-800', desc: 'Being fabricated' },
+                { label: 'In-Process', bg: 'bg-orange-100', text: 'text-orange-800', desc: 'Being fabricated' },
                 { label: 'Ready', bg: 'bg-blue-100', text: 'text-blue-800', desc: 'Ready to ship from MFC' },
                 { label: 'Sent', bg: 'bg-yellow-100', text: 'text-yellow-800', desc: 'Shipped to sub' },
                 { label: 'Shipped', bg: 'bg-purple-100', text: 'text-purple-800', desc: 'Shipped back to MFC' },
@@ -1117,7 +1117,7 @@ export default function HowToGuide() {
                   <span className="text-sm text-gray-600">Steel has left MFC and is in transit or delivered to the sub-fabricator.</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="w-24 px-2 py-1 text-center rounded bg-orange-100 text-orange-800 text-xs font-semibold">InProcess</span>
+                  <span className="w-24 px-2 py-1 text-center rounded bg-orange-100 text-orange-800 text-xs font-semibold">In-Process</span>
                   <span className="text-sm text-gray-600">The sub-fabricator is actively working on fabrication.</span>
                 </div>
                 <div className="flex items-center gap-3">

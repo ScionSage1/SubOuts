@@ -57,7 +57,7 @@ export default function Settings() {
                 <span className="text-gray-600">Shipped from MFC to sub</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="w-24 px-2 py-1 text-center rounded bg-orange-100 text-orange-800">InProcess</span>
+                <span className="w-24 px-2 py-1 text-center rounded bg-orange-100 text-orange-800">In-Process</span>
                 <span className="text-gray-600">Being fabricated at sub</span>
               </div>
               <div className="flex items-center gap-3">

@@ -1,6 +1,6 @@
 export const statusColors = {
   'Pending':    { bg: 'bg-gray-100',    text: 'text-gray-800',    border: 'border-gray-300' },
-  'InProcess':  { bg: 'bg-orange-100',  text: 'text-orange-800',  border: 'border-orange-300' },
+  'In-Process':  { bg: 'bg-orange-100',  text: 'text-orange-800',  border: 'border-orange-300' },
   'Ready':      { bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-300' },
   'Sent':       { bg: 'bg-yellow-100',  text: 'text-yellow-800',  border: 'border-yellow-300' },
   'Shipped':    { bg: 'bg-purple-100',  text: 'text-purple-800',  border: 'border-purple-300' },
@@ -72,7 +72,7 @@ export function getActionColor(subOut) {
   }
 
   // Check in progress
-  if (['Sent', 'InProcess', 'Shipped'].includes(subOut.Status)) {
+  if (['Sent', 'In-Process', 'Shipped'].includes(subOut.Status)) {
     return actionColors.inProgress
   }
 
@@ -98,7 +98,7 @@ export function getActionBarColor(subOut) {
   if (dateToShip && dateToShip < now && inShipped < inTotal) return actionBarColors.overdueReceive
   if (subOut.MissingSteel) return actionBarColors.missingSteel
   if (subOut.Status === 'Complete' || subOut.Status === 'OnSite') return actionBarColors.complete
-  if (['Sent', 'InProcess', 'Shipped'].includes(subOut.Status)) return actionBarColors.inProgress
+  if (['Sent', 'In-Process', 'Shipped'].includes(subOut.Status)) return actionBarColors.inProgress
   if (subOut.Status === 'Ready') return actionBarColors.readyToShip
   return actionBarColors.default
 }
@@ -129,7 +129,7 @@ export function getRowColor(subOut) {
 
 export const statusOptions = [
   'Pending',
-  'InProcess',
+  'In-Process',
   'Ready',
   'Sent',
   'Shipped',
