@@ -1,5 +1,5 @@
 const { query, sql } = require('../config/database');
-const { logActivity } = require('../helpers/activityLog');
+const { logActivity, autoStatusFromLoadPercent } = require('../helpers/activityLog');
 
 // Get all items for a sub out
 async function getItems(req, res, next) {
@@ -149,6 +149,7 @@ async function deleteItem(req, res, next) {
       const mark = itemInfo.PieceMark || itemInfo.MainMark || itemInfo.Shape || 'unknown';
       const user = req.headers['x-user'] || null;
       await logActivity(subOutId, 'ItemRemoved', `Item ${mark} removed`, { mark }, user);
+      await autoStatusFromLoadPercent(subOutId, user);
     }
 
     res.json({ success: true, message: 'Item removed successfully' });
@@ -229,6 +230,7 @@ async function bulkAddItems(req, res, next) {
       const sourceTypes = [...new Set(items.map(i => i.sourceTable))].join(', ');
       const user = req.headers['x-user'] || null;
       await logActivity(subOutId, 'ItemsAdded', `${insertedIds.length} items added from ${sourceTypes}`, { count: insertedIds.length, sources: sourceTypes }, user);
+      await autoStatusFromLoadPercent(subOutId, user);
     }
 
     res.status(201).json({
