@@ -78,7 +78,7 @@ export default function SubOutCard({ subOut }) {
             </div>
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-0.5">Due Back</div>
+            <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-0.5">Due to Site</div>
             <div className={clsx('text-sm font-medium flex items-center gap-1', inOverdue ? 'text-orange-600' : 'text-gray-700')}>
               {inOverdue && <AlertCircle className="w-3 h-3" />}
               {formatDate(subOut.DateToShipFromSub)}
