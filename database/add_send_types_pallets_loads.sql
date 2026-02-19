@@ -32,7 +32,7 @@ BEGIN
         PieceCount INT,
 
         -- Status
-        Status NVARCHAR(50) DEFAULT 'Planned',   -- Planned, Loading, InTransit, Delivered
+        Status NVARCHAR(50) DEFAULT 'Planned',   -- Planned, Loading, Loaded, InTransit, Delivered
         Notes NVARCHAR(MAX),
         CreatedAt DATETIME DEFAULT GETDATE(),
         UpdatedAt DATETIME,

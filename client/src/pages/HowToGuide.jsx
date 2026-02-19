@@ -486,12 +486,13 @@ export default function HowToGuide() {
                 {[
                   { label: 'Planned', bg: 'bg-gray-100', text: 'text-gray-800' },
                   { label: 'Loading', bg: 'bg-blue-100', text: 'text-blue-800' },
+                  { label: 'Loaded', bg: 'bg-indigo-100', text: 'text-indigo-800' },
                   { label: 'In Transit', bg: 'bg-yellow-100', text: 'text-yellow-800' },
                   { label: 'Delivered', bg: 'bg-green-100', text: 'text-green-800' },
                 ].map((s, i) => (
                   <div key={i} className="flex items-center gap-1">
                     <span className={clsx('px-3 py-1 rounded-full text-xs font-semibold', s.bg, s.text)}>{s.label}</span>
-                    {i < 3 && <ArrowRight className="w-4 h-4 text-gray-300" />}
+                    {i < 4 && <ArrowRight className="w-4 h-4 text-gray-300" />}
                   </div>
                 ))}
               </div>

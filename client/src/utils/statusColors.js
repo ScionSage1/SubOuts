@@ -156,11 +156,12 @@ export function getPalletStatusColor(status) {
 export const loadStatusColors = {
   'Planned':   { bg: 'bg-gray-100',   text: 'text-gray-800',   border: 'border-gray-300' },
   'Loading':   { bg: 'bg-blue-100',   text: 'text-blue-800',   border: 'border-blue-300' },
+  'Loaded':    { bg: 'bg-indigo-100', text: 'text-indigo-800', border: 'border-indigo-300' },
   'InTransit': { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300' },
   'Delivered': { bg: 'bg-green-100',  text: 'text-green-800',  border: 'border-green-300' }
 }
 
-export const loadStatusOptions = ['Planned', 'Loading', 'InTransit', 'Delivered']
+export const loadStatusOptions = ['Planned', 'Loading', 'Loaded', 'InTransit', 'Delivered']
 
 export function getLoadStatusColor(status) {
   return loadStatusColors[status] || loadStatusColors['Planned']

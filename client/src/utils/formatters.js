@@ -92,6 +92,7 @@ export function formatSendType(sendType) {
 export const loadStatusLabels = {
   'Planned': 'Planned',
   'Loading': 'Loading',
+  'Loaded': 'Loaded',
   'InTransit': 'In Transit',
   'Delivered': 'Delivered'
 }

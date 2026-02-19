@@ -181,7 +181,7 @@ CORTEX_ADMIN_KEY=your_admin_key
   - LoadID (PK), SubOutID (FK cascade), LoadNumber (auto: OUT-001, IN-001)
   - Direction: 'Outbound' | 'Inbound'
   - ScheduledDate, ActualDate, TruckCompany, TrailerNumber, DriverName, BOLNumber
-  - Weight, PieceCount, Status: Planned → Loading → InTransit → Delivered
+  - Weight, PieceCount, Status: Planned → Loading → Loaded → InTransit → Delivered
   - Unique: (SubOutID, LoadNumber)
 - **SubOutPallets** - Pallet grouping for parts
   - PalletID (PK), SubOutID (FK cascade), PalletNumber (auto: P-001)
@@ -379,7 +379,7 @@ Items can be classified into three send types reflecting real-world scenarios:
 - Two-column layout: Outbound (MFC → Sub) and Inbound (Sub → MFC)
 - Auto-numbered: OUT-001, OUT-002... and IN-001, IN-002...
 - Load details: scheduled/actual dates, truck company, trailer number, driver, BOL number, weight, piece count
-- Status flow: Planned → Loading → InTransit → Delivered
+- Status flow: Planned → Loading → Loaded → InTransit → Delivered
 - Assign items and pallets to loads via tabbed assigner (LongShapes, Parts, PullList/Raw, Pallets)
 - Load card headers show total weight in lbs and remaining capacity (48,000 lb default)
 - Expanded load cards show items with weights and remove (X) buttons
@@ -560,7 +560,7 @@ Click on any sub out card or table row to open its detail page. The detail page 
    - Each column has: **"+ Load"** button to create loads with full details
    - Load cards show: number, status badge, scheduled date, item/pallet counts
    - Expand loads to see truck info, assigned pallets, and direct items
-   - Inline status dropdown to advance: Planned → Loading → InTransit → Delivered
+   - Inline status dropdown to advance: Planned → Loading → Loaded → InTransit → Delivered
    - Actions: assign items/pallets, edit, delete
 
 4. **Pallets Section** - Group parts onto pallets for organized shipping:
@@ -616,7 +616,7 @@ Loads are tracked on the sub out detail page in the **Loads Section**. Two colum
 2. Fill in the load form: direction, scheduled date, truck company, trailer number, driver name, BOL number, weight, piece count, notes.
 3. Click **"Create Load"**. The load appears as a card in the column.
 4. Assign items or pallets to the load using the **+** button on the load card.
-5. Update the load status as it progresses: **Planned → Loading → InTransit → Delivered**.
+5. Update the load status as it progresses: **Planned → Loading → Loaded → InTransit → Delivered**.
 
 **Assigning items/pallets to loads:**
 - Click the **+** icon on a load card to open the assigner modal.
