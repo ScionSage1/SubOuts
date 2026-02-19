@@ -24,7 +24,7 @@ export default function SubOutCard({ subOut }) {
 
   const totalItems = subOut.TotalItemCount || 0
   const loadedItems = subOut.LoadedItemCount || 0
-  const pctLoaded = totalItems > 0 ? Math.round((loadedItems / totalItems) * 100) : 0
+  const pctLoaded = totalItems > 0 ? parseFloat(((loadedItems / totalItems) * 100).toFixed(1)) : 0
 
   const outOverdue = dateToLeave && dateToLeave < now && outShipped < outTotal
   const inOverdue = dateToShip && dateToShip < now && inShipped < inTotal

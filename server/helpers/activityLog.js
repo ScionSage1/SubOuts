@@ -22,9 +22,11 @@ async function logActivity(subOutId, eventType, description, eventData = null, c
 }
 
 /**
- * Auto-advance SubOut to Ready when 100% items are loaded and status is In-Process.
+ * Auto-toggle between In-Process and Ready based on loaded percentage.
+ * - 100% loaded + In-Process → Ready
+ * - <100% loaded + Ready → In-Process
  */
-async function autoReadyIfFullyLoaded(subOutId, user) {
+async function autoStatusFromLoadPercent(subOutId, user) {
   try {
     const countResult = await query(`
       SELECT
@@ -40,17 +42,22 @@ async function autoReadyIfFullyLoaded(subOutId, user) {
       WHERE SubOutID = @id
     `, { id: parseInt(subOutId) });
     const { TotalItems, LoadedItems } = countResult.recordset[0];
-    if (TotalItems > 0 && LoadedItems >= TotalItems) {
-      const statusResult = await query('SELECT Status FROM FabTracker.SubOuts WHERE SubOutID = @id', { id: parseInt(subOutId) });
-      const currentStatus = statusResult.recordset[0]?.Status;
-      if (currentStatus === 'In-Process') {
-        await query("UPDATE FabTracker.SubOuts SET Status = 'Ready', UpdatedAt = GETDATE() WHERE SubOutID = @id", { id: parseInt(subOutId) });
-        await logActivity(subOutId, 'StatusChange', 'Status auto-changed from In-Process to Ready (100% loaded)', { from: 'In-Process', to: 'Ready', auto: true }, user);
-      }
+    if (TotalItems === 0) return;
+
+    const statusResult = await query('SELECT Status FROM FabTracker.SubOuts WHERE SubOutID = @id', { id: parseInt(subOutId) });
+    const currentStatus = statusResult.recordset[0]?.Status;
+
+    if (LoadedItems >= TotalItems && currentStatus === 'In-Process') {
+      await query("UPDATE FabTracker.SubOuts SET Status = 'Ready', UpdatedAt = GETDATE() WHERE SubOutID = @id", { id: parseInt(subOutId) });
+      await logActivity(subOutId, 'StatusChange', 'Status auto-changed from In-Process to Ready (100% loaded)', { from: 'In-Process', to: 'Ready', auto: true }, user);
+    } else if (LoadedItems < TotalItems && currentStatus === 'Ready') {
+      const pct = ((LoadedItems / TotalItems) * 100).toFixed(1);
+      await query("UPDATE FabTracker.SubOuts SET Status = 'In-Process', UpdatedAt = GETDATE() WHERE SubOutID = @id", { id: parseInt(subOutId) });
+      await logActivity(subOutId, 'StatusChange', `Status auto-changed from Ready to In-Process (${pct}% loaded)`, { from: 'Ready', to: 'In-Process', auto: true, pctLoaded: pct }, user);
     }
   } catch (err) {
-    console.error('Failed to auto-ready:', err.message);
+    console.error('Failed to auto-status:', err.message);
   }
 }
 
-module.exports = { logActivity, autoReadyIfFullyLoaded };
+module.exports = { logActivity, autoStatusFromLoadPercent };

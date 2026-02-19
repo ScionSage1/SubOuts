@@ -1,5 +1,5 @@
 const { query, sql } = require('../config/database');
-const { logActivity, autoReadyIfFullyLoaded } = require('../helpers/activityLog');
+const { logActivity, autoStatusFromLoadPercent } = require('../helpers/activityLog');
 
 // Helper: Sync legacy load counters on SubOuts from SubOutLoads
 async function syncLegacyCounters(subOutId) {
@@ -247,6 +247,7 @@ async function deleteLoad(req, res, next) {
 
     const user = req.headers['x-user'] || null;
     await logActivity(subOutId, 'LoadDeleted', `Load ${loadNum} deleted (${direction})`, { loadNumber: loadNum, direction }, user);
+    await autoStatusFromLoadPercent(subOutId, user);
 
     res.json({ success: true, message: 'Load deleted successfully' });
   } catch (err) {
@@ -357,7 +358,7 @@ async function assignItemsToLoad(req, res, next) {
 
     const user = req.headers['x-user'] || null;
     await logActivity(subOutId, 'ItemsAssignedToLoad', `${itemIds.length} item(s) assigned to load ${loadNum}`, { loadNumber: loadNum, itemCount: itemIds.length }, user);
-    await autoReadyIfFullyLoaded(subOutId, user);
+    await autoStatusFromLoadPercent(subOutId, user);
 
     const getQuery = `SELECT * FROM FabTracker.vwSubOutLoadsDetail WHERE LoadID = @id`;
     const getResult = await query(getQuery, { id: parseInt(loadId) });
@@ -387,6 +388,7 @@ async function removeItemFromLoad(req, res, next) {
 
     const user = req.headers['x-user'] || null;
     await logActivity(subOutId, 'ItemRemovedFromLoad', `Item removed from load ${loadNum}`, { loadNumber: loadNum }, user);
+    await autoStatusFromLoadPercent(subOutId, user);
 
     res.json({ success: true, message: 'Item removed from load' });
   } catch (err) {
@@ -432,7 +434,7 @@ async function assignPalletsToLoad(req, res, next) {
 
     const user = req.headers['x-user'] || null;
     await logActivity(subOutId, 'PalletsAssignedToLoad', `${palletIds.length} pallet(s) assigned to load ${loadNum}`, { loadNumber: loadNum, palletCount: palletIds.length }, user);
-    await autoReadyIfFullyLoaded(subOutId, user);
+    await autoStatusFromLoadPercent(subOutId, user);
 
     const getQuery = `SELECT * FROM FabTracker.vwSubOutLoadsDetail WHERE LoadID = @id`;
     const getResult = await query(getQuery, { id: parseInt(loadId) });
@@ -474,6 +476,7 @@ async function removePalletFromLoad(req, res, next) {
 
     const user = req.headers['x-user'] || null;
     await logActivity(subOutId, 'PalletRemovedFromLoad', `Pallet ${palletNum} removed from load ${loadNum}`, { loadNumber: loadNum, palletNumber: palletNum }, user);
+    await autoStatusFromLoadPercent(subOutId, user);
 
     res.json({ success: true, message: 'Pallet removed from load' });
   } catch (err) {
