@@ -165,11 +165,11 @@ export default function LoadsSection({
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                const computedWeight = totalWeight > 0 ? totalWeight : load.Weight
+                const computedWeight = totalWeight > 0 ? Math.round(totalWeight) : load.Weight
                 const computedCount = allLoadItems.length > 0
                   ? allLoadItems.reduce((sum, i) => sum + (i.Quantity || 1), 0)
                   : (load.ItemCount || load.PieceCount)
-                setEditingLoad({ ...load, Weight: computedWeight ?? '', PieceCount: computedCount ?? '' })
+                setEditingLoad({ ...load, Weight: computedWeight != null ? Math.round(computedWeight).toLocaleString() : '', PieceCount: computedCount ?? '' })
               }}
               className="p-1 text-gray-400 hover:text-blue-600"
               title="Edit"
