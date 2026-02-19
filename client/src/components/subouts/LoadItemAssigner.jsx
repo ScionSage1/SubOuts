@@ -48,10 +48,49 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
 
   const currentTabItems = availableItemsBySource[activeTab] || []
 
+  // Build barcode → item IDs map for cross-tab selection
+  const barcodeItemMap = useMemo(() => {
+    const map = {}
+    const allItems = [...(availableItemsBySource.LongShapes || []), ...(availableItemsBySource.Parts || []), ...(availableItemsBySource.PullList || [])]
+    for (const item of allItems) {
+      if (item.Barcode) {
+        if (!map[item.Barcode]) map[item.Barcode] = []
+        map[item.Barcode].push(item.SubOutItemID)
+      }
+    }
+    return map
+  }, [availableItemsBySource])
+
+  // Reverse: item ID → barcode
+  const itemBarcodeMap = useMemo(() => {
+    const map = {}
+    const allItems = [...(availableItemsBySource.LongShapes || []), ...(availableItemsBySource.Parts || []), ...(availableItemsBySource.PullList || [])]
+    for (const item of allItems) {
+      if (item.Barcode && !item.LoadID) {
+        map[item.SubOutItemID] = item.Barcode
+      }
+    }
+    return map
+  }, [availableItemsBySource])
+
   const toggleItem = (id) => {
-    setSelectedItemIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    )
+    setSelectedItemIds(prev => {
+      const isRemoving = prev.includes(id)
+      const barcode = itemBarcodeMap[id]
+      const linkedIds = barcode ? (barcodeItemMap[barcode] || []) : [id]
+      // Only include IDs that are not already on a load
+      const allItems = [...(availableItemsBySource.LongShapes || []), ...(availableItemsBySource.Parts || []), ...(availableItemsBySource.PullList || [])]
+      const onLoadIds = new Set(allItems.filter(i => i.LoadID).map(i => i.SubOutItemID))
+      const toggleIds = linkedIds.filter(lid => !onLoadIds.has(lid))
+
+      if (isRemoving) {
+        return prev.filter(i => !toggleIds.includes(i))
+      } else {
+        const next = new Set(prev)
+        toggleIds.forEach(lid => next.add(lid))
+        return Array.from(next)
+      }
+    })
   }
 
   const togglePallet = (id) => {
@@ -271,7 +310,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
       <div className="border-b border-gray-200 mb-4">
         <nav className="flex gap-2">
           {itemTabs.map(tab => {
-            const count = (availableItemsBySource[tab.key] || []).length
+            const count = (availableItemsBySource[tab.key] || []).filter(i => !i.LoadID).length
             const selCount = selectedCountForTab(tab.key)
             return (
               <button
@@ -294,7 +333,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
               activeTab === 'pallets' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
             )}
           >
-            Pallets ({availablePallets.length})
+            Pallets ({availablePallets.filter(p => !p.LoadID).length})
             {selectedPalletIds.length > 0 && <span className="ml-1 text-xs bg-blue-100 text-blue-700 rounded-full px-1.5">{selectedPalletIds.length}</span>}
           </button>
         </nav>
