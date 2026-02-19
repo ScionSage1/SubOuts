@@ -34,21 +34,25 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
     }
   }, [items, loadId])
 
-  // Barcodes where any item is on a load (not this load) — these are effectively unavailable
+  // Barcodes where any item is on any load — barcode-linked items are effectively unavailable
   const loadedBarcodes = useMemo(() => {
     const barcodes = new Set()
     for (const item of (items || [])) {
-      if (item.Barcode && item.LoadID && item.LoadID !== loadId) {
+      if (item.Barcode && item.LoadID) {
         barcodes.add(item.Barcode)
       }
     }
     return barcodes
-  }, [items, loadId])
+  }, [items])
 
-  // Check if an item is effectively unavailable (on another load or barcode-linked to one)
+  // Check if an item is effectively unavailable
   const isItemUnavailable = (item) => {
+    // Directly on another load
     if (item.LoadID && item.LoadID !== loadId) return true
-    if (item.Barcode && loadedBarcodes.has(item.Barcode) && !item.LoadID) return true
+    // Already on this load (shown as green, not selectable)
+    if (item.LoadID === loadId) return false
+    // Barcode-linked to an item on any load
+    if (item.Barcode && loadedBarcodes.has(item.Barcode)) return true
     return false
   }
 
