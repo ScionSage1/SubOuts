@@ -53,6 +53,11 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
     if (item.LoadID === loadId) return false
     // Barcode-linked to an item on any load
     if (item.Barcode && loadedBarcodes.has(item.Barcode)) return true
+    // Mutual exclusion: selecting PullList/Raw blocks linked LongShapes, and vice versa
+    if (item.Barcode) {
+      if (item.SourceTable === 'LongShapes' && selectedBarcodesBySource.PullList.has(item.Barcode)) return true
+      if ((item.SourceTable === 'PullList' || item.SourceTable === 'TeklaInventory') && selectedBarcodesBySource.LongShapes.has(item.Barcode)) return true
+    }
     return false
   }
 
@@ -70,49 +75,24 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
 
   const currentTabItems = availableItemsBySource[activeTab] || []
 
-  // Build barcode → item IDs map for cross-tab selection
-  const barcodeItemMap = useMemo(() => {
-    const map = {}
+  // Track which barcodes are selected per source type (for mutual exclusion)
+  const selectedBarcodesBySource = useMemo(() => {
     const allItems = [...(availableItemsBySource.LongShapes || []), ...(availableItemsBySource.Parts || []), ...(availableItemsBySource.PullList || [])]
+    const longShapeBarcodes = new Set()
+    const pullListBarcodes = new Set()
     for (const item of allItems) {
-      if (item.Barcode) {
-        if (!map[item.Barcode]) map[item.Barcode] = []
-        map[item.Barcode].push(item.SubOutItemID)
+      if (item.Barcode && selectedItemIds.includes(item.SubOutItemID)) {
+        if (item.SourceTable === 'LongShapes') longShapeBarcodes.add(item.Barcode)
+        if (item.SourceTable === 'PullList' || item.SourceTable === 'TeklaInventory') pullListBarcodes.add(item.Barcode)
       }
     }
-    return map
-  }, [availableItemsBySource])
-
-  // Reverse: item ID → barcode
-  const itemBarcodeMap = useMemo(() => {
-    const map = {}
-    const allItems = [...(availableItemsBySource.LongShapes || []), ...(availableItemsBySource.Parts || []), ...(availableItemsBySource.PullList || [])]
-    for (const item of allItems) {
-      if (item.Barcode && !item.LoadID) {
-        map[item.SubOutItemID] = item.Barcode
-      }
-    }
-    return map
-  }, [availableItemsBySource])
+    return { LongShapes: longShapeBarcodes, PullList: pullListBarcodes }
+  }, [selectedItemIds, availableItemsBySource])
 
   const toggleItem = (id) => {
-    setSelectedItemIds(prev => {
-      const isRemoving = prev.includes(id)
-      const barcode = itemBarcodeMap[id]
-      const linkedIds = barcode ? (barcodeItemMap[barcode] || []) : [id]
-      // Only include IDs that are not already on a load
-      const allItems = [...(availableItemsBySource.LongShapes || []), ...(availableItemsBySource.Parts || []), ...(availableItemsBySource.PullList || [])]
-      const onLoadIds = new Set(allItems.filter(i => i.LoadID).map(i => i.SubOutItemID))
-      const toggleIds = linkedIds.filter(lid => !onLoadIds.has(lid))
-
-      if (isRemoving) {
-        return prev.filter(i => !toggleIds.includes(i))
-      } else {
-        const next = new Set(prev)
-        toggleIds.forEach(lid => next.add(lid))
-        return Array.from(next)
-      }
-    })
+    setSelectedItemIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
   }
 
   const togglePallet = (id) => {
