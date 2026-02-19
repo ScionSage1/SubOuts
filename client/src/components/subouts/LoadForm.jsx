@@ -29,7 +29,7 @@ export default function LoadForm({ isOpen, onClose, onSubmit, initialData, defau
         trailerNumber: initialData.TrailerNumber || '',
         driverName: initialData.DriverName || '',
         bolNumber: initialData.BOLNumber || '',
-        weight: initialData.Weight != null ? Math.round(initialData.Weight).toLocaleString() : '',
+        weight: initialData.Weight ?? '',
         pieceCount: initialData.PieceCount ?? '',
         notes: initialData.Notes || ''
       })
