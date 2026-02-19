@@ -130,8 +130,9 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
     const unassignedCount = currentTabItems.filter(i => !i.LoadID).length
     const showMainMark = activeTab === 'LongShapes' || activeTab === 'Parts'
     const showPieceMark = activeTab === 'LongShapes' || activeTab === 'Parts'
-      const showGrade = activeTab === 'PullList'
+    const showGrade = activeTab === 'PullList'
     const showLength = activeTab === 'LongShapes' || activeTab === 'PullList'
+    const showRMNumber = activeTab === 'LongShapes' || activeTab === 'PullList'
 
     return (
       <>
@@ -152,6 +153,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Size</th>
                 {showGrade && <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Grade</th>}
                 {showLength && <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Length</th>}
+                {showRMNumber && <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">RM#</th>}
                 <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">Qty</th>
                 <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">Weight</th>
               </tr>
@@ -186,6 +188,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
                     <td className="px-3 py-2 text-sm">{item.Dimension || '-'}</td>
                     {showGrade && <td className="px-3 py-2 text-sm">{item.Grade || '-'}</td>}
                     {showLength && <td className="px-3 py-2 text-sm">{item.Length || '-'}</td>}
+                    {showRMNumber && <td className="px-3 py-2 text-sm text-gray-600">{item.RMNumber || '-'}</td>}
                     <td className="px-3 py-2 text-sm text-center">{item.Quantity || 0}</td>
                     <td className="px-3 py-2 text-sm text-right">
                       <span className={item.TeklaWeight != null ? 'text-blue-600' : ''}>

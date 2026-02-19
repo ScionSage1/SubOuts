@@ -137,6 +137,19 @@ async function getSubOutById(req, res, next) {
       });
     }
 
+    // Propagate RMNumber from PullList to LongShapes via shared Barcode
+    const rmByBarcode = {};
+    itemsResult.recordset.forEach(item => {
+      if (item.SourceTable === 'PullList' && item.RMNumber && item.Barcode) {
+        rmByBarcode[item.Barcode] = item.RMNumber;
+      }
+    });
+    itemsResult.recordset.forEach(item => {
+      if (item.SourceTable === 'LongShapes' && !item.RMNumber && item.Barcode && rmByBarcode[item.Barcode]) {
+        item.RMNumber = rmByBarcode[item.Barcode];
+      }
+    });
+
     // Enrich PullList items with Tekla inventory weights
     const pullItems = itemsResult.recordset.filter(i => i.SourceTable === 'PullList');
     await enrichItemsWithTeklaWeight(pullItems);
