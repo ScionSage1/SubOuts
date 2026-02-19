@@ -11,6 +11,7 @@ import VendorsPage from './pages/VendorsPage'
 import JobView from './pages/JobView'
 import ArchivedPage from './pages/ArchivedPage'
 import Settings from './pages/Settings'
+import HowToGuide from './pages/HowToGuide'
 import { useApp } from './context/AppContext'
 import AiChat from './components/cortex/AiChat'
 import UserSelectModal from './components/common/UserSelectModal'
@@ -66,6 +67,7 @@ function App() {
             <Route path="/vendors" element={<VendorsPage />} />
             <Route path="/jobs/:jobCode" element={<JobView />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/guide" element={<HowToGuide />} />
           </Routes>
         </main>
       </div>

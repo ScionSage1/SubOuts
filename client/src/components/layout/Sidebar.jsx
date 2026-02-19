@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Package, Building2, Settings, Archive } from 'lucide-react'
+import { LayoutDashboard, Package, Building2, Settings, Archive, BookOpen } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '../../context/AppContext'
 
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/subouts', icon: Package, label: 'All SubOuts' },
   { to: '/archived', icon: Archive, label: 'Archived' },
   { to: '/vendors', icon: Building2, label: 'Sub Fabricators' },
+  { to: '/guide', icon: BookOpen, label: 'How-To Guide' },
   { to: '/settings', icon: Settings, label: 'Settings' }
 ]
 
