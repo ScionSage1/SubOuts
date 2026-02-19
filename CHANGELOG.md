@@ -6,6 +6,47 @@ Format: [Date] - Summary of changes
 
 ---
 
+## 2026-02-19 (Part 2)
+
+### Added
+- **Dashboard Panels** — Action Items, Vendor Summary, Recent Activity, and Follow-Up Reminders
+  - Four collapsible panels between stats bar and filter bar on Dashboard
+  - Action Items: color-coded dots (red=Overdue Send, orange=Overdue Receive, pink=Missing Steel) with links to SubOuts
+  - Follow-Ups: pending follow-ups with vendor name, type badge, due date, and quick complete button
+  - Vendor Summary: table showing active/pending/in-progress/complete counts and weight per vendor
+  - Recent Activity: last 10 updated SubOuts with status badges and relative timestamps
+  - `client/src/pages/Dashboard.jsx`
+
+- **Inline Status Changes** — Clickable status stepper bar on SubOut detail page
+  - Horizontal bar of 8 status pills (Pending through Complete)
+  - Past statuses show checkmark, current has ring highlight, future are gray
+  - Click any status to change directly without editing
+  - `client/src/components/subouts/SubOutDetail.jsx`, `client/src/pages/SubOutDetailPage.jsx`
+
+- **Print-Friendly Bill of Lading** — Print button on each load card
+  - Opens a new browser window with clean, print-optimized load manifest
+  - Shows SubOut info, load details, truck info, items table, pallets table, totals, signature lines
+  - Auto-prints via window.print() on load
+  - `client/src/components/subouts/LoadPrintView.jsx` (new), `client/src/components/subouts/LoadsSection.jsx`
+
+- **Vendor Workload Overview** — Workload summary section on Vendors page
+  - Collapsible panel showing active vendors with SubOut counts and weight
+  - Per-vendor stacked progress bars (green=complete, yellow=active, blue=pending)
+  - Overdue count badge (red) for vendors with overdue SubOuts
+  - Backend SQL enhanced to include OverdueCount per vendor
+  - `client/src/pages/VendorsPage.jsx`, `server/controllers/dashboardController.js`
+
+- **SubOut Activity Timeline / Audit Log** — Activity history on SubOut detail page
+  - New `SubOutActivityLog` database table with cascading delete
+  - Backend helper `logActivity()` for non-blocking event recording
+  - Instrumented controllers: status changes, items added/removed, loads created, load status changes, pallets created
+  - Timeline UI with colored event icons, descriptions, user attribution, and relative timestamps
+  - User identification sent via X-User request header from localStorage
+  - `database/add_activity_log.sql`, `server/helpers/activityLog.js`, `server/controllers/activityController.js`, `server/routes/activity.js`
+  - `client/src/hooks/useActivity.js`, `client/src/pages/SubOutDetailPage.jsx`, `client/src/services/api.js`
+
+---
+
 ## 2026-02-19
 
 ### Added

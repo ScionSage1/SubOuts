@@ -69,6 +69,10 @@ async function getByVendor(req, res, next) {
         SUM(CASE WHEN s.Status IN ('Pending', 'Ready') THEN 1 ELSE 0 END) AS Pending,
         SUM(CASE WHEN s.Status IN ('Sent', 'InProcess', 'Shipped') THEN 1 ELSE 0 END) AS InProgress,
         SUM(CASE WHEN s.Status IN ('Received', 'QCd', 'Complete') THEN 1 ELSE 0 END) AS Complete,
+        SUM(CASE WHEN s.Status <> 'Complete' AND (
+          (s.DateToLeaveMFC < GETDATE() AND s.LoadsShippedFromMFC < s.LoadsToShipFromMFC)
+          OR (s.DateToShipFromSub < GETDATE() AND s.LoadsShippedFromSub < s.LoadsToShipFromSub)
+        ) THEN 1 ELSE 0 END) AS OverdueCount,
         SUM(ISNULL(s.Weight, 0)) AS TotalWeight,
         SUM(ISNULL(s.MajorPieces, 0)) AS TotalPieces
       FROM FabTracker.SubOutVendors v

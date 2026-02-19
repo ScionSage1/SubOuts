@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, ChevronRight, ChevronDown, LayoutDashboard, Package, Building2, Plus, Edit2, Trash2, Truck, ClipboardList, Filter, Eye, MousePointer, ArrowRight, CheckCircle2, AlertTriangle, Info, Layers, Settings as SettingsIcon, History } from 'lucide-react'
+import { BookOpen, ChevronRight, ChevronDown, LayoutDashboard, Package, Building2, Plus, Edit2, Trash2, Truck, ClipboardList, Filter, Eye, MousePointer, ArrowRight, CheckCircle2, AlertTriangle, Info, Layers, Settings as SettingsIcon, History, Clock, Printer, BarChart3, RefreshCw } from 'lucide-react'
 import clsx from 'clsx'
 
 function GuideSection({ icon: Icon, title, color, children, defaultOpen = false }) {
@@ -283,6 +283,59 @@ export default function HowToGuide() {
                 </div>
               </div>
             </div>
+          </div>
+        </GuideSection>
+
+        {/* Dashboard Panels */}
+        <GuideSection icon={BarChart3} title="Dashboard Panels & Follow-Ups" color="teal">
+          <div className="bg-white rounded-lg p-4 space-y-4">
+            <p className="text-sm text-gray-700">
+              Between the stats bar and filter bar, four collapsible panels provide quick insights without leaving the Dashboard.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="border border-red-200 rounded-xl p-4 bg-red-50">
+                <h4 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                  Action Items
+                </h4>
+                <p className="text-sm text-gray-600">
+                  SubOuts needing attention: overdue sends (red), overdue receives (orange), and missing steel (pink). Each row links to the SubOut detail page.
+                </p>
+              </div>
+
+              <div className="border border-amber-200 rounded-xl p-4 bg-amber-50">
+                <h4 className="font-semibold text-amber-900 mb-2 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-600" />
+                  Follow-Ups
+                </h4>
+                <p className="text-sm text-gray-600">
+                  Pending follow-ups from the communication log. Shows vendor name, type, due date (red if overdue), and a quick "complete" checkmark button.
+                </p>
+              </div>
+
+              <div className="border border-blue-200 rounded-xl p-4 bg-blue-50">
+                <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-blue-600" />
+                  Vendor Summary
+                </h4>
+                <p className="text-sm text-gray-600">
+                  Table showing each vendor's active SubOuts broken down by status (pending, in progress, complete) with total weight.
+                </p>
+              </div>
+
+              <div className="border border-indigo-200 rounded-xl p-4 bg-indigo-50">
+                <h4 className="font-semibold text-indigo-900 mb-2 flex items-center gap-2">
+                  <History className="w-4 h-4 text-indigo-600" />
+                  Recent Activity
+                </h4>
+                <p className="text-sm text-gray-600">
+                  Last 10 updated SubOuts with lot, vendor, status badge, and relative timestamp. Click any to go to its detail page.
+                </p>
+              </div>
+            </div>
+
+            <Tip>Click the panel header to toggle it open or closed. Panel states are remembered during your session.</Tip>
           </div>
         </GuideSection>
 
@@ -600,6 +653,46 @@ export default function HowToGuide() {
           </div>
         </GuideSection>
 
+        {/* Print Bill of Lading */}
+        <GuideSection icon={Printer} title="Print Bill of Lading" color="indigo">
+          <div className="bg-white rounded-lg p-4 space-y-4">
+            <p className="text-sm text-gray-700">
+              Each load card has a <strong>print button</strong> (printer icon) that generates a print-friendly Bill of Lading / Load Manifest in a new browser window.
+            </p>
+
+            <div className="space-y-3">
+              <Step number="1">Open a SubOut's detail page and expand the <strong>Loads Section</strong>.</Step>
+              <Step number="2">
+                Click the
+                <span className="inline-flex items-center mx-1 p-1 rounded border border-gray-300">
+                  <Printer className="w-3.5 h-3.5 text-gray-500" />
+                </span>
+                icon on any load card (between the assign and edit buttons).
+              </Step>
+              <Step number="3">A new browser window opens with the formatted manifest. It auto-triggers the browser's print dialog.</Step>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                What's on the Print View
+              </h4>
+              <div className="bg-gray-50 rounded-lg p-3 space-y-1.5 text-sm text-gray-600">
+                <div><strong>Header:</strong> "METALSFAB CORPORATION - Bill of Lading / Load Manifest"</div>
+                <div><strong>SubOut Info:</strong> Job, Lot, Description, Vendor</div>
+                <div><strong>Load Details:</strong> Load Number, Direction, Status, Scheduled/Actual Dates</div>
+                <div><strong>Truck Info:</strong> Company, Trailer #, Driver, BOL # (if entered)</div>
+                <div><strong>Items Table:</strong> Shape, Main Mark, Piece Mark, Grade, Length, Qty, Weight</div>
+                <div><strong>Pallets Table:</strong> Pallet #, Item Count, Dimensions, Weight</div>
+                <div><strong>Totals:</strong> Total Weight, Total Pieces, Pallet Count</div>
+                <div><strong>Signature Lines:</strong> Loaded By, Driver Signature, Received By</div>
+              </div>
+            </div>
+
+            <Tip>The print layout is optimized for standard letter paper. Use your browser's "Save as PDF" option to create a digital copy.</Tip>
+          </div>
+        </GuideSection>
+
         {/* Managing Pallets */}
         <GuideSection icon={Package} title="Managing Pallets" color="purple">
           <div className="bg-white rounded-lg p-4 space-y-4">
@@ -816,12 +909,77 @@ export default function HowToGuide() {
           </div>
         </GuideSection>
 
+        {/* Activity Timeline */}
+        <GuideSection icon={Clock} title="Activity Timeline" color="indigo">
+          <div className="bg-white rounded-lg p-4 space-y-4">
+            <p className="text-sm text-gray-700">
+              Every SubOut detail page has a collapsible <strong>Activity</strong> section at the bottom that shows an audit trail of changes.
+            </p>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                Tracked Events
+              </h4>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 bg-blue-50 rounded-lg px-3 py-2 border border-blue-200">
+                  <RefreshCw className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-blue-800">Status Change</strong> <span className="text-gray-600">- "Status changed from Ready to Sent"</span></span>
+                </div>
+                <div className="flex items-center gap-3 bg-green-50 rounded-lg px-3 py-2 border border-green-200">
+                  <Plus className="w-4 h-4 text-green-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-green-800">Items Added</strong> <span className="text-gray-600">- "12 items added from PullList"</span></span>
+                </div>
+                <div className="flex items-center gap-3 bg-red-50 rounded-lg px-3 py-2 border border-red-200">
+                  <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-red-800">Item Removed</strong> <span className="text-gray-600">- "Item W14x30 removed"</span></span>
+                </div>
+                <div className="flex items-center gap-3 bg-purple-50 rounded-lg px-3 py-2 border border-purple-200">
+                  <Truck className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-purple-800">Load Created</strong> <span className="text-gray-600">- "Load OUT-001 created (Outbound)"</span></span>
+                </div>
+                <div className="flex items-center gap-3 bg-indigo-50 rounded-lg px-3 py-2 border border-indigo-200">
+                  <Truck className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-indigo-800">Load Status Change</strong> <span className="text-gray-600">- "Load OUT-001 status changed to Delivered"</span></span>
+                </div>
+                <div className="flex items-center gap-3 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+                  <Package className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span className="text-sm"><strong className="text-amber-800">Pallet Created</strong> <span className="text-gray-600">- "Pallet P-001 created"</span></span>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-600">
+              Each entry shows the description, who made the change, and when (as relative time like "2h ago"). The timeline auto-refreshes when you make changes.
+            </p>
+
+            <Tip>The activity log tracks the logged-in user automatically. Make sure you're signed in (via the user selector) so your changes are attributed correctly.</Tip>
+          </div>
+        </GuideSection>
+
         {/* Managing Vendors */}
         <GuideSection icon={Building2} title="Managing Vendors" color="teal">
           <div className="bg-white rounded-lg p-4 space-y-4">
             <p className="text-sm text-gray-700">
               Vendors are the sub-fabrication companies you send work to. Navigate to <strong>Vendors</strong> in the sidebar.
             </p>
+
+            {/* Workload Overview */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                Vendor Workload Overview
+              </h4>
+              <p className="text-sm text-gray-600 mb-2">
+                At the top of the Vendors page, a collapsible <strong>Vendor Workload</strong> panel shows active vendors with:
+              </p>
+              <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 space-y-1.5 text-sm text-gray-600">
+                <div><strong>Per-vendor cards</strong> showing active SubOut count and total weight</div>
+                <div><strong>Stacked progress bar</strong> — green (complete), yellow (in progress), blue (pending)</div>
+                <div><strong>Overdue badge</strong> — red count if vendor has overdue SubOuts</div>
+              </div>
+              <Tip>Only vendors with active SubOuts appear in the workload overview. Toggle the panel by clicking its header.</Tip>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Add */}
@@ -881,7 +1039,7 @@ export default function HowToGuide() {
         <GuideSection icon={CheckCircle2} title="Status Flow & Lifecycle" color="green">
           <div className="bg-white rounded-lg p-4 space-y-4">
             <p className="text-sm text-gray-700">
-              Each sub out progresses through these statuses. Update the status via the Edit page.
+              Each sub out progresses through these statuses. Update the status by clicking any step on the <strong>status stepper bar</strong> on the detail page, or via the Edit page.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-1 py-2">
@@ -943,6 +1101,32 @@ export default function HowToGuide() {
                   <span className="text-sm text-gray-600">All work is done. No further action required.</span>
                 </div>
               </div>
+            </div>
+
+            {/* Inline Status Stepper */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                Status Stepper Bar
+              </h4>
+              <p className="text-sm text-gray-600 mb-2">
+                On the SubOut detail page, a <strong>clickable status stepper bar</strong> appears below the header. It shows all 8 statuses as connected pills:
+              </p>
+              <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span><strong>Past statuses</strong> — filled with color and show a checkmark icon</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-4 h-4 rounded-full ring-2 ring-blue-500 ring-offset-1 bg-blue-100 flex-shrink-0 mt-0.5"></span>
+                  <span><strong>Current status</strong> — highlighted with a ring outline</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-4 h-4 rounded-full bg-gray-100 flex-shrink-0 mt-0.5"></span>
+                  <span><strong>Future statuses</strong> — gray, but clickable to jump ahead</span>
+                </div>
+              </div>
+              <Tip>Click any status on the stepper bar to change the SubOut's status instantly. No need to open the Edit page.</Tip>
             </div>
           </div>
         </GuideSection>
@@ -1009,10 +1193,41 @@ export default function HowToGuide() {
         {/* Recent Changes */}
         <GuideSection icon={History} title="Recent Changes" color="indigo">
           <div className="bg-white rounded-lg p-4 space-y-6">
-            {/* Feb 19 */}
+            {/* Feb 19 Part 2 */}
             <div>
               <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-mono">2026-02-19</span>
+                <span className="text-xs text-gray-400">Part 2</span>
+              </h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Dashboard Panels</strong> — Action Items, Follow-Ups, Vendor Summary, and Recent Activity panels</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Inline Status Changes</strong> — clickable status stepper bar on SubOut detail page</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Print Bill of Lading</strong> — print button on load cards opens formatted manifest</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Vendor Workload Overview</strong> — per-vendor progress bars and overdue badges on Vendors page</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-500 font-bold flex-shrink-0">+</span>
+                  <span><strong>Activity Timeline</strong> — audit log on SubOut detail page tracking all changes with user attribution</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Feb 19 Part 1 */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-mono">2026-02-19</span>
+                <span className="text-xs text-gray-400">Part 1</span>
               </h4>
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex items-start gap-2">

@@ -1,5 +1,6 @@
 const { query, sql } = require('../config/database');
 const { enrichItemsWithTeklaWeight } = require('../config/tekla');
+const { logActivity } = require('../helpers/activityLog');
 
 // Get all sub outs with optional filters
 async function getAllSubOuts(req, res, next) {
@@ -334,6 +335,10 @@ async function updateStatus(req, res, next) {
       return res.status(400).json({ success: false, error: 'Status is required' });
     }
 
+    // Get current status for logging
+    const currentResult = await query('SELECT Status FROM FabTracker.SubOuts WHERE SubOutID = @id', { id: parseInt(id) });
+    const oldStatus = currentResult.recordset[0]?.Status;
+
     const sqlQuery = `
       UPDATE FabTracker.SubOuts
       SET Status = @status, UpdatedAt = GETDATE()
@@ -341,6 +346,9 @@ async function updateStatus(req, res, next) {
     `;
 
     await query(sqlQuery, { id: parseInt(id), status });
+
+    const user = req.headers['x-user'] || null;
+    await logActivity(id, 'StatusChange', `Status changed from ${oldStatus} to ${status}`, { from: oldStatus, to: status }, user);
 
     const getQuery = `SELECT * FROM FabTracker.vwSubOutsList WHERE SubOutID = @id`;
     const getResult = await query(getQuery, { id: parseInt(id) });

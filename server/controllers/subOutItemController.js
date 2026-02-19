@@ -1,4 +1,5 @@
 const { query, sql } = require('../config/database');
+const { logActivity } = require('../helpers/activityLog');
 
 // Get all items for a sub out
 async function getItems(req, res, next) {
@@ -131,13 +132,23 @@ async function updateItem(req, res, next) {
 // Delete item
 async function deleteItem(req, res, next) {
   try {
-    const { itemId } = req.params;
+    const { subOutId, itemId } = req.params;
+
+    // Get item info before deleting for logging
+    const itemResult = await query('SELECT PieceMark, MainMark, Shape FROM FabTracker.SubOutItems WHERE SubOutItemID = @itemId', { itemId: parseInt(itemId) });
+    const itemInfo = itemResult.recordset[0];
 
     const sqlQuery = `DELETE FROM FabTracker.SubOutItems WHERE SubOutItemID = @itemId`;
     const result = await query(sqlQuery, { itemId: parseInt(itemId) });
 
     if (result.rowsAffected[0] === 0) {
       return res.status(404).json({ success: false, error: 'Item not found' });
+    }
+
+    if (subOutId && itemInfo) {
+      const mark = itemInfo.PieceMark || itemInfo.MainMark || itemInfo.Shape || 'unknown';
+      const user = req.headers['x-user'] || null;
+      await logActivity(subOutId, 'ItemRemoved', `Item ${mark} removed`, { mark }, user);
     }
 
     res.json({ success: true, message: 'Item removed successfully' });
@@ -212,6 +223,13 @@ async function bulkAddItems(req, res, next) {
       ORDER BY SourceTable, MainMark, PieceMark
     `;
     const getResult = await query(getQuery, { subOutId: parseInt(subOutId) });
+
+    // Log activity
+    if (insertedIds.length > 0) {
+      const sourceTypes = [...new Set(items.map(i => i.sourceTable))].join(', ');
+      const user = req.headers['x-user'] || null;
+      await logActivity(subOutId, 'ItemsAdded', `${insertedIds.length} items added from ${sourceTypes}`, { count: insertedIds.length, sources: sourceTypes }, user);
+    }
 
     res.status(201).json({
       success: true,

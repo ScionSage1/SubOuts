@@ -18,6 +18,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const communicationsRoutes = require('./routes/communications');
 const configRoutes = require('./routes/config');
 const teklaRoutes = require('./routes/tekla');
+const activityRoutes = require('./routes/activity');
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -42,6 +43,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/communications', communicationsRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/tekla', teklaRoutes);
+app.use('/api/subouts', activityRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

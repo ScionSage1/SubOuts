@@ -1,4 +1,5 @@
 const { query, sql } = require('../config/database');
+const { logActivity } = require('../helpers/activityLog');
 
 // Get all pallets for a sub out
 async function getPallets(req, res, next) {
@@ -94,6 +95,9 @@ async function createPallet(req, res, next) {
     });
 
     const newId = result.recordset[0].PalletID;
+
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'PalletCreated', `Pallet ${finalPalletNumber} created`, { palletNumber: finalPalletNumber }, user);
 
     // Fetch created pallet from view
     const getQuery = `SELECT * FROM FabTracker.vwSubOutPalletsDetail WHERE PalletID = @id`;

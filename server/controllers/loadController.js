@@ -1,4 +1,5 @@
 const { query, sql } = require('../config/database');
+const { logActivity } = require('../helpers/activityLog');
 
 // Helper: Sync legacy load counters on SubOuts from SubOutLoads
 async function syncLegacyCounters(subOutId) {
@@ -138,6 +139,9 @@ async function createLoad(req, res, next) {
     // Sync legacy counters
     await syncLegacyCounters(subOutId);
 
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'LoadCreated', `Load ${loadNumber} created (${direction})`, { loadNumber, direction, status: status || 'Planned' }, user);
+
     // Fetch created load from view
     const getQuery = `SELECT * FROM FabTracker.vwSubOutLoadsDetail WHERE LoadID = @id`;
     const getResult = await query(getQuery, { id: newId });
@@ -245,6 +249,11 @@ async function updateLoadStatus(req, res, next) {
       return res.status(400).json({ success: false, error: 'Status is required' });
     }
 
+    // Get current load info for logging
+    const currentLoad = await query('SELECT LoadNumber, Status FROM FabTracker.SubOutLoads WHERE LoadID = @loadId', { loadId: parseInt(loadId) });
+    const oldStatus = currentLoad.recordset[0]?.Status;
+    const loadNum = currentLoad.recordset[0]?.LoadNumber;
+
     // Set ActualDate when delivered
     const sqlQuery = `
       UPDATE FabTracker.SubOutLoads
@@ -266,6 +275,9 @@ async function updateLoadStatus(req, res, next) {
 
     // Sync legacy counters
     await syncLegacyCounters(subOutId);
+
+    const user = req.headers['x-user'] || null;
+    await logActivity(subOutId, 'LoadStatusChange', `Load ${loadNum} status changed to ${status}`, { loadNumber: loadNum, from: oldStatus, to: status }, user);
 
     const getQuery = `SELECT * FROM FabTracker.vwSubOutLoadsDetail WHERE LoadID = @id`;
     const getResult = await query(getQuery, { id: parseInt(loadId) });

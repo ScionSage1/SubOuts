@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import clsx from 'clsx'
-import { Plus, Edit2, Trash2, Truck, ChevronDown, ChevronRight, Package, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Truck, ChevronDown, ChevronRight, Package, X, Printer } from 'lucide-react'
+import { openPrintView } from './LoadPrintView'
 import Card from '../common/Card'
 import Button from '../common/Button'
 import LoadForm from './LoadForm'
@@ -15,6 +16,7 @@ export default function LoadsSection({
   items,
   pallets,
   subOutId,
+  subOut,
   dateToLeaveMFC,
   dateToShipFromSub,
   onCreateLoad,
@@ -146,6 +148,19 @@ export default function LoadsSection({
               title="Assign items/pallets"
             >
               <Plus className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const directItems = (items || []).filter(i => i.LoadID === load.LoadID && !i.PalletID)
+                const palletsList = (pallets || []).filter(p => p.LoadID === load.LoadID)
+                const palletItemsList = (items || []).filter(i => i.LoadID === load.LoadID && i.PalletID)
+                openPrintView({ subOut: subOut || {}, load, loadItems: directItems, loadPallets: palletsList, allPalletItems: palletItemsList })
+              }}
+              className="p-1 text-gray-400 hover:text-blue-600"
+              title="Print BOL"
+            >
+              <Printer className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); setEditingLoad(load) }}

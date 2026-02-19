@@ -1,17 +1,62 @@
 import { Link } from 'react-router-dom'
-import { Edit2, Trash2, RotateCcw } from 'lucide-react'
+import { Edit2, Trash2, RotateCcw, Check } from 'lucide-react'
+import clsx from 'clsx'
 import Card from '../common/Card'
 import Button from '../common/Button'
-import StatusBadge from '../common/StatusBadge'
+import { statusColors, statusOptions } from '../../utils/statusColors'
 import { formatDate, formatWeightLbs, formatCurrency } from '../../utils/formatters'
+
+function StatusStepper({ currentStatus, onStatusChange }) {
+  const currentIndex = statusOptions.indexOf(currentStatus)
+
+  return (
+    <div className="flex items-center gap-0 overflow-x-auto py-2">
+      {statusOptions.map((status, i) => {
+        const isPast = i < currentIndex
+        const isCurrent = i === currentIndex
+        const colors = statusColors[status] || statusColors.Pending
+
+        return (
+          <div key={status} className="flex items-center">
+            <button
+              onClick={() => onStatusChange(status)}
+              className={clsx(
+                'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap',
+                isCurrent
+                  ? `${colors.bg} ${colors.text} ring-2 ring-offset-1 ${colors.border.replace('border-', 'ring-')}`
+                  : isPast
+                    ? `${colors.bg} ${colors.text} opacity-80`
+                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+              )}
+              title={`Set status to ${status}`}
+            >
+              {isPast && <Check className="w-3 h-3" />}
+              {status}
+            </button>
+            {i < statusOptions.length - 1 && (
+              <div className={clsx('w-4 h-0.5 flex-shrink-0', i < currentIndex ? 'bg-gray-300' : 'bg-gray-200')} />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 export default function SubOutDetail({
   subOut,
   onDelete,
   onReopen,
+  onStatusChange,
   children
 }) {
   if (!subOut) return null
+
+  const handleStatusSelect = (status) => {
+    if (status !== subOut.Status && onStatusChange) {
+      onStatusChange({ id: subOut.SubOutID, status })
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -48,6 +93,13 @@ export default function SubOutDetail({
         </div>
       </div>
 
+      {/* Status Stepper */}
+      {onStatusChange && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-2">
+          <StatusStepper currentStatus={subOut.Status} onStatusChange={handleStatusSelect} />
+        </div>
+      )}
+
       {/* Details Card */}
       <Card>
         <Card.Header>
@@ -77,7 +129,15 @@ export default function SubOutDetail({
             </div>
             <div>
               <span className="text-sm text-gray-500">Status</span>
-              <div className="mt-0.5"><StatusBadge status={subOut.Status} /></div>
+              <p className="font-medium mt-0.5">
+                <span className={clsx(
+                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                  statusColors[subOut.Status]?.bg || 'bg-gray-100',
+                  statusColors[subOut.Status]?.text || 'text-gray-800'
+                )}>
+                  {subOut.Status}
+                </span>
+              </p>
             </div>
             {subOut.EstimatedCost && (
               <div>

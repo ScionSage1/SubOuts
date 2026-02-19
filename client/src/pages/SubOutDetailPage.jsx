@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Plus, Layers } from 'lucide-react'
+import { ArrowLeft, Plus, Layers, Clock, RefreshCw, Package, Truck, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { useSubOut, useDeleteSubOut, useUpdateStatus } from '../hooks/useSubOuts'
 import { useDeleteItem, useBulkAddItems, useUpdateItem } from '../hooks/useSubOutItems'
 import { useUpdatePullListSource, useBulkUpdatePullListStatus } from '../hooks/useCutlists'
 import { usePullStatuses } from '../hooks/useConfig'
+import { useActivity } from '../hooks/useActivity'
 import { usePallets, useCreatePallet, useUpdatePallet, useDeletePallet, useUpdatePalletStatus, useAssignItemsToPallet, useRemoveItemFromPallet, useAssignPalletToLoad } from '../hooks/usePallets'
 import { useLoads, useCreateLoad, useUpdateLoad, useDeleteLoad, useUpdateLoadStatus, useAssignItemsToLoad, useAssignPalletsToLoad, useRemoveItemFromLoad, useRemovePalletFromLoad } from '../hooks/useLoads'
 import SubOutDetail from '../components/subouts/SubOutDetail'
@@ -39,6 +40,11 @@ export default function SubOutDetailPage() {
   const deleteItemMutation = useDeleteItem()
   const bulkAddMutation = useBulkAddItems()
   const updateItemMutation = useUpdateItem()
+
+  // Activity log
+  const { data: activityData } = useActivity(id)
+  const activityLog = activityData?.data || []
+  const [showActivity, setShowActivity] = useState(true)
 
   // PullList source data
   const { data: pullStatusesData } = usePullStatuses()
@@ -168,6 +174,7 @@ export default function SubOutDetailPage() {
         subOut={subOut}
         onDelete={() => setShowDeleteModal(true)}
         onReopen={() => setShowReopenModal(true)}
+        onStatusChange={({ id: subOutId, status }) => updateStatusMutation.mutate({ id: subOutId, status })}
       >
         {/* Loads Section */}
         <LoadsSection
@@ -175,6 +182,7 @@ export default function SubOutDetailPage() {
           items={subOut.items}
           pallets={pallets}
           subOutId={id}
+          subOut={subOut}
           dateToLeaveMFC={subOut.DateToLeaveMFC}
           dateToShipFromSub={subOut.DateToShipFromSub}
           onCreateLoad={createLoadMutation.mutate}
@@ -233,6 +241,81 @@ export default function SubOutDetailPage() {
               isDeleting={deleteItemMutation.isPending}
             />
           </Card.Body>
+        </Card>
+
+        {/* Activity Timeline */}
+        <Card>
+          <Card.Header>
+            <button
+              onClick={() => setShowActivity(!showActivity)}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-gray-500" />
+                <h2 className="font-semibold">Activity ({activityLog.length})</h2>
+              </div>
+              {showActivity ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+            </button>
+          </Card.Header>
+          {showActivity && (
+            <Card.Body>
+              {activityLog.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">No activity recorded yet.</p>
+              ) : (
+                <div className="relative">
+                  <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200" />
+                  <div className="space-y-4">
+                    {activityLog.map(entry => {
+                      const eventIcon = {
+                        StatusChange: <RefreshCw className="w-3.5 h-3.5" />,
+                        ItemsAdded: <Plus className="w-3.5 h-3.5" />,
+                        ItemRemoved: <AlertCircle className="w-3.5 h-3.5" />,
+                        LoadCreated: <Truck className="w-3.5 h-3.5" />,
+                        LoadStatusChange: <Truck className="w-3.5 h-3.5" />,
+                        PalletCreated: <Package className="w-3.5 h-3.5" />,
+                      }[entry.EventType] || <Clock className="w-3.5 h-3.5" />
+
+                      const eventColor = {
+                        StatusChange: 'bg-blue-100 text-blue-600',
+                        ItemsAdded: 'bg-green-100 text-green-600',
+                        ItemRemoved: 'bg-red-100 text-red-600',
+                        LoadCreated: 'bg-purple-100 text-purple-600',
+                        LoadStatusChange: 'bg-indigo-100 text-indigo-600',
+                        PalletCreated: 'bg-amber-100 text-amber-600',
+                      }[entry.EventType] || 'bg-gray-100 text-gray-600'
+
+                      const timeAgo = (date) => {
+                        const diff = Date.now() - new Date(date).getTime()
+                        const minutes = Math.floor(diff / 60000)
+                        if (minutes < 1) return 'just now'
+                        if (minutes < 60) return `${minutes}m ago`
+                        const hours = Math.floor(minutes / 60)
+                        if (hours < 24) return `${hours}h ago`
+                        const days = Math.floor(hours / 24)
+                        if (days < 7) return `${days}d ago`
+                        return new Date(date).toLocaleDateString()
+                      }
+
+                      return (
+                        <div key={entry.LogID} className="relative pl-8">
+                          <div className={`absolute left-1 top-0.5 w-5 h-5 rounded-full flex items-center justify-center ${eventColor}`}>
+                            {eventIcon}
+                          </div>
+                          <div className="text-sm">
+                            <span className="text-gray-900">{entry.Description}</span>
+                            <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                              {entry.CreatedBy && <span>by {entry.CreatedBy}</span>}
+                              <span>{timeAgo(entry.CreatedAt)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </Card.Body>
+          )}
         </Card>
       </SubOutDetail>
 

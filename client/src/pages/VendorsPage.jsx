@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react'
-import { Plus, Edit2, Trash2, Building2, Search, Phone, Mail, MapPin, ChevronDown, ChevronUp, Filter, X, MessageSquare, Calendar, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Plus, Edit2, Trash2, Building2, Search, Phone, Mail, MapPin, ChevronDown, ChevronUp, Filter, X, MessageSquare, Calendar, Clock, CheckCircle2, AlertCircle, BarChart3 } from 'lucide-react'
 import { useVendors, useCreateVendor, useUpdateVendor, useDeleteVendor } from '../hooks/useVendors'
 import { useVendorCommunications, useCreateCommunication, useUpdateCommunication, useDeleteCommunication, useCompleteFollowUp } from '../hooks/useCommunications'
+import { useVendorSummary } from '../hooks/useDashboard'
+import { formatWeightLbs } from '../utils/formatters'
 import Button from '../components/common/Button'
 import Modal from '../components/common/Modal'
 import Input from '../components/common/Input'
@@ -30,8 +32,11 @@ export default function VendorsPage() {
   const updateCommMutation = useUpdateCommunication()
   const deleteCommMutation = useDeleteCommunication()
   const completeFollowUpMutation = useCompleteFollowUp()
+  const { data: vendorSummaryData } = useVendorSummary()
+  const vendorSummary = (vendorSummaryData?.data || []).filter(v => v.TotalSubOuts > 0)
 
   const [showModal, setShowModal] = useState(false)
+  const [showWorkload, setShowWorkload] = useState(true)
   const [showCommModal, setShowCommModal] = useState(false)
   const [editingVendor, setEditingVendor] = useState(null)
   const [selectedVendor, setSelectedVendor] = useState(null)
@@ -340,6 +345,67 @@ export default function VendorsPage() {
           </div>
         </div>
       </div>
+
+      {/* Workload Overview */}
+      {vendorSummary.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 mb-4 overflow-hidden">
+          <button
+            onClick={() => setShowWorkload(!showWorkload)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+          >
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <BarChart3 className="w-4 h-4 text-blue-600" />
+              Vendor Workload ({vendorSummary.length})
+            </div>
+            {showWorkload ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+          </button>
+          {showWorkload && (
+            <div className="border-t border-gray-200 px-4 py-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {vendorSummary.map(v => {
+                  const total = v.TotalSubOuts || 1
+                  const pendingPct = (v.Pending / total) * 100
+                  const inProgressPct = (v.InProgress / total) * 100
+                  const completePct = (v.Complete / total) * 100
+                  return (
+                    <div key={v.VendorID} className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-900 truncate">{v.VendorName}</span>
+                        {v.OverdueCount > 0 && (
+                          <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-medium">
+                            {v.OverdueCount} overdue
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+                        <span>{v.TotalSubOuts} active</span>
+                        {v.TotalWeight > 0 && <span>{formatWeightLbs(v.TotalWeight)}</span>}
+                      </div>
+                      {/* Stacked progress bar */}
+                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden flex">
+                        {completePct > 0 && (
+                          <div className="bg-green-500 h-full" style={{ width: `${completePct}%` }} title={`${v.Complete} complete`} />
+                        )}
+                        {inProgressPct > 0 && (
+                          <div className="bg-yellow-400 h-full" style={{ width: `${inProgressPct}%` }} title={`${v.InProgress} in progress`} />
+                        )}
+                        {pendingPct > 0 && (
+                          <div className="bg-blue-400 h-full" style={{ width: `${pendingPct}%` }} title={`${v.Pending} pending`} />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                        {v.Pending > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400" />{v.Pending} pending</span>}
+                        {v.InProgress > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400" />{v.InProgress} active</span>}
+                        {v.Complete > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" />{v.Complete} done</span>}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {error ? (
         <div className="text-center py-10 text-red-600">Error: {error.message}</div>

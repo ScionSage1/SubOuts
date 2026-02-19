@@ -42,6 +42,7 @@ D:\Claude\SubOuts\
 │   │   │   │   ├── JobGroup.jsx
 │   │   │   │   ├── LoadForm.jsx      # Load create/edit modal
 │   │   │   │   ├── LoadItemAssigner.jsx  # Assign items/pallets to a load
+│   │   │   │   ├── LoadPrintView.jsx # Print-friendly Bill of Lading generator
 │   │   │   │   ├── LoadsSection.jsx  # Two-column outbound/inbound load tracking
 │   │   │   │   ├── PalletForm.jsx    # Pallet create/edit modal
 │   │   │   │   ├── PalletItemAssigner.jsx  # Assign parts to a pallet
@@ -59,6 +60,7 @@ D:\Claude\SubOuts\
 │   │   ├── context/
 │   │   │   └── AppContext.jsx       # Global state (sidebar, view mode, currentUser)
 │   │   ├── hooks/                   # Custom React Query hooks
+│   │   │   ├── useActivity.js       # Activity log hook
 │   │   │   ├── useSubOuts.js
 │   │   │   ├── useSubOutItems.js
 │   │   │   ├── usePallets.js        # Pallet CRUD, item/load assignment hooks
@@ -91,7 +93,10 @@ D:\Claude\SubOuts\
 │   ├── tailwind.config.js
 │   └── package.json
 ├── server/                          # Express backend
+│   ├── helpers/
+│   │   └── activityLog.js           # Non-blocking activity logging helper
 │   ├── controllers/
+│   │   ├── activityController.js    # Activity log GET endpoint
 │   │   ├── subOutController.js
 │   │   ├── subOutItemController.js
 │   │   ├── palletController.js      # Pallet CRUD, item assignment, load assignment
@@ -106,6 +111,7 @@ D:\Claude\SubOuts\
 │   │   ├── database.js              # SQL Server connection pool
 │   │   └── tekla.js                 # Tekla inventory via MFCCortex (30min cache)
 │   ├── routes/
+│   │   ├── activity.js              # Activity log routes
 │   │   ├── subouts.js
 │   │   ├── items.js
 │   │   ├── pallets.js               # Pallet routes under /api/subouts/:subOutId/pallets
@@ -125,7 +131,8 @@ D:\Claude\SubOuts\
 │   ├── schema.sql                   # Tables, indexes, views
 │   ├── seed.sql                     # Default vendors
 │   ├── add_communication_log.sql    # Communication log table
-│   └── add_send_types_pallets_loads.sql  # Loads, Pallets, SendType migration
+│   ├── add_send_types_pallets_loads.sql  # Loads, Pallets, SendType migration
+│   └── add_activity_log.sql         # Activity log table for audit trail
 ├── CHANGELOG.md                     # Project changelog (see below)
 └── CLAUDE.md
 ```
@@ -198,6 +205,9 @@ CORTEX_ADMIN_KEY=your_admin_key
   - PullStatus (INT) - Maps to ConfigItems where ConfigName = 'LongPullStatus'
   - RMNumber (NVARCHAR) - Requisition material number
   - These fields are fetched live and displayed on SubOut items; edits write back to this table
+- **SubOutActivityLog** - Audit trail for SubOut changes
+  - LogID (PK), SubOutID (FK cascade), EventType (StatusChange, ItemsAdded, ItemRemoved, LoadCreated, LoadStatusChange, PalletCreated)
+  - Description, EventData (JSON), CreatedBy, CreatedAt
 - **SubFabricatorCommunicationLog** - Communication history with vendors
   - Fields: ContactDate, ContactType, ContactPerson, MFCEmployee, Summary, Details
   - Follow-up tracking: FollowUpRequired, FollowUpDate, FollowUpType, FollowUpNotes, FollowUpCompleted
@@ -221,6 +231,7 @@ Run these scripts on the FabTracker database:
 1. `database/schema.sql` - Creates tables, indexes, and views
 2. `database/seed.sql` - Inserts default vendors
 3. `database/add_send_types_pallets_loads.sql` - Adds loads, pallets, send types (run after schema.sql)
+4. `database/add_activity_log.sql` - Adds activity log table for audit trail
 
 ## API Endpoints
 
@@ -267,6 +278,9 @@ Run these scripts on the FabTracker database:
 - `DELETE /:loadId/items/:itemId` - Remove item from load
 - `POST /:loadId/pallets` - Assign pallets to load (body: { palletIds })
 - `DELETE /:loadId/pallets/:palletId` - Remove pallet from load
+
+### Activity (`/api/subouts/:id/activity`)
+- `GET /` - Get activity log for a SubOut (query: limit, default 50)
 
 ### Vendors (`/api/vendors`)
 - `GET /` - Get all (filter: includeInactive)

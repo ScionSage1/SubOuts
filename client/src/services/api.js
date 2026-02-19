@@ -7,6 +7,15 @@ const api = axios.create({
   }
 })
 
+// Request interceptor to send current user
+api.interceptors.request.use(config => {
+  const user = localStorage.getItem('subouts-user')
+  if (user) {
+    config.headers['X-User'] = user
+  }
+  return config
+})
+
 // Response interceptor for error handling
 api.interceptors.response.use(
   response => response.data,
@@ -109,6 +118,11 @@ export const loadsApi = {
 export const teklaApi = {
   getInventoryFilters: () => api.get('/tekla/inventory/filters'),
   getMatchingInventory: (shapes) => api.get('/tekla/inventory/match', { params: { shapes: JSON.stringify(shapes) } })
+}
+
+// Activity API
+export const activityApi = {
+  getBySubOut: (subOutId) => api.get(`/subouts/${subOutId}/activity`)
 }
 
 // Communications API
