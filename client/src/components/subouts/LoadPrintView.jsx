@@ -87,6 +87,7 @@ export function openPrintView({ subOut, load, loadItems, loadPallets, allPalletI
         <th>Piece Mark</th>
         <th>Grade</th>
         <th>Length</th>
+        <th>RM#</th>
         <th class="right">Qty</th>
         <th class="right">Weight</th>
       </tr>
@@ -100,6 +101,7 @@ export function openPrintView({ subOut, load, loadItems, loadPallets, allPalletI
         <td>${item.PieceMark || '-'}</td>
         <td>${item.Grade || '-'}</td>
         <td>${item.Length || '-'}</td>
+        <td>${item.RMNumber || '-'}</td>
         <td class="right">${item.Quantity || 1}</td>
         <td class="right">${formatWt((item.TeklaWeight != null ? item.TeklaWeight : item.Weight) * (item.Quantity || 1))}</td>
       </tr>
