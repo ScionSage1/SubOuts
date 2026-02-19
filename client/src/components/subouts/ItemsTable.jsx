@@ -117,6 +117,17 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
     return allFilteredItems.filter(item => matchesTab(item, sourceTable)).length
   }
 
+  // Barcodes where any associated item is on a load (cross-tab strikethrough)
+  const loadedBarcodes = useMemo(() => {
+    const barcodes = new Set()
+    for (const item of (items || [])) {
+      if (item.Barcode && item.LoadID) {
+        barcodes.add(item.Barcode)
+      }
+    }
+    return barcodes
+  }, [items])
+
   // Build combined hierarchy: PullList -> LongShapes by Barcode
   const combinedData = useMemo(() => {
     if (!allFilteredItems.length) return { hierarchy: [], orphanLongShapes: [] }
@@ -430,7 +441,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {sortedItems.map(item => {
-            const isAssigned = !!(item.PalletID || item.LoadID)
+            const isAssigned = !!(item.PalletID || item.LoadID) || (item.Barcode && loadedBarcodes.has(item.Barcode))
             const rowStrike = isAssigned ? 'line-through text-gray-400' : ''
             return (
             <tr key={item.SubOutItemID} className={clsx('hover:bg-gray-50', isAssigned && 'bg-gray-50/50', activeTab === 'PullList' ? selectedPullListIds.has(item.SourceID) && 'bg-blue-50' : selectedItemIds.has(item.SubOutItemID) && 'bg-blue-50')}>
@@ -547,7 +558,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
               {hierarchy.map(pullItem => {
                 const isExpanded = expandedBarcodes.has(pullItem.Barcode)
                 const hasChildren = pullItem.children.length > 0
-                const pullAssigned = !!(pullItem.PalletID || pullItem.LoadID)
+                const pullAssigned = !!(pullItem.PalletID || pullItem.LoadID) || (pullItem.Barcode && loadedBarcodes.has(pullItem.Barcode))
                 const pullStrike = pullAssigned ? 'line-through text-gray-400' : ''
 
                 return (
@@ -595,7 +606,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                     </tr>
 
                     {isExpanded && pullItem.children.map(child => {
-                      const childAssigned = !!(child.PalletID || child.LoadID)
+                      const childAssigned = !!(child.PalletID || child.LoadID) || (child.Barcode && loadedBarcodes.has(child.Barcode))
                       const childStrike = childAssigned ? 'line-through text-gray-400' : ''
                       return (
                       <tr key={child.SubOutItemID} className={clsx('hover:bg-gray-100', childAssigned ? 'bg-gray-100/50' : 'bg-gray-50')}>
@@ -644,7 +655,7 @@ export default function ItemsTable({ items, onDelete, onEdit, onUpdateSendType, 
                     </td>
                   </tr>
                   {orphanLongShapes.map(item => {
-                    const oAssigned = !!(item.PalletID || item.LoadID)
+                    const oAssigned = !!(item.PalletID || item.LoadID) || (item.Barcode && loadedBarcodes.has(item.Barcode))
                     const oStrike = oAssigned ? 'line-through text-gray-400' : ''
                     return (
                     <tr key={item.SubOutItemID} className={clsx('hover:bg-gray-50', oAssigned && 'bg-gray-50/50')}>
