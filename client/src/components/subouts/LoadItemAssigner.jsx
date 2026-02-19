@@ -122,7 +122,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
   }
 
   const selectAllTabItems = () => {
-    const unassigned = currentTabItems.filter(i => !isItemUnavailable(i)).map(i => i.SubOutItemID)
+    const unassigned = currentTabItems.filter(i => !isItemUnavailable(i) && i.LoadID !== loadId).map(i => i.SubOutItemID)
     setSelectedItemIds(prev => {
       const existing = new Set(prev)
       unassigned.forEach(id => existing.add(id))
@@ -188,7 +188,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
       )
     }
 
-    const unassignedCount = currentTabItems.filter(i => !isItemUnavailable(i)).length
+    const unassignedCount = currentTabItems.filter(i => !isItemUnavailable(i) && i.LoadID !== loadId).length
     const showMainMark = activeTab === 'LongShapes' || activeTab === 'Parts'
     const showPieceMark = activeTab === 'LongShapes' || activeTab === 'Parts'
     const showGrade = activeTab === 'PullList'
@@ -332,7 +332,7 @@ export default function LoadItemAssigner({ isOpen, onClose, items, pallets, load
       <div className="border-b border-gray-200 mb-4">
         <nav className="flex gap-2">
           {itemTabs.map(tab => {
-            const count = (availableItemsBySource[tab.key] || []).filter(i => !isItemUnavailable(i)).length
+            const count = (availableItemsBySource[tab.key] || []).filter(i => !isItemUnavailable(i) && i.LoadID !== loadId).length
             const selCount = selectedCountForTab(tab.key)
             return (
               <button
