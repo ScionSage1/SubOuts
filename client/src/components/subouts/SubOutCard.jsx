@@ -126,7 +126,7 @@ export default function SubOutCard({ subOut }) {
         <div className="flex items-center gap-3 pt-2 border-t border-gray-100 text-xs text-gray-500">
           <span className="flex items-center gap-1">
             <Weight className="w-3 h-3" />
-            {formatWeight(subOut.Weight)}
+            {subOut.Weight ? `${Math.round(parseFloat(subOut.Weight)).toLocaleString()} lbs` : '-'}
           </span>
           <span className="flex items-center gap-1">
             <Package className="w-3 h-3" />
